@@ -1249,6 +1249,17 @@ export function createBridge(config, deps) {
       const v = sanitizeGameString(String(r.args[k]), 64);
       if (v) args[k] = v;
     }
+    // Inventory nudges carry only numeric facts, never game text. Slot ids are
+    // a bounded comma-separated list because strip args are flat strings.
+    if (kind === 'bags_full' || kind === 'gear_breaking') {
+      for (const k of ['from', 'to', 'n', 'layer', 'zone']) delete args[k];
+      if (kind === 'bags_full' && /^\d{1,4}$/.test(r.args.free || '') && Number(r.args.free) <= 2) args.free = Number(r.args.free);
+      if (kind === 'gear_breaking') {
+        if (/^\d{1,2}$/.test(r.args.pct || '') && Number(r.args.pct) <= 20) args.pct = Number(r.args.pct);
+        const slots = String(r.args.slots || '').split(',');
+        if (slots.length <= 19 && slots.every(s => /^(?:[1-9]|1[0-9])$/.test(s))) args.slots = [...new Set(slots)].join(',');
+      }
+    }
     const item = { token: r.token, key: r.key, chat: c.id, kind: 'evt', event: kind, args, st: /^\d+$/.test(r.args.st || '') ? Number(r.args.st) : null,
       text: '', context: null, firstSeen: now(), attempts: 0, via };
     store.addOutbox(item); // persisted before the ack, as for a msg (SE-2)

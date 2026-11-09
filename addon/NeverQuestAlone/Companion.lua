@@ -46,13 +46,15 @@ function P.Call(name, ...)
 	R.companionError = { text = tostring(a), at = GetTime(), where = name }
 	return nil
 end
-local KINDS = { "level_up", "route_done", "route_stale", "zone_first" } -- flush order
-local WORDS = { level = "level_up", route = "route_done", stale = "route_stale", zone = "zone_first", recap = "recap" }
+local KINDS = { "level_up", "route_done", "route_stale", "zone_first", "bags_full", "gear_breaking" } -- flush order
+local WORDS = { level = "level_up", route = "route_done", stale = "route_stale", zone = "zone_first", bags = "bags_full", repair = "gear_breaking", recap = "recap" }
 local LABEL = {
 	level_up = "level-ups",
 	route_done = "a finished route",
 	route_stale = "3 or more quests no route covers",
 	zone_first = "a first visit to a zone",
+	bags_full = "bags almost full",
+	gear_breaking = "gear needs repair",
 	recap = "a recap after you log off",
 }
 local STALE_QUESTS = 3 -- picked up, and on no map stop
@@ -129,9 +131,18 @@ local function CharDB()
 	if type(ch.profMax) ~= "table" then ch.profMax = {} end
 	if type(ch.pending) ~= "table" then ch.pending = {} end
 	if type(ch.queue) ~= "table" then ch.queue = {} end -- kind -> { args, onces, due, at }: events waiting for their moment
+	if type(ch.nudgeKinds) ~= "table" then ch.nudgeKinds = {} end
+	if ch.nudgeKinds.bags_full == nil then ch.nudgeKinds.bags_full = true end
+	if ch.nudgeKinds.gear_breaking == nil then ch.nudgeKinds.gear_breaking = true end
 	return ch, key
 end
 P.CharDB = CharDB
+
+-- Inventory switches are per character; keep the older switches' storage.
+function P.KindOn(kind)
+	if kind == "bags_full" or kind == "gear_breaking" then return CharDB().nudgeKinds[kind] end
+	return DB().kinds[kind]
+end
 
 local function NewSid()
 	return string.format("%04x%04x%04x%04x", math.random(0, 0xFFFF), math.random(0, 0xFFFF), math.random(0, 0xFFFF), math.random(0, 0xFFFF))
@@ -1387,6 +1398,8 @@ function P.Summary(kind, a)
 	if kind == "route_done" then return "Route finished: " .. tostring(a.title or a.layer or "route") end
 	if kind == "route_stale" then return string.format("%d quests picked up that no route covers", a.n or 0) end
 	if kind == "zone_first" then return "First visit: " .. tostring(a.zone or "a new zone") end
+	if kind == "bags_full" then return "Bags are almost full" end
+	if kind == "gear_breaking" then return "Equipped gear needs repair" end
 	return kind
 end
 
@@ -1397,7 +1410,7 @@ function P.Send(kind, a, once)
 	local db = ns.db
 	local st = P.QueueState(STATE_DWELL)
 	local args = { { "cur", db.cursor }, { "kind", kind }, { "agent", chat.agent }, { "name", chat.name } }
-	for _, f in ipairs({ "from", "to", "n", "layer", "zone" }) do
+	for _, f in ipairs({ "from", "to", "n", "layer", "zone", "free", "slots", "pct" }) do
 		if a[f] ~= nil then args[#args + 1] = { f, a[f] } end
 	end
 	local ch = CharDB()
@@ -1429,7 +1442,7 @@ end
 -- makes one turn, from the first level to the last.
 function P.Queue(kind, a, once, due, noFlush)
 	local c = DB()
-	if not c.on or not c.kinds[kind] then return false end
+	if not c.on or not P.KindOn(kind) then return false end
 	if once and c.fired[once] then return false end
 	local q = CharDB().queue
 	local onces = { once }
@@ -1448,6 +1461,7 @@ end
 -- level-up doesn't wait). One per call; the 2-second ticker calls it again.
 function P.Flush()
 	if not ns.db or not R.nonce then return end
+	P.CheckNudges()
 	local c = DB()
 	local q = CharDB().queue
 	if not next(q) then return end
@@ -1458,12 +1472,62 @@ function P.Flush()
 	if q.route_stale then P.CheckStale(true) end -- quests may have left the log since it was queued
 	for _, kind in ipairs(KINDS) do
 		local e = q[kind]
-		if e and (not c.kinds[kind] or time() - (tonumber(e.at) or 0) > QUEUE_STALE) then
+		if e and (not P.KindOn(kind) or time() - (tonumber(e.at) or 0) > QUEUE_STALE) then
 			q[kind] = nil -- switched off, or too old to help now
 		elseif e and (not e.due or time() >= e.due) and (kind == "level_up" or not c.lastAt or time() - c.lastAt >= GAP) then
 			if P.Send(kind, e.args, e.onces) then q[kind] = nil end
 			return
 		end
+	end
+end
+
+-- Read only after a bag/equipment change (or login), never on every idle tick.
+-- Latches and pending events survive reload per character. Unknown readings do
+-- not rearm a warning; a known recovery does, and cancels obsolete queued advice.
+function P.CheckNudges()
+	if not ns.db or ns.InCombat() or not R.nudgesDirty then return end
+	R.nudgesDirty = nil
+	local ch = CharDB()
+	if type(ch.nudges) ~= "table" then ch.nudges = {} end
+	local seen = ch.nudges
+	if type(seen.gear) ~= "table" then seen.gear = {} end
+	local free = Get(P.Bags(), "free")
+	if free then
+		if free > 2 then
+			seen.bags, ch.queue.bags_full = nil, nil
+		elseif not seen.bags then
+			if P.Queue("bags_full", { free = free }, nil, nil, true) then seen.bags = true end
+		elseif ch.queue.bags_full then
+			ch.queue.bags_full.args.free = free
+		end
+	end
+	local rows = P.Durability()
+	if not rows then return end -- unavailable is not repaired
+	local pending, slots, lowest, fresh = {}, {}, nil, false
+	local old = ch.queue.gear_breaking
+	if old then
+		for slot in tostring(old.args.slots or ""):gmatch("%d+") do pending[tonumber(slot)] = true end
+	end
+	local low = {}
+	for _, row in ipairs(rows) do
+		local slot, pct = Get(row, "slot"), Get(row, "pct")
+		if pct > 20 then seen.gear[slot] = nil
+		elseif not seen.gear[slot] or pending[slot] then
+			low[slot] = pct
+			if not seen.gear[slot] then fresh = true end
+		end
+	end
+	for slot = 1, 19 do
+		if low[slot] then
+			slots[#slots + 1] = slot
+			lowest = math.min(lowest or 100, low[slot])
+		end
+	end
+	local args = { slots = table.concat(slots, ","), pct = lowest }
+	if fresh and P.Queue("gear_breaking", args, nil, nil, true) then
+		for _, slot in ipairs(slots) do seen.gear[slot] = true end
+	elseif old then
+		if #slots == 0 then ch.queue.gear_breaking = nil else old.args = args end
 	end
 end
 
@@ -1589,6 +1653,9 @@ for _, event in ipairs({ "QUEST_LOG_UPDATE", "ZONE_CHANGED_NEW_AREA", "BAG_UPDAT
 end
 On("UNIT_AURA", function(_, unit) if unit == "player" then P.LiveChanged() end end)
 On("PLAYER_REGEN_ENABLED", function() P.LiveFlush() end)
+for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "UPDATE_INVENTORY_DURABILITY", "PLAYER_EQUIPMENT_CHANGED" }) do
+	On(event, function() R.nudgesDirty = true end)
+end
 
 On("PLAYER_LOGOUT", function()
 	if not ns.db then return end
@@ -1609,6 +1676,7 @@ function P.Tick()
 		R.onTaxi = false
 		P.Call("OnZone") -- landed: this zone counts
 	end
+	P.Call("CheckNudges")
 	P.Call("Flush")
 	P.Call("LiveFlush")
 end
@@ -1623,6 +1691,7 @@ On("PLAYER_LOGIN", function()
 		S.OnRoutesChanged = P.CheckStale
 	end
 	DB()
+	R.nudgesDirty = true
 	CheckProfessions()
 	if C_Timer and C_Timer.NewTicker then C_Timer.NewTicker(2, P.Tick) end
 end)
@@ -1645,6 +1714,7 @@ function P.Command(rest)
 	local word, v = (rest or ""):lower():match("^(%S*)%s*(%S*)$")
 	if word == "on" or word == "off" then
 		c.on = word == "on"
+		R.nudgesDirty = true
 		if not c.on then
 			-- Nothing more goes: the state leaves the strip and the reload outbox, events are dropped.
 			R.stateRec = nil
@@ -1663,7 +1733,10 @@ function P.Command(rest)
 			ns.Transport.RefreshStrip()
 		end
 	elseif WORDS[word] and (v == "on" or v == "off") then
-		c.kinds[WORDS[word]] = v == "on"
+		local kind = WORDS[word]
+		if kind == "bags_full" or kind == "gear_breaking" then CharDB().nudgeKinds[kind] = v == "on"
+		else c.kinds[kind] = v == "on" end
+		R.nudgesDirty = true
 		if v == "off" then CharDB().queue[WORDS[word]] = nil end
 	end
 	local caps = P.Caps()
@@ -1683,9 +1756,9 @@ function P.Command(rest)
 		lines[#lines + 1] = R.bridge and "The NeverQuestAlone app doesn't support check-ins yet: update it. Nothing is sent until you do."
 			or "Waiting for the first answer from the NeverQuestAlone app."
 	end
-	for _, w in ipairs({ "level", "route", "stale", "zone", "recap" }) do
+	for _, w in ipairs({ "level", "route", "stale", "zone", "bags", "repair", "recap" }) do
 		local kind = WORDS[w]
-		lines[#lines + 1] = string.format("  %s: %s  (/nqa companion %s on||off)", LABEL[kind], c.kinds[kind] and "on" or "off", w)
+		lines[#lines + 1] = string.format("  %s: %s  (/nqa companion %s on||off)", LABEL[kind], P.KindOn(kind) and "on" or "off", w)
 	end
 	if c.last then lines[#lines + 1] = c.lastAt and ns.Fill("Last check-in: {summary}, {duration} ago.", { summary = ns.Escape(c.last), duration = ns.DurWords(time() - c.lastAt) })
 		or ns.Fill("Last check-in: {summary}.", { summary = ns.Escape(c.last) }) end

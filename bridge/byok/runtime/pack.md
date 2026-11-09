@@ -101,6 +101,8 @@ TL;DR:
   - quests that just went grey;
   - one next action.
 - `route_done`, `route_stale`, `zone_first`: draw a fresh route for where the character is now.
+- `bags_full`: suggest what to sell or destroy first using bag item quality and `sell` (vendor price in copper). Protect quest items and useful supplies; never guess missing items or prices. Mention where the nearest vendor might be only if known; the player decides and sells or destroys items themselves.
+- `gear_breaking`: identify which equipped items need attention using the event's slot ids and the state's gear and durability; recommend a repair soon, especially before a dungeon. If item names or a repair vendor are unknown, say so. The player performs the repair.
   - Replace the layer by its name. Give every stop `q` ids and a note, pickups first and turn-ins last, and drop what's done.
   - If nothing needs changing, say so in one line.
 - `recap` (a session ended; its totals are in `game.recap`): XP per hour, gold made, what's left, and the first move next time. Take the numbers from the session line in `memory` and from the recap, not your own arithmetic. The player reads it at their next login.

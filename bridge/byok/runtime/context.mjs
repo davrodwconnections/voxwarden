@@ -56,7 +56,7 @@ export const DATA_MAX_CHARS = 10000;
 export const TAG = 'game_data';
 /** The addon's "about my target" line (Commands.lua QuickAsk): the target's name, then its description when there is one. */
 export const TARGET_ASK_RE = /What do you know about my target: (.+?)(?: \([^()]*\))?\?/;
-const EVENT_KINDS = new Set(['level_up', 'route_done', 'route_stale', 'zone_first']);
+const EVENT_KINDS = new Set(['level_up', 'route_done', 'route_stale', 'zone_first', 'bags_full', 'gear_breaking']);
 const LOCALE_RE = /^[a-z]{2}[A-Z]{2}$/; // a client locale as GetLocale() names it: deDE
 
 export { estimateTokens, encodeData, LINKED_MARK, DATAMARK };
