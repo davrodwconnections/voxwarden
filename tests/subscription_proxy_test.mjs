@@ -40,7 +40,9 @@ test('proxy: route maps model ids to a CLI and an optional model; anything else 
   assert.equal(route('claude-code:opus --tools default'), null);
   assert.equal(route(''), null);
   assert.ok(MODELS.some(m => m.id === 'codex:gpt-reserve'));
-  assert.ok(!MODELS.some(m => /luna|6\.1-sol/.test(m.id)), 'models a ChatGPT login refuses are not offered');
+  assert.ok(MODELS.some(m => m.id === 'codex:gpt-6-luna'), 'Luna is offered: a ChatGPT login takes it on a recent Codex CLI');
+  assert.deepEqual(route('codex:gpt-6-luna'), route('codex:gpt-6-astra') && { ...route('codex:gpt-6-astra'), model: 'gpt-6-luna' });
+  assert.ok(!MODELS.some(m => /6\.1-luna|6\.1-sol/.test(m.id)), 'models a ChatGPT login refuses are not offered');
 });
 
 async function withProxy(fn, factory = createServer) {
