@@ -341,3 +341,32 @@ test('voice controls: after Talk, the first "listening" plays one short UI sound
   old.run('NS.VoiceBar.Refresh()');
   assert.equal(old.bool('NQAVoiceBar ~= nil and NQAVoiceBar:IsShown()'), false);
 });
+
+test('T15: with a long quest log (40 quests, 60-byte titles) the voice\'s inventory fit still keeps bags and named gear, dropping quest titles first (ids stay), in one frame', () => {
+  // A quest log of 40 (the companion tests' C_QuestLog stub, cut down).
+  const LOG40 = `STUB.log = {}
+local function Q(id) for _, q in ipairs(STUB.log) do if q.id == id then return q end end end
+C_QuestLog = { GetNumQuestLogEntries = function() return #STUB.log end,
+ GetInfo = function(i) local q = STUB.log[i]; if q then return { title = q.title, questID = q.id, level = q.level, isHeader = false } end end,
+ IsOnQuest = function(id) return Q(id) ~= nil end, IsComplete = function() return false end, ReadyForTurnIn = function() return false end,
+ IsQuestTrivial = function() return false end, IsQuestFlaggedCompleted = function() return false end,
+ GetTitleForQuestID = function(id) local q = Q(id); return q and q.title end, GetQuestObjectives = function(id) local q = Q(id); return q and q.objectives or {} end,
+ GetQuestsOnMap = function() return {} end }`;
+  const vm = newVM({ extra: DATA + LOG40 }).login();
+  vm.run(`NQADB.linked = true; NS.R.nonce = 'ab12'; NS.R.bridge = { caps = { 'state', 'evt', 'z', 'qlog', 'voice', 'usage' }, usage = { autoOn = true } }
+   math.randomseed(42)
+   local function words() local t = {} for k = 1, 60 do t[k] = string.char(97 + math.random(0, 25)) end return table.concat(t) end
+   for i = 1, 40 do STUB.log[i] = { id = 2000 + i, title = words(), level = 10, complete = false, trivial = false, objectives = { { text = words(), numFulfilled = 0, numRequired = 1 } } } end
+   C_Item.GetItemInfo = function(id) return 'Item' .. id, nil, 2, nil, nil, nil, nil, nil, nil, nil, 5 end
+   function GetInventoryItemID(u, slot) if slot <= 16 then return 100 + slot end end`);
+  const normal = JSON.parse(vm.evaluate('NS.Companion.Build().json'));
+  vm.run('NS.R.statePreferInv = true; STUB.inv = NS.Companion.Build(); NS.R.statePreferInv = nil');
+  const inv = JSON.parse(vm.evaluate('STUB.inv.json'));
+  assert.ok(normal.omitted.includes('bags'), 'a plain fit leaves bags out with this log');
+  assert.ok(inv.bags && Array.isArray(inv.bags.items), 'the inventory fit keeps bags');
+  assert.ok(Array.isArray(inv.gear) && inv.gear.some(g => typeof g.name === 'string'), 'and named gear');
+  assert.equal(inv.quests.length, 40, 'every quest');
+  assert.ok(inv.quests.every(q => Number.isInteger(q.id)), 'each with its id');
+  assert.ok(vm.num('#(STUB.inv.packed or STUB.inv.json)') <= 3100, 'one frame');
+  assert.notEqual(vm.evaluate('STUB.inv.seq'), String(normal.seq), 'a new seq, so it is sent');
+});

@@ -87,7 +87,8 @@ export function tools({ web = false } = {}) {
     {
       type: 'function', name: 'get_game_state',
       description: 'Read the player\'s current game data from the NeverQuestAlone app: only the sections needed. Read-only. Asking for "bags", "gear", "durability", "rewards", "talents" or "hearth" fetches them fresh from the game (a few seconds: say you are checking); bags and gear come with item names, quality and vendor price (copper). A *AgeSeconds field means that part is from an earlier look.',
-      parameters: { type: 'object', properties: { sections: { type: 'array', items: { type: 'string', enum: [...SECTIONS] } } }, required: ['sections'], additionalProperties: false },
+      parameters: { type: 'object', properties: { sections: { type: 'array', items: { type: 'string', enum: [...SECTIONS] },
+        description: 'gear = what they have equipped (equipo, lo que llevo puesto, armadura, arma); bags = what they carry (bolsas, inventario, objetos); durability = repairs (reparar, durabilidad); rewards = quest reward items (recompensas); talents = talent points (talentos); hearth = hearthstone (piedra de hogar); character = level, XP, money, rested XP; quests = quest log; location = where they are.' } }, required: ['sections'], additionalProperties: false },
     },
     {
       type: 'function', name: 'place_map_pins',
@@ -177,6 +178,7 @@ async function mintSecret(o, key, fetchFn = fetch) {
 /** Runs one tool call for the page. Never throws: errors come back as {error}. */
 // Asked for bags or gear the state lacks, the tool asks the addon and waits this long for them (S7).
 export const INVENTORY_WAIT_MS = 5000;
+const isObjOf = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const pause = ms => new Promise(r => setTimeout(r, ms));
 
 export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now(), sleep = pause, clock = Date.now } = {}) {
@@ -202,9 +204,13 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
       // What the newest state left out, from the last one that had it, with its age.
       if (out.available) {
         const ageOf = at => Math.max(0, Math.round((clock() - at) / 1000));
-        const wantAll = !asked.length;
-        if ((wantAll || asked.includes('bags')) && !out.bags && mem.bags) { out.bags = mem.bags.value; out.bagsAgeSeconds = ageOf(mem.bags.at); }
-        if ((wantAll || asked.includes('gear')) && mem.gear && !(Array.isArray(out.gear) && out.gear.some(g => g && g.name))) { out.gear = mem.gear.value; out.gearAgeSeconds = ageOf(mem.gear.at); }
+        // Gear and bags ride along whatever was asked (the mini model sometimes picks the wrong section for
+        // "what am I wearing"): from this state, else from the last one that had them, with their age.
+        if (!out.bags && isObjOf(game.state?.bags)) out.bags = game.state.bags;
+        if (!out.bags && mem.bags) { out.bags = mem.bags.value; out.bagsAgeSeconds = ageOf(mem.bags.at); }
+        const named = g => Array.isArray(g) && g.some(x => x && x.name);
+        if (!named(out.gear) && named(game.state?.gear)) out.gear = game.state.gear;
+        if (!named(out.gear) && mem.gear) { out.gear = mem.gear.value; out.gearAgeSeconds = ageOf(mem.gear.at); }
         if (Array.isArray(out.missing)) { out.missing = out.missing.filter(m => !((m === 'bags' || m === 'gear') && out[m])); if (!out.missing.length) delete out.missing; }
         if (waited && lacksInventory(game.state, onDemand) && !(onDemand.length === 1 && onDemand[0] === 'bags' && out.bags)) out.inventoryNote = 'Asked the game for ' + onDemand.join(', ') + ' but not everything arrived in time (in combat, the data is not cached yet, or the addon is busy): say what you could not see right now.';
       }

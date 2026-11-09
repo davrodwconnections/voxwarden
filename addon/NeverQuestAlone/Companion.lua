@@ -85,7 +85,10 @@ local DROP_ORDER = { "bags", "auras", "rep", "target", "group", "rewards", "rest
 -- until the quests' detail has gone, so a long quest log can't push them out of the frame.
 -- The small sections (rested, hearth, talents) stay too: they cost a few bytes and the voice asked for them.
 local INV_DROP_ORDER = { "auras", "rep", "target", "group", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
-	"prof", "pending", "rewards", "rested", "hearth", "talents", "bags", "gear", "durability", "quests.title.short", "quests.title.tiny", "quests.title" }
+	"prof", "pending", "rewards", "rested", "hearth", "talents", "quests.title.short", "quests.title.tiny", "quests.title", "bags", "gear", "durability" }
+-- Quest titles go before bags and gear here: a long log (30 quests of long titles) doesn't fit beside
+-- them otherwise, and the bridge puts the titles back from the ones it already holds (fillTitles, cap
+-- qlog); every quest keeps its id and ready flag.
 local FIRED_MAX = 300
 local LEVEL_SETTLE = 2 -- s: during PLAYER_LEVEL_UP the unit's level and XP can still be the old ones
 local QUEUE_STALE = 1800 -- s: a queued event older than this (a long fight, a relog) is dropped
