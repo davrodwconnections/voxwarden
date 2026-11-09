@@ -13,6 +13,7 @@
 # -Companion: turns on the app's companion switch (byok.privacy.companion), which the addon needs to send
 #   full game data on its own (/nqa live on) and which also allows automatic check-in turns. Off by default.
 # -ShowVoice: open the voice page as a normal browser tab instead of the hidden off-screen window.
+# -NoWeb: no Wowhead lookups for the voice (on by default here: only quest, item, spell or NPC ids leave the PC).
 # Quit the NeverQuestAlone app first: the app and this never serve one AddOns folder at once.
 param(
   [ValidateSet('openai', 'anthropic', 'proxy')] [string]$Ai = 'openai',
@@ -21,7 +22,8 @@ param(
   [switch]$NoVoice,
   [ValidateSet('skeleton', 'orc-shaman')] [string]$Persona = 'skeleton',
   [switch]$Companion,
-  [switch]$ShowVoice
+  [switch]$ShowVoice,
+  [switch]$NoWeb
 )
 $ErrorActionPreference = 'Stop'
 $repo = Resolve-Path (Join-Path $PSScriptRoot '..\..')
@@ -74,7 +76,9 @@ if ($Ai -ne 'proxy') {
 
 if (-not $NoVoice) {
   $env:NQA_APP_DATA = $data
-  Start-Process -WindowStyle Minimized -FilePath 'node' -ArgumentList @((Join-Path $repo 'tools\voice\server.mjs'), '--key-file', $keys, '--app-data', $data, '--persona', $Persona)
+  $voiceArgs = @((Join-Path $repo 'tools\voice\server.mjs'), '--key-file', $keys, '--app-data', $data, '--persona', $Persona)
+  if (-not $NoWeb) { $voiceArgs += '--web' }
+  Start-Process -WindowStyle Minimized -FilePath 'node' -ArgumentList $voiceArgs
   Start-Sleep 2
   # The voice page (odd/tasks/nqa-voice-controls.md T1): a Chrome app window off screen, with a profile of
   # its own that only ever opens this page, so nothing covers the game's top-left strip and the addon's
