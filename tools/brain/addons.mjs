@@ -59,6 +59,16 @@ export function importAddons({wowDir=DEFAULT_WOW_DIR,db,now=Date.now()}) {
  }
  return result;
 }
+/** For the app (bridge/service.mjs): import into an existing brain file from the game's WTF folder.
+ * Returns the rows per source, or null when there is no brain yet. Never creates the brain. */
+export function importAddonsIntoBrain({ brainFile, wtfDir, now = Date.now() }) {
+  if (!brainFile || !wtfDir || !fs.existsSync(brainFile)) return null;
+  const db = openBrain(brainFile);
+  try {
+    const r = importAddons({ wowDir: path.dirname(wtfDir), db, now });
+    return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.rows]));
+  } finally { db.close(); }
+}
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
  const args=process.argv.slice(2); if(args.shift()!=='import')throw Error('Usage: addons.mjs import [--wow-dir dir] [--brain file]');
  let wowDir=DEFAULT_WOW_DIR, file=brainFile(path.join(process.env.APPDATA??path.join(os.homedir(),'AppData','Roaming'),'NeverQuestAlone','dev'));

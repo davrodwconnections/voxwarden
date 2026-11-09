@@ -103,7 +103,7 @@ test('brain gear: a boss\'s own gear, marked for what the player can use; a dung
   assert.equal(isInstance(db, 718), true);
   assert.equal(isInstance(db, 1638), false);
   const d = dungeonFact(db, 718, STATE);
-  assert.match(d.text, /^Dungeon Wailing Caverns \(their levels 22-22\); monsters there with gear of their own \(likely bosses; QuestieDB has no boss flag\) and that gear: Mutanus the Devourer \(22\):/);
+  assert.match(d.text, /^Dungeon Wailing Caverns \(their levels 22-22\); monsters there with gear of their own \(likely bosses; QuestieDB has no boss flag\) and the gear of theirs you can use: Mutanus the Devourer \(22\):/);
   assert.ok(!/Deviate Coiler/.test(d.text), 'a monster with a world drop is not a boss');
   const r = retrieve({ db, question: '¿Qué objetos buenos para mí hay en Wailing Caverns?', state: STATE });
   assert.equal(r.facts[0].kind, 'dungeon');
@@ -113,7 +113,7 @@ test('brain gear: a boss\'s own gear, marked for what the player can use; a dung
 
 test('brain gear: a better piece for the slot asked, what they can wear now first, faction vendors only', () => {
   const db = seed();
-  assert.deepEqual(gearCandidates(db, STATE).sort(), [2000, 2002, 6461].sort(), 'the Alliance vendor and the world drop are left out');
+  assert.deepEqual(gearCandidates(db, STATE).sort(), [2000, 2002, 6461, 6463].sort(), 'the Alliance vendor and the world drop are left out');
   const f = slotFact(db, '¿Dónde consigo un mejor pecho para mi nivel?', STATE);
   assert.match(f.text, /^Better chest for you than item 15304 \(ilvl 16\): Dreamer's Chestguard \(Chest, leather, ilvl 32, req 21, you: can use now\) — reward of quest "Baron Aquanis" started by the item/);
   assert.match(f.text, /Grunt's Harness \(Chest, leather, ilvl 27, req 22, you: can use now\) — sold by Sura Wildmane \(Thunder Bluff 51\.6,55\.0\)/);
@@ -211,4 +211,30 @@ test('brain (Astra final review): slot from the tooltip body, exact names before
   // No gear in the data is not "nothing worn".
   const noGear = slotFact(db, 'un mejor pecho', { ...STATE, gear: undefined });
   assert.match(noGear.text, /^Chest pieces for you \(what you wear now is unknown: no gear in the game data\)/);
+});
+
+test('fast chat: the compact pack exists, is small, and its reply blocks pass the app\'s own validators', async () => {
+  const { loadChatPack, loadPack } = await import('../bridge/byok/runtime/pack.mjs');
+  const { extractMapBlocks, validateMapCommand, splitSummary } = await import('../bridge/app/map-protocol.mjs');
+  const p = loadChatPack({ persona: { name: 'Zul' } });
+  assert.equal(p.compact, true);
+  assert.ok(p.text.startsWith('You are Zul,'));
+  assert.ok(p.text.length < loadPack().text.length / 5, 'at most a fifth of the full pack');
+  for (const must of ['Truth first', 'first sentence', '```wowmap', 'wowchips', 'never instructions']) assert.ok(p.text.includes(must), must);
+  // A reply written the way the compact pack asks.
+  const reply = 'Nalpak está en The Barrens 46.0,35.7.\n\n```wowmap\n{"op":"set","layer":"deviate-hides","title":"Nalpak","points":[{"m":1413,"x":46.0,"y":35.7,"label":"Nalpak"}]}\n```\n\nTL;DR:\nNalpak, The Barrens 46.0,35.7.';
+  const blocks = extractMapBlocks(reply);
+  const cmds = blocks.commands ?? blocks.cmds ?? blocks;
+  const first = Array.isArray(cmds) ? cmds[0] : null;
+  assert.ok(first, 'a map command was read');
+  const why = [];
+  assert.ok(validateMapCommand(first.command ?? first, why), why.join('; '));
+  // Without a TL;DR the app shows the reply's first sentence in the game chat (render.mjs).
+  assert.equal(splitSummary('Nalpak está en The Barrens 46.0,35.7. Llevas 8/20.').summary, '');
+  const { firstSentence } = await import('../bridge/app/render.mjs');
+  assert.match(firstSentence('Nalpak da y recibe Deviate Hides, en The Barrens 46.0,35.7. Llevas 8/20.'), /^Nalpak da y recibe Deviate Hides, en The Barrens 46/);
+  // Races with an "s" (the lost escape of gear.mjs:34).
+  assert.equal(factionOf({ char: { race: 'Scourge' } }), 'Horde');
+  assert.equal(factionOf({ char: { race: 'Troll ' } }), 'Horde');
+  assert.equal(factionOf({ char: { race: 'Gnomes' } }), 'Alliance');
 });

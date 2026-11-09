@@ -87,7 +87,16 @@ async function main() {
       body = { model, max_tokens: r.maxTokens, messages: r.messages };
       meta = r.meta;
     } else {
-      const req = buildRequest({ pack: loadPack(), game: { state }, history: lastTurns(appData, chat, historyN), userText: q, pseudonymizer: createPseudonymizer(), model });
+      // As bridge/byok/backend.mjs does: the brain's facts in the game data; the compact pack when it found any.
+      const { openBrain, brainFile } = await import('./db.mjs');
+      const { retrieve } = await import('./retrieve.mjs');
+      const { loadChatPack } = await import('../../bridge/byok/runtime/pack.mjs');
+      const db = fs.existsSync(brainFile(appData)) ? openBrain(brainFile(appData), { readOnly: true }) : null;
+      const found = db ? retrieve({ db, question: q, state }) : { lines: [] };
+      if (db) db.close();
+      const fast = mode === 'app' && found.lines.length > 0;
+      const req = buildRequest({ pack: fast ? loadChatPack() : loadPack(), game: { state, ...(found.lines.length ? { facts: found.lines } : {}) }, history: lastTurns(appData, chat, historyN), userText: q, pseudonymizer: createPseudonymizer(), model, ...(fast ? { maxTokens: 500 } : {}) });
+      meta = { facts: found.lines.length, retrieveMs: found.ms, fast };
       body = toChat(req, model);
     }
     const chars = body.messages.reduce((n, m) => n + String(m.content).length, 0);

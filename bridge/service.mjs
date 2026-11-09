@@ -1931,6 +1931,19 @@ export function createBridge(config, deps) {
     every(gameWork, deps.runCheckEveryMs || 5000, () => checkRuns()); // the safety net (BR-22)
     every(gameWork, deps.voiceEveryMs || 1500, drainVoiceInbox); // the voice companion's inbox (T7)
     if (savedVariablesOn()) every(gameWork, deps.savedVarsEveryMs || 2000, pollSavedVariables);
+    // The other addons' saved data (Auctionator prices, Syndicator, RXPGuides) into the local brain, read
+    // from disk: at start and every 30 minutes (odd/tasks/nqa-fast-chat.md F5). Read-only toward the game.
+    if (deps.wtfDir && deps.brainAddons !== false) {
+      const brainImport = async () => {
+        try {
+          const { importAddonsIntoBrain } = await import('../tools/brain/addons.mjs');
+          const rows = importAddonsIntoBrain({ brainFile: path.join(stateDir, '..', 'brain', 'brain.sqlite'), wtfDir: deps.wtfDir });
+          if (rows) log('brain-addons', rows);
+        } catch (e) { log('brain-addons', { error: String(e?.message || e).slice(0, 160) }); }
+      };
+      setTimeout(brainImport, deps.brainAddonsFirstMs ?? 5000).unref?.();
+      every(gameWork, deps.brainAddonsEveryMs || 30 * 60 * 1000, brainImport);
+    }
     // A send that failed on a transient error is retried every 30 s while the backend is ready, and a
     // write the disk refused (BR-11) is made again first. deps.flushEveryMs: tests only.
     every(gameWork, deps.flushEveryMs || 30000, () => {

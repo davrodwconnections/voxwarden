@@ -134,7 +134,7 @@ import { writeFileQuick } from '../files.mjs';
 import { CHAT_RE } from '../transport/records.mjs';
 import { loadManifests, createProvider, userLine, retryPlan, resolveModel, manifestFor, effortLevels, thinkRoom, outputCeiling, EFFORT_LEVELS, THINK_ROOM, DEFAULT_TIMEOUTS } from './providers/index.mjs';
 import { makeError, errorLogFields, cleanRequestId } from './providers/errors.mjs';
-import { loadPack, personaName } from './runtime/pack.mjs';
+import { loadPack, loadChatPack, personaName } from './runtime/pack.mjs';
 import { FILES as MEMORY_FILES, MEMORY_DIR, charKey } from './runtime/logbook.mjs';
 import { createUsageHistory } from './usage/history.mjs';
 import { buildRequest, replyTranscript, stripDatamark, resolveEffort, modelHasEffort, MAX_TOKENS, EFFORTS } from './runtime/context.mjs';
@@ -449,6 +449,10 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   // <dataDir>/brain/brain.sqlite when it exists (tools/brain). Loaded once in the background; a turn
   // that comes before it, or any error, simply goes without facts.
   const brain = { retrieve: null, db: null, tried: false };
+  const brainChat = opts.brainChat !== false && process.env.NQA_BRAIN_CHAT !== '0';
+  const FAST_MAX_TOKENS = 500; // a short answer, its map block and the TL;DR
+  let chatPackCache = null;
+  const chatPack = () => (chatPackCache && chatPackCache.name === personaName(settings.persona) ? chatPackCache : (chatPackCache = loadChatPack({ persona: { name: settings.persona } })));
   const brainFacts = (question, state) => {
     if (opts.brain === false) return [];
     if (!brain.tried) {
@@ -467,7 +471,9 @@ export function createLocalBackend(handlers = {}, opts = {}) {
       const r = brain.retrieve({ db: brain.db, question, state });
       if (r.lines.length) log('byok-brain-facts', { facts: r.lines.length, ms: r.ms });
       const who = brain.profile && brain.profile.profileLines(brain.db, brain.profile.charKey(state));
-      return [...(who || []).slice(0, 6), ...r.lines];
+      const lines = [...(who || []).slice(0, 6), ...r.lines];
+      lines.found = r.lines.length;
+      return lines;
     } catch (e) { log('byok-brain', { error: short(e) }); return []; }
   };
   brainFacts('', null); // start loading it now
@@ -996,7 +1002,8 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     // The core's mark for a state older than the one the turn named (rawTurn): the count line says so.
     if (game.state && w.stale === true) game.stale = true;
     // Sourced facts for what the player typed (the brain): data, quoted, with their source.
-    if (t.wowKind === 'msg') { const facts = brainFacts(t.typed, w.state); if (facts.length) game.facts = facts; }
+    let found = 0;
+    if (t.wowKind === 'msg') { const facts = brainFacts(t.typed, w.state); if (facts.length) game.facts = facts; found = facts.found || 0; }
     const notes = keyFree(Array.isArray(w.notes) ? w.notes.filter(x => typeof x === 'string' && x) : [], 'notes', t.chatId);
     if (notes.length) game.notes = notes;
     // The first meeting (onboarding spec §9.3, §9.6): Say Hi's "hi" before any first reply. The pack's
@@ -1020,11 +1027,16 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     // The first meeting's cap is the reply's (fix-102): a model that thinks gets its level's thinking
     // room on top of it (buildRequest, THINK_ROOM), so its thinking never eats the short answer.
     const introCap = intro && GREETING_RE.test(t.typed);
+    // The short path (odd/tasks/nqa-fast-chat.md F3): a typed question the brain found facts for goes
+    // with the compact pack (the answer starts about 2 s sooner). The first meeting, a message with
+    // linked tooltips, and anything the brain has nothing for keep the full pack and the logbook.
+    const fast = brainChat && found > 0 && !intro && !/Linked from the game/i.test(String(t.typed || ''));
+    if (fast) log('byok-brain-chat', { fast: true, facts: found });
     const req = buildRequest({
-      pack, memory: mem, game, history, userText: t.wowKind === 'msg' ? t.typed : '',
+      pack: fast ? chatPack() : pack, memory: fast ? null : mem, game, history, userText: t.wowKind === 'msg' ? t.typed : '',
       pseudonymizer, sendNames: settings.sendNames, identity: settings.identity,
       manifest: p.manifest, model: p.model, effort: t.effort, safetyId: safetyId(),
-      maxTokens: Math.max(1, Math.min(MAX_TOKENS, perTurnOut, p.manifest.limits?.maxOutputTokens || MAX_TOKENS, introCap ? INTRO_MAX_TOKENS : MAX_TOKENS)),
+      maxTokens: Math.max(1, Math.min(fast ? FAST_MAX_TOKENS : MAX_TOKENS, perTurnOut, p.manifest.limits?.maxOutputTokens || MAX_TOKENS, introCap ? INTRO_MAX_TOKENS : MAX_TOKENS)),
     });
     if (p.manifest.custom !== true) return req;
     // Other: what its server said the model takes, and the room it needed to think and still answer.

@@ -25,3 +25,19 @@ test('real-shaped fixtures, source replacement, privacy, missing files',()=>{
 test('installed SavedVariables integration', {skip:!fs.existsSync(path.join(DEFAULT_WOW_DIR,'WTF/Account'))},t=>{
  const db=openBrain(':memory:');try { const start=performance.now(); const counts=importAddons({db});t.diagnostic(JSON.stringify({counts,elapsed_ms:performance.now()-start}));assert.ok(counts.syndicator.rows>0);assert.ok(counts.auctionator.rows>0); }finally{db.close();}
 });
+
+test('the app\'s import: into an existing brain from the WTF folder; never creates one', async () => {
+ const { importAddonsIntoBrain } = await import('../tools/brain/addons.mjs');
+ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nqa-addons-app-'));
+ try {
+  const account = path.join(root, 'game/WTF/Account/test/SavedVariables'); fs.mkdirSync(account, { recursive: true });
+  fs.copyFileSync(new URL('./fixtures/brain-addons/Auctionator.lua', import.meta.url), path.join(account, 'Auctionator.lua'));
+  const file = path.join(root, 'app/brain/brain.sqlite');
+  assert.equal(importAddonsIntoBrain({ brainFile: file, wtfDir: path.join(root, 'game/WTF') }), null, 'no brain yet: nothing made');
+  assert.equal(fs.existsSync(file), false);
+  fs.mkdirSync(path.dirname(file), { recursive: true }); openBrain(file).close();
+  const rows = importAddonsIntoBrain({ brainFile: file, wtfDir: path.join(root, 'game/WTF') });
+  assert.equal(rows.auctionator, 1);
+  const db = openBrain(file, { readOnly: true }); try { assert.equal(db.prepare('SELECT copper FROM price').get().copper, 500); } finally { db.close(); }
+ } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});

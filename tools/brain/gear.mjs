@@ -31,7 +31,7 @@ const WEAPON = { 0: 'one-hand axe', 1: 'two-hand axe', 2: 'bow', 3: 'gun', 4: 'o
 
 const classOf = state => String(state?.char?.class || '').toUpperCase();
 const HORDE_RACES = /^(orc|troll|tauren|undead|scourge)$/i;
-export const factionOf = state => { const r = String(state?.char?.race || '').replace(/s+/g, ''); return r ? (HORDE_RACES.test(r) ? 'Horde' : 'Alliance') : null; };
+export const factionOf = state => { const r = String(state?.char?.race || '').replace(/\s+/g, ''); return r ? (HORDE_RACES.test(r) ? 'Horde' : 'Alliance') : null; };
 // QuestieDB's race and class masks: Horde races 2|16|32|128, Alliance 1|4|8|64; class bits by class id.
 const RACE_MASK = { Horde: 178, Alliance: 77 };
 const CLASS_BIT = { WARRIOR: 1, PALADIN: 2, HUNTER: 4, ROGUE: 8, PRIEST: 16, SHAMAN: 64, MAGE: 128, WARLOCK: 256, DRUID: 1024 };
@@ -126,13 +126,35 @@ function describe(it, state) {
   return `${it.name} (${bits.join(', ')})`;
 }
 
+// Against what they wear in that slot, when the item's slot is known (cached tooltip): the comparison
+// done here, so the model doesn't have to work it out.
+const INV = { Head: [1], Neck: [2], Shoulder: [3], Back: [15], Chest: [5], Wrist: [9], Hands: [10], Waist: [6], Legs: [7], Feet: [8], Finger: [11, 12], Trinket: [13, 14], 'Off Hand': [17], 'Held In Off-hand': [17], 'One-Hand': [16], 'Two-Hand': [16], 'Main Hand': [16] };
+function vsWorn(db, it, state) {
+  const inv = INV[it.slot];
+  if (!inv || !Array.isArray(state?.gear) || !state.gear.length || !it.ilvl) return '';
+  const worn = state.gear.filter(g => inv.includes(g.slot));
+  if (!worn.length) return ' [slot empty]';
+  const low = Math.min(...worn.map(g => Number(g.ilvl) || 0));
+  return it.ilvl > low ? ` [upgrade over ilvl ${low}]` : ` [not an upgrade: yours is ilvl ${low}]`;
+}
+
 /** Gear a boss or elite drops: its own loot (few droppers), weapons and armor only. */
-export function bossLoot(db, npcId, state, max = 6) {
+export function bossLoot(db, npcId, state, max = 6, { usableOnly = false } = {}) {
   const rows = db.prepare('SELECT item_id, chance FROM item_source WHERE kind = ? AND id = ?').all('npc', npcId);
   const items = rows.map(r => ({ ...itemInfo(db, r.item_id), chance: r.chance })).filter(it => it.id && (it.cls === 2 || it.cls === 4) && (it.drops <= 3 || (it.chance ?? 0) >= 5));
   const u = it => usable(classOf(state), levelOf(state), it.cls, it.sub);
   items.sort((a, b) => ((u(b) === true) - (u(a) === true)) || ((b.ilvl ?? 0) - (a.ilvl ?? 0)));
-  return items.slice(0, max).map(it => describe(it, state) + (it.chance ? ` ${Math.round(it.chance)}%` : ''));
+  // For a dungeon's list: what they can use, and not what is known to be no better than what they wear.
+  const list = usableOnly && PROF[classOf(state)] ? items.filter(it => u(it) !== false && !vsWorn(db, it, state).includes('not an upgrade')) : items;
+  // The dungeon's list is terse (everything in it is wearable now or says when): name, slot, type, level.
+  if (usableOnly) {
+    return list.slice(0, max).map(it => {
+      const type = it.cls === 4 && it.sub === 0 ? null : typeName(it.cls, it.sub);
+      const later = Number.isInteger(it.req) && levelOf(state) !== null && it.req > levelOf(state) ? `, at ${it.req}` : '';
+      return `${it.name} (${[it.slot, type, it.ilvl ? `ilvl ${it.ilvl}` : null].filter(Boolean).join(', ')}${later})${vsWorn(db, it, state)}`;
+    });
+  }
+  return list.slice(0, max).map(it => describe(it, state) + vsWorn(db, it, state) + (it.chance ? ` ${Math.round(it.chance)}%` : ''));
 }
 
 export function isInstance(db, areaId) {
@@ -153,7 +175,7 @@ export function dungeonFact(db, areaId, state, maxBosses = 8) {
     const rank = (json(db.prepare('SELECT raw FROM npc WHERE id = ?').get(n.id)?.raw) || {}).rank;
     const mine = own.get(n.id).n;
     if (rank !== 3 && mine < 2) continue;
-    const loot = bossLoot(db, n.id, state, 4);
+    const loot = bossLoot(db, n.id, state, 3, { usableOnly: true });
     if (loot.length) bosses.push({ ...n, loot, mine: rank === 3 ? 99 : mine });
   }
   // The most own gear first (the real bosses), then by level for reading.
@@ -163,7 +185,7 @@ export function dungeonFact(db, areaId, state, maxBosses = 8) {
   if (!bosses.length) return null;
   const lv = bosses.map(n => n.max_level).filter(Number.isInteger);
   const range = lv.length ? ` (their levels ${Math.min(...lv)}-${Math.max(...lv)})` : '';
-  const text = `Dungeon ${z.name}${range}; monsters there with gear of their own (likely bosses; QuestieDB has no boss flag) and that gear: ` + bosses.map(b => `${b.name} (${b.max_level ?? '?'}): ${b.loot.join('; ')}`).join(' | ');
+  const text = `Dungeon ${z.name}${range}; monsters there with gear of their own (likely bosses; QuestieDB has no boss flag) and the gear of theirs you can use: ` + bosses.map(b => `${b.name} (${b.max_level ?? '?'}): ${b.loot.join('; ')}`).join(' | ');
   return { kind: 'dungeon', id: z.area_id, name: z.name, text, source: z.source };
 }
 
@@ -175,7 +197,7 @@ export function slotAsked(question) {
 
 /** Items worth a tooltip so slot answers can know their slot: usable gear near the player's level
  * with a known source (a quest reward, a vendor, or a few droppers: a boss's own loot). */
-export function gearCandidates(db, state, { below = 2, above = 5, limit = 400 } = {}) {
+export function gearCandidates(db, state, { below = 7, above = 5, limit = 900 } = {}) {
   const lvl = levelOf(state);
   if (lvl === null) return [];
   const rows = db.prepare(`SELECT id, raw FROM item WHERE json_extract(raw, '$.class') IN (2, 4) AND json_extract(raw, '$.requiredLevel') BETWEEN ? AND ?`).all(Math.max(1, lvl - below), lvl + above);
