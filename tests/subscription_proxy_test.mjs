@@ -47,7 +47,7 @@ async function withProxy(fn, factory = createServer) {
   const server = factory();
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
-  try { await fn(base); } finally { server.close(); }
+  try { await fn(base); } finally { await new Promise(r => server.close(r)); }
 }
 const ask = (base, body) => fetch(`${base}/v1/chat/completions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
 
@@ -190,4 +190,175 @@ test('proxy: a Windows .cmd shim is refused with the fix, never started through 
     assert.equal(r.status, 502);
     assert.match((await r.json()).error.message, /\.cmd\/\.bat shim: point NQA_CODEX_BIN at the CLI's \.exe/);
   } finally { server.close(); }
+});
+
+test('proxy: warm Claude workers use streaming input once, preserve system identity and never share request history', async () => {
+  await withProxy(async base => {
+    const answers = [];
+    for (const [system, input] of [['alpha', 'IDENTITY first-private'], ['alpha', 'IDENTITY second-private'], ['beta', 'IDENTITY third-private']]) {
+      const r = await ask(base, { model: 'claude-code:sonnet', messages: [{ role: 'system', content: system }, { role: 'user', content: input }] });
+      const text = (await r.json()).choices[0].message.content;
+      assert.match(text, /--input-format stream-json/);
+      assert.match(text, /--safe-mode/);
+      assert.match(text, /--disable-slash-commands/);
+      assert.match(text, /--max-turns 1/);
+      assert.doesNotMatch(text, /LATE-TEXT/);
+      const identity = JSON.parse(text.split(' identity=')[1]);
+      assert.equal(identity.system, system);
+      assert.equal(identity.input, input);
+      answers.push(identity.pid);
+      await new Promise(r => setTimeout(r, 150));
+    }
+    assert.equal(new Set(answers).size, 3, 'every request uses a different process');
+  });
+});
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+async function until(check, message) {
+  for (let i = 0; i < 100; i++) { if (check()) return; await delay(20); }
+  assert.fail(message);
+}
+const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
+let variant = 0;
+async function configuredProxy(settings, fn) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nqa-pool-test-'));
+  const file = path.join(dir, 'lifecycle.jsonl');
+  const values = { FAKE_CLI_LIFECYCLE: file, NQA_PROXY_LOG: path.join(dir, 'proxy.log'), ...settings };
+  const saved = Object.fromEntries(Object.keys(values).map(k => [k, process.env[k]]));
+  const events = () => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
+  try {
+    Object.assign(process.env, values);
+    const mod = await import(`../tools/subscription-proxy/proxy.mjs?pool-test=${++variant}`);
+    await withProxy(base => fn(base, events, dir), mod.createServer);
+    await until(() => events().filter(e => e.event === 'spawn').every(e => !alive(e.pid)), 'server close must terminate every worker');
+    await until(() => events().filter(e => e.event === 'spawn').every(e => !fs.existsSync(e.cwd)), 'worker scratch directories must be removed');
+  } finally {
+    for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+const claudeBody = (content = 'IDENTITY hello', system = 'rules', model = 'claude-code:sonnet') => ({ model, messages: [{ role: 'system', content: system }, { role: 'user', content }] });
+
+test('proxy: pool is lazy, bounded globally, prestarts without a user turn, and replaces a worker after one use', async () => {
+  await configuredProxy({}, async (base, events) => {
+    await delay(100);
+    assert.deepEqual(events(), [], 'health/model endpoints and idle startup spend no turns');
+    const first = await (await ask(base, claudeBody('IDENTITY first'))).json();
+    await until(() => events().filter(e => e.event === 'spawn').length === 3, 'one used worker and two idle workers');
+    assert.equal(events().filter(e => e.event === 'input').length, 1, 'warmup never sends a dummy prompt');
+    const used = JSON.parse(first.choices[0].message.content.split(' identity=')[1]).pid;
+    const warm = events().filter(e => e.event === 'spawn' && e.pid !== used).map(e => e.pid);
+    const second = await (await ask(base, claudeBody('IDENTITY second'))).json();
+    const next = JSON.parse(second.choices[0].message.content.split(' identity=')[1]).pid;
+    assert.ok(warm.includes(next), 'the second request takes an already-started process');
+    assert.notEqual(used, next);
+    for (const model of ['haiku', 'opus', 'another-model']) {
+      assert.equal((await ask(base, claudeBody('hello', `rules-${model}`, `claude-code:${model}`))).status, 200);
+      await delay(150);
+      const live = events().filter(e => e.event === 'spawn' && alive(e.pid));
+      assert.equal(live.length, 2, 'arbitrary model ids cannot accumulate idle processes');
+    }
+  });
+});
+
+test('proxy: idle processes expire without respawning; the next turn still works', async () => {
+  await configuredProxy({ NQA_CLAUDE_IDLE_MS: '150' }, async (base, events) => {
+    assert.equal((await ask(base, claudeBody())).status, 200);
+    await until(() => events().filter(e => e.event === 'spawn').length === 3, 'pool started');
+    await until(() => events().filter(e => e.event === 'spawn').every(e => !alive(e.pid)), 'idle timer kills workers');
+    await delay(250);
+    assert.equal(events().filter(e => e.event === 'spawn').length, 3, 'expired workers are not replaced while idle');
+    assert.equal((await ask(base, claudeBody())).status, 200);
+  });
+});
+
+test('proxy: unsupported streaming and clean exits without a result fall back once, then cool down', async () => {
+  for (const mode of ['reject', 'empty']) {
+    await configuredProxy({ FAKE_CLI_STREAM_MODE: mode }, async (base, events) => {
+      for (let i = 0; i < 2; i++) {
+        const r = await ask(base, claudeBody());
+        assert.equal(r.status, 200);
+        assert.doesNotMatch((await r.json()).choices[0].message.content, /--input-format/);
+      }
+      const starts = events().filter(e => e.event === 'spawn');
+      assert.equal(starts.filter(e => e.streaming).length, 1);
+      assert.equal(starts.filter(e => !e.streaming).length, 2);
+    });
+  }
+});
+
+test('proxy: partial output followed by process failure is an error, never a second answer or false success', async () => {
+  await configuredProxy({ FAKE_CLI_STREAM_MODE: 'partial' }, async (base, events) => {
+    const r = await ask(base, { ...claudeBody(), stream: true });
+    const body = await r.text();
+    assert.match(body, /claude /);
+    assert.match(body, /"error"/);
+    assert.doesNotMatch(body, /\[DONE\]/);
+    assert.equal(events().filter(e => e.event === 'input').length, 1);
+  });
+});
+
+test('proxy: quota failures are not retried and an active timeout fails instead of returning partial success', async () => {
+  await configuredProxy({}, async (base, events) => {
+    assert.equal((await ask(base, claudeBody('FAIL'))).status, 429);
+    assert.equal(events().filter(e => e.event === 'input').length, 1);
+  });
+  await configuredProxy({ NQA_PROXY_TIMEOUT_MS: '200' }, async (base, events) => {
+    assert.equal((await ask(base, claudeBody('hello'))).status, 200);
+    await delay(150);
+    const r = await ask(base, claudeBody('HANG'));
+    assert.equal(r.status, 504);
+    assert.equal(events().filter(e => e.event === 'input').length, 2);
+  });
+});
+
+test('proxy: simultaneous requests retain their own model, system and messages with two active slots', async () => {
+  await configuredProxy({ NQA_PROXY_MAX_RUNS: '2' }, async base => {
+    const cases = [
+      ['alpha', 'IDENTITY A', 'sonnet'], ['beta', 'IDENTITY B', 'haiku'],
+      ['alpha', 'IDENTITY C', 'sonnet'], ['gamma', 'IDENTITY D', 'opus'],
+    ];
+    const answers = await Promise.all(cases.map(async ([system, prompt, model]) => {
+      const r = await ask(base, claudeBody(prompt, system, `claude-code:${model}`));
+      assert.equal(r.status, 200);
+      const text = (await r.json()).choices[0].message.content;
+      assert.ok(text.includes(`--model ${model}`));
+      const identity = JSON.parse(text.split(' identity=')[1]);
+      assert.equal(identity.system, system); assert.equal(identity.input, prompt);
+      return identity.pid;
+    }));
+    assert.equal(new Set(answers).size, cases.length);
+  });
+});
+
+test('proxy: cancelling an active warm turn kills it without a fallback and releases the queue', async () => {
+  await configuredProxy({}, async (base, events) => {
+    await (await ask(base, claudeBody())).json();
+    await delay(150);
+    const ctl = new AbortController();
+    const pending = fetch(`${base}/v1/chat/completions`, { method: 'POST', signal: ctl.signal,
+      headers: { 'content-type': 'application/json' }, body: JSON.stringify(claudeBody('HANG cancelled')) }).catch(e => e);
+    await until(() => events().some(e => e.input === 'HANG cancelled'), 'warm worker received request');
+    const pid = events().find(e => e.input === 'HANG cancelled').pid;
+    ctl.abort(); await pending;
+    await until(() => !alive(pid), 'cancelled process is dead');
+    assert.equal(events().filter(e => e.input === 'HANG cancelled').length, 1);
+    assert.equal((await ask(base, claudeBody('after cancellation'))).status, 200);
+  });
+});
+
+test('proxy: a worker that dies while idle is discarded; disabling the pool keeps the legacy path', async () => {
+  await configuredProxy({ FAKE_CLI_STREAM_MODE: 'die-idle' }, async (base, events) => {
+    assert.equal((await ask(base, claudeBody())).status, 200);
+    await delay(350);
+    const r = await ask(base, claudeBody('after idle failure'));
+    assert.equal(r.status, 200);
+    assert.doesNotMatch((await r.json()).choices[0].message.content, /--input-format/);
+  });
+  await configuredProxy({ NQA_CLAUDE_POOL_SIZE: '0' }, async (base, events) => {
+    assert.equal((await ask(base, claudeBody())).status, 200);
+    await delay(150);
+    assert.equal(events().filter(e => e.event === 'spawn').length, 1);
+    assert.equal(events().find(e => e.event === 'spawn').streaming, false);
+  });
 });
