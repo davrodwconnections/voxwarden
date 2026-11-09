@@ -20,11 +20,12 @@ In the NeverQuestAlone app, pick **Other**, then **Connect another AI**:
 |---|---|---|
 | `codex:gpt-reserve` | Codex, ChatGPT login | about 4.5 s |
 | `codex:gpt-6-astra` | Codex, ChatGPT login | about 8 s |
+| `codex:gpt-6-luna` | Codex, ChatGPT login, CLI 0.167 or newer (2026-11-09) | about 3.7 s on the short brain turn |
 | `codex` | Codex's own default model | about 9 s |
 | `claude-code:haiku` | Claude Code | about 2.3 s |
 | `claude-code` (Sonnet), `claude-code:opus` | Claude Code | about 7.5 s and up |
 
-A ChatGPT login refuses some Codex models (`gpt-6-luna`, `gpt-6-sol`, `gpt-6.1-sol`, `gpt-6.1-terra` on 2026-11-08). With an API key, the app's own Claude or ChatGPT card is faster: it skips starting a CLI for every turn.
+`gpt-6-luna` depends on the Codex CLI's version: with a ChatGPT login 0.167.0 answers and 0.153.4 gets "not supported when using Codex with a ChatGPT account" (checked 2026-11-09), so point `NQA_CODEX_BIN` at the newest CLI installed. On the 10 test questions Luna took 2.6-4.4 s through the short brain turn (average 3.7 s) and about 4 s typed, with some turns of 10-22 s. `gpt-6.1-luna` is refused on both CLIs; `gpt-6-sol`, `gpt-6.1-sol` and `gpt-6.1-terra` were refused on 0.153 on 2026-11-08 and not rechecked. Codex also loads the user's global instructions (`AGENTS.md`), which can show up in answers (a `[Cierto]` tag did). With an API key, the app's own Claude or ChatGPT card is faster: it skips starting a CLI for every turn.
 
 **Codex is disabled by default**, including the Codex models listed above. Use `claude-code` unless you explicitly accept the security risk below. The recorded reply times predate this hardening.
 

@@ -61,9 +61,12 @@ export const MODELS = Object.freeze([
   { id: 'claude-code:opus', owned_by: 'claude-code' },
   { id: 'claude-code:haiku', owned_by: 'claude-code' },
   { id: 'codex', owned_by: 'codex' },
-  // The models a ChatGPT login takes (2026-11-08: gpt-6-luna, gpt-6-sol, gpt-6.1-sol and gpt-6.1-terra are refused).
+  // The models a ChatGPT login takes. gpt-6-luna needs a recent Codex CLI: 0.167 answers, 0.153 is refused
+  // it (checked 2026-11-09). gpt-6.1-luna is refused on both; gpt-6-sol, gpt-6.1-sol and gpt-6.1-terra were
+  // refused on 0.153 (2026-11-08, not rechecked on 0.167).
   { id: 'codex:gpt-reserve', owned_by: 'codex' },
   { id: 'codex:gpt-6-astra', owned_by: 'codex' },
+  { id: 'codex:gpt-6-luna', owned_by: 'codex' },
 ]);
 
 fs.mkdirSync(WORK_ROOT, { recursive: true });
