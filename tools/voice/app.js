@@ -64,7 +64,7 @@
     } catch { return () => {}; }
   }
 
-  async function runTools(calls) {
+  async function runTools(calls, item = lastCommitted) {
     for (const c of calls) {
       let args = {};
       try { args = JSON.parse(c.arguments || '{}'); } catch { args = {}; }
@@ -72,10 +72,11 @@
       let out;
       // The brain also gets what the transcription heard: the voice's own wording can mishear a game
       // name ("The Hive" for Deviate Hides). Its words may come a moment after the call: wait up to 0.8 s.
-      if (c.name === 'ask_brain' && lastCommitted) {
+      // The words of the turn this call answers (fixed when its response started), never a newer one.
+      if (c.name === 'ask_brain' && item) {
         const until = performance.now() + 800;
-        while (!transcripts.has(lastCommitted) && performance.now() < until) await new Promise(r => setTimeout(r, 50));
-        const heard = transcripts.get(lastCommitted);
+        while (!transcripts.has(item) && performance.now() < until) await new Promise(r => setTimeout(r, 50));
+        const heard = transcripts.get(item);
         if (heard) args = { ...args, heard };
       }
       try { out = await post('/tool', { name: c.name, args }); } catch (e) { out = { error: String(e.message || e) }; }
@@ -142,7 +143,7 @@
         if (calls.length) {
           // What it said before looking ("let me check") and the answer after share one line, spaced.
           if (botText.trim()) botText += ' ';
-          runTools(calls);
+          runTools(calls, answerOf.get(r.id) || lastCommitted);
           break;
         }
         const said = botText.trim();

@@ -224,7 +224,8 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
     raw = Object.values(comp.states || {}).filter(x => x && x.state).sort((a, b) => (b.at || 0) - (a.at || 0))[0]?.state ?? null;
   } catch { raw = null; }
   const [{ brainRequest }, P] = await Promise.all([import('../brain/turn.mjs'), import('../brain/profile.mjs')]);
-  const key = raw ? P.charKey(raw) : null;
+  // Game data off (privacy): no character, no profile in the turn, nothing remembered about it.
+  const key = game.ok && raw ? P.charKey(raw) : null;
   const hkey = key || '-';
   if (!brainHistories.has(hkey)) brainHistories.set(hkey, []);
   const brainHistory = brainHistories.get(hkey);
@@ -254,7 +255,7 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
     const { openBrain, brainFile } = await import('../brain/db.mjs');
     const db = openBrain(brainFile(dir));
     try {
-      if (raw && P.charKey(raw) === key) P.updateFromState(db, raw);
+      if (key && raw && P.charKey(raw) === key) P.updateFromState(db, raw);
       if (key) { P.learnFromPlayer(db, key, question); P.recordSaid(db, key, 'player', 'voice', question); P.recordSaid(db, key, 'brain', 'voice', answer); }
     } finally { db.close(); }
   } catch { /* the brain is a help, never a reason to fail the answer */ }

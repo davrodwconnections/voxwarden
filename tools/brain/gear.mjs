@@ -92,7 +92,10 @@ const SLOT_IN_TOOLTIP = /\b(Head|Neck|Shoulder|Back|Chest|Wrist|Hands|Waist|Legs
 /** Slot, item level and required level from a cached tooltip text, or null. */
 export function tooltipStats(text) {
   const t = String(text || '');
-  const slot = t.match(SLOT_IN_TOOLTIP)?.[1] ?? null;
+  // After "Item Level": the name above it may hold a slot word.
+  const at = t.indexOf('Item Level');
+  const body = at >= 0 ? t.slice(at) : t.split('\n').slice(1).join('\n');
+  const slot = body.match(SLOT_IN_TOOLTIP)?.[1] ?? null;
   const ilvl = Number(t.match(/Item Level (\d+)/)?.[1]) || null;
   const req = Number(t.match(/Requires Level (\d+)/)?.[1]) || null;
   return { slot, ilvl, req };
@@ -138,7 +141,7 @@ export function isInstance(db, areaId) {
 }
 
 /** The bosses of an instance (NPCs there with their own gear loot) and that gear, as one fact. */
-export function dungeonFact(db, areaId, state, maxBosses = 6) {
+export function dungeonFact(db, areaId, state, maxBosses = 8) {
   const z = db.prepare('SELECT * FROM zone WHERE area_id = ?').get(areaId);
   if (!z) return null;
   const npcs = db.prepare("SELECT DISTINCT s.id, n.name, n.min_level, n.max_level FROM spawn s JOIN npc n ON n.id = s.id WHERE s.kind = 'npc' AND s.area_id = ?").all(areaId);
@@ -148,15 +151,19 @@ export function dungeonFact(db, areaId, state, maxBosses = 6) {
     WHERE s.kind = 'npc' AND s.id = ? AND json_extract(i.raw, '$.class') IN (2, 4) AND json_array_length(json_extract(i.raw, '$.npcDrops')) <= 2`);
   for (const n of npcs) {
     const rank = (json(db.prepare('SELECT raw FROM npc WHERE id = ?').get(n.id)?.raw) || {}).rank;
-    if (rank !== 3 && own.get(n.id).n < 2) continue;
+    const mine = own.get(n.id).n;
+    if (rank !== 3 && mine < 2) continue;
     const loot = bossLoot(db, n.id, state, 4);
-    if (loot.length) bosses.push({ ...n, loot });
+    if (loot.length) bosses.push({ ...n, loot, mine: rank === 3 ? 99 : mine });
   }
+  // The most own gear first (the real bosses), then by level for reading.
+  bosses.sort((a, b) => b.mine - a.mine);
+  bosses.splice(maxBosses);
   bosses.sort((a, b) => (a.max_level ?? 0) - (b.max_level ?? 0));
   if (!bosses.length) return null;
   const lv = bosses.map(n => n.max_level).filter(Number.isInteger);
-  const range = lv.length ? ` (bosses level ${Math.min(...lv)}-${Math.max(...lv)})` : '';
-  const text = `Dungeon ${z.name}${range}; bosses and their gear: ` + bosses.slice(0, maxBosses).map(b => `${b.name} (${b.max_level ?? '?'}): ${b.loot.join('; ')}`).join(' | ');
+  const range = lv.length ? ` (their levels ${Math.min(...lv)}-${Math.max(...lv)})` : '';
+  const text = `Dungeon ${z.name}${range}; monsters there with gear of their own (likely bosses; QuestieDB has no boss flag) and that gear: ` + bosses.map(b => `${b.name} (${b.max_level ?? '?'}): ${b.loot.join('; ')}`).join(' | ');
   return { kind: 'dungeon', id: z.area_id, name: z.name, text, source: z.source };
 }
 
@@ -225,7 +232,8 @@ function sourceText(db, it, state) {
 export function slotFact(db, question, state, max = 5) {
   const s = slotAsked(question);
   if (!s || levelOf(state) === null) return null;
-  const worn = (Array.isArray(state?.gear) ? state.gear : []).filter(g => s.inv.includes(g.slot));
+  const gearKnown = Array.isArray(state?.gear) && state.gear.length > 0;
+  const worn = (gearKnown ? state.gear : []).filter(g => s.inv.includes(g.slot));
   const wornIlvl = worn.length ? Math.min(...worn.map(g => Number(g.ilvl) || 0)) : 0;
   const wornName = worn.length ? (db.prepare('SELECT name FROM item WHERE id = ?').get(worn[0].id)?.name || `item ${worn[0].id}`) : null;
   const ids = gearCandidates(db, state);
@@ -243,7 +251,7 @@ export function slotFact(db, question, state, max = 5) {
   // What they can wear now first (best first), then what comes in the next levels.
   const later = it => ((it.req ?? 0) > levelOf(state) ? 1 : 0);
   known.sort((a, b) => later(a) - later(b) || (b.ilvl ?? 0) - (a.ilvl ?? 0));
-  const head = `Better ${s.slot.toLowerCase()} for you than ${wornName ? `${wornName} (ilvl ${wornIlvl})` : 'nothing worn'}`;
+  const head = !gearKnown ? `${s.slot} pieces for you (what you wear now is unknown: no gear in the game data)` : `Better ${s.slot.toLowerCase()} for you than ${wornName ? `${wornName} (ilvl ${wornIlvl})` : 'nothing worn'}`;
   if (!known.length) return { kind: 'gear', id: s.slot, name: s.slot, text: `${head}: none known yet among ${ids.length} sourced items near your level (${unknown} without a cached slot)`, source: 'questiedb-1.0.13+wowhead' };
   const text = `${head}: ` + known.slice(0, max).map(it => `${describe(it, state)} — ${sourceText(db, it, state) || 'source unknown'}`).join(' | ');
   return { kind: 'gear', id: s.slot, name: s.slot, text, source: 'questiedb-1.0.13+wowhead' };

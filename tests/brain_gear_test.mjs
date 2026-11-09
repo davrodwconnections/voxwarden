@@ -103,7 +103,7 @@ test('brain gear: a boss\'s own gear, marked for what the player can use; a dung
   assert.equal(isInstance(db, 718), true);
   assert.equal(isInstance(db, 1638), false);
   const d = dungeonFact(db, 718, STATE);
-  assert.match(d.text, /^Dungeon Wailing Caverns \(bosses level 22-22\); bosses and their gear: Mutanus the Devourer \(22\):/);
+  assert.match(d.text, /^Dungeon Wailing Caverns \(their levels 22-22\); monsters there with gear of their own \(likely bosses; QuestieDB has no boss flag\) and that gear: Mutanus the Devourer \(22\):/);
   assert.ok(!/Deviate Coiler/.test(d.text), 'a monster with a world drop is not a boss');
   const r = retrieve({ db, question: '¿Qué objetos buenos para mí hay en Wailing Caverns?', state: STATE });
   assert.equal(r.facts[0].kind, 'dungeon');
@@ -181,4 +181,34 @@ test('brain (Astra review): lowercase names, reviewed boss abilities with their 
   P.updateFromState(db, { char: { name: 'Other', realm: 'R', class: 'MAGE', level: 30 } });
   const keyed = await brainRequest({ question: 'hola', state: { loc: STATE.loc }, db, key: 'Other-R' });
   assert.match(keyed.messages.at(-1).content, /\[game \d{4}-\d{2}-\d{2}\] class: MAGE/, 'the profile comes from the key given, not the identity-free state');
+});
+
+test('brain (Astra final review): slot from the tooltip body, exact names before misheard ones, variant givers, faction trainers, unknown gear', () => {
+  assert.equal(tooltipStats("Roogug's Severed Head\nRoogug's Severed Head\nItem Level 30\nBinds when picked up\nUnique-Equipped Trinket\nRequires Level 25").slot, 'Trinket');
+  const db = seed();
+  const now = Date.now();
+  // Two quests with near names: the exact one asked wins; the one in the log is not added.
+  db.prepare('INSERT INTO quest (id, name, level, starts, ends, raw, source, read_at) VALUES (?,?,?,?,?,?,?,?)').run(1522, 'Call of Fire', 10, JSON.stringify({ npc: [5767] }), JSON.stringify({ npc: [5767] }), '{}', SRC, now);
+  db.prepare('INSERT INTO quest (id, name, level, starts, ends, raw, source, read_at) VALUES (?,?,?,?,?,?,?,?)').run(1536, 'Call of Water', 22, JSON.stringify({ npc: [5767] }), JSON.stringify({ npc: [5767] }), '{}', SRC, now);
+  db.prepare('INSERT INTO name_index (name, kind, id) VALUES (?,?,?)').run('Call of Fire', 'quest', 1522);
+  const st = { ...STATE, quests: [...STATE.quests, { id: 1536, title: 'Call of Water', obj: [] }] };
+  const fire = retrieve({ db, question: '¿dónde empieza call of fire?', state: st });
+  assert.match(fire.lines[0], /Quest 1522 "Call of Fire"/);
+  assert.ok(!fire.lines.some(l => /Quest 1536 /.test(l)), 'not the Call of Water in the log');
+  // A conditional giver comes from the faction/class variant.
+  db.prepare('INSERT INTO quest (id, name, level, starts, ends, raw, source, read_at) VALUES (?,?,?,?,?,?,?,?)').run(687, 'Theldurin the Lost', 40, JSON.stringify({ npc: [] }), JSON.stringify({ npc: [5767] }), '{}', SRC, now);
+  db.prepare('INSERT INTO questie_variant (kind, id, faction, class, raw, source, read_at) VALUES (?,?,?,?,?,?,?)').run('quest', 687, 'Horde', 'SHAMAN', JSON.stringify({ startedBy: [[7001]] }), SRC, now);
+  db.prepare('INSERT INTO name_index (name, kind, id) VALUES (?,?,?)').run('Theldurin the Lost', 'quest', 687);
+  assert.match(retrieve({ db, question: '¿Quién da Theldurin the Lost?', state: STATE }).lines[0], /given by Sura Wildmane \(Thunder Bluff 51\.6,55\.0/);
+  // Trainers: only the player's faction, also when their zone is unknown.
+  db.prepare('INSERT INTO npc (id, name, subname, min_level, max_level, zone_area, friendly, raw, source, read_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(9001, 'Ally Mage', 'Mage Trainer', 30, 30, 1519, 'A', '{}', SRC, now);
+  db.prepare('INSERT INTO npc (id, name, subname, min_level, max_level, zone_area, friendly, raw, source, read_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(9002, 'Horde Mage', 'Mage Trainer', 30, 30, 1638, 'H', '{}', SRC, now);
+  db.prepare('INSERT INTO spawn (kind, id, area_id, x, y, source) VALUES (?,?,?,?,?,?)').run('npc', 9001, 1519, 10, 10, SRC);
+  db.prepare('INSERT INTO spawn (kind, id, area_id, x, y, source) VALUES (?,?,?,?,?,?)').run('npc', 9002, 1638, 20, 20, SRC);
+  const tr = retrieve({ db, question: '¿dónde está el entrenador de magos?', state: { ...STATE, loc: {} } }).lines.join(' ');
+  assert.match(tr, /Horde Mage/);
+  assert.ok(!/Ally Mage/.test(tr));
+  // No gear in the data is not "nothing worn".
+  const noGear = slotFact(db, 'un mejor pecho', { ...STATE, gear: undefined });
+  assert.match(noGear.text, /^Chest pieces for you \(what you wear now is unknown: no gear in the game data\)/);
 });

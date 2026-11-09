@@ -22,7 +22,7 @@ function mechanicsFact(id) {
   const text = `${m.name} abilities (from ${m.url}, updated ${m.updated}, read ${m.read}): ` + m.abilities.map(a => `${a.name} (spell ${a.spell}): ${a.text}`).join(' | ') + (m.advice ? `. The guide's advice: ${m.advice}` : '');
   return { kind: 'mechanics', id, name: m.name, text, source: m.source || 'reviewed' };
 }
-import { bossLoot, dungeonFact, factionOf, farmFact, isInstance, questForMe, slotFact } from './gear.mjs';
+import { bossLoot, dungeonFact, factionOf, farmFact, isInstance, npcForMe, questForMe, slotFact } from './gear.mjs';
 export { factionOf };
 
 export const MAX_FACTS = 14;
@@ -76,7 +76,7 @@ export function candidates(question, state, db = null) {
   const low = q.toLowerCase();
   for (const quest of Array.isArray(state?.quests) ? state.quests : []) {
     const t = typeof quest?.title === 'string' ? quest.title : '';
-    if (t.length >= 4 && (low.includes(t.toLowerCase()) || soundsLike(low, t))) out.add(t);
+    if (t.length >= 4 && low.includes(t.toLowerCase())) out.add(t);
   }
   // Names typed or dictated without capitals ("dónde está islen waterseer"): runs of 1-4 words that are
   // exactly a name in the brain (single words only when long: "nalpak", not "agua").
@@ -160,6 +160,11 @@ function questFact(db, id, mine, state = null) {
   if (!q) return null;
   const v = variantOf(db, 'quest', id, state);
   if (v && Number.isInteger(v.nextQuestInChain)) q.next_quest = v.nextQuestInChain;
+  // QuestieDB: startedBy = [npcs, objects, items], finishedBy = [npcs, objects].
+  const who = list => ({ npc: Array.isArray(list?.[0]) ? list[0] : [], object: Array.isArray(list?.[1]) ? list[1] : [], item: Array.isArray(list?.[2]) ? list[2] : [] });
+  if (v && Array.isArray(v.startedBy)) q.starts = JSON.stringify(who(v.startedBy));
+  if (v && Array.isArray(v.finishedBy)) q.ends = JSON.stringify(who(v.finishedBy));
+  if (v && Array.isArray(v.objectivesText)) q.objectives_text = v.objectivesText.join(' ');
   const logged = (Array.isArray(state?.quests) ? state.quests : []).find(l => l?.id === id);
   const starts = whoText(db, json(q.starts));
   const ends = whoText(db, json(q.ends));
@@ -256,8 +261,9 @@ function trainerFact(db, question, state, areaHint) {
   const title = cls[0].toUpperCase() + cls.slice(1) + ' Trainer';
   const rows = db.prepare("SELECT DISTINCT n.id, n.name, s.area_id, s.x, s.y FROM npc n JOIN spawn s ON s.kind = 'npc' AND s.id = n.id WHERE n.subname = ?").all(title);
   const zoneArea = areaHint || db.prepare('SELECT area_id FROM zone WHERE name = ?').get(state?.loc?.zone || '')?.area_id;
-  const here = rows.filter(r => r.area_id === zoneArea);
-  const pick = (here.length ? here : rows).slice(0, 3);
+  const ok = rows.filter(r => !state || npcForMe(db, r.id, state));
+  const here = ok.filter(r => r.area_id === zoneArea);
+  const pick = (here.length ? here : ok).slice(0, 3);
   if (!pick.length) return null;
   const parts = pick.map(r => {
     const z = zoneName(db, r.area_id);
@@ -292,6 +298,15 @@ export function retrieve({ db, question, state = null, now = Date.now() } = {}) 
       } else if (hit.kind === 'npc') { add(npcFact(db, hit.id, state)); add(mechanicsFact(hit.id)); }
       else if (hit.kind === 'item') add(itemFact(db, hit.id));
       else if (hit.kind === 'zone') { zoneHit = zoneHit ?? hit.id; add(zoneFact(db, hit.id, state)); }
+    }
+  }
+  // A misheard title ("Viet Hides") only when no name in the question matched anything exactly:
+  // "call of fire" finds Call of Fire, never the Call of Water in the log.
+  if (!facts.some(f => ['quest', 'npc', 'item', 'dungeon', 'zone'].includes(f.kind))) {
+    const low = String(question || '').toLowerCase();
+    for (const quest of Array.isArray(state?.quests) ? state.quests : []) {
+      const t = typeof quest?.title === 'string' ? quest.title : '';
+      if (Number.isInteger(quest?.id) && t.length >= 4 && soundsLike(low, t)) add(questFact(db, quest.id, true, state));
     }
   }
   try { add(trainerFact(db, question, state, zoneHit)); } catch { /* idem */ }
