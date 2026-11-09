@@ -6,6 +6,8 @@
 //   retrieve({ db, question, state, now }) → { facts: [{ kind, id, name, text, source }], lines, ms }
 //
 // lines is what goes to the model: one fact per line, "[source] text", at most MAX_FACTS.
+import { tooltipFact } from './web.mjs';
+
 export const MAX_FACTS = 14;
 export const MAX_SPAWNS = 3;
 
@@ -170,6 +172,11 @@ export function retrieve({ db, question, state = null, now = Date.now() } = {}) 
       else if (hit.kind === 'zone') add(zoneFact(db, hit.id));
     }
   }
-  const lines = facts.map(f => `[${f.source}] ${f.text}`);
+  // Wowhead's cached tooltip for a quest or item found (B9): what QuestieDB doesn't hold (stats, text).
+  const lines = [];
+  for (const f of facts) {
+    lines.push(`[${f.source}] ${f.text}`);
+    if ((f.kind === 'quest' || f.kind === 'item') && lines.length < MAX_FACTS + 4) { const w = tooltipFact(db, f.kind, f.id); if (w) lines.push(w); }
+  }
   return { facts, lines, ms: Math.round((performance.now() - t0) * 10) / 10, at: now };
 }

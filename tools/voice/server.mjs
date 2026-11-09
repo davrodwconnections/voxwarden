@@ -383,5 +383,24 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const log = (...a) => console.log(new Date().toISOString(), ...a);
   if (!key) log('warning: no OpenAI key (OPENAI_API_KEY or --key-file); the page will say so');
   const server = createServer(o, { key, log });
+  // The brain's Wowhead cache, warmed with what the player has (B9): with --web, a few tooltips a
+  // minute for the quests in their log and the items they wear or carry, so asking needs no wait.
+  if (o.web) {
+    let warming = false;
+    const warm = async () => {
+      if (warming) return;
+      warming = true;
+      try {
+        const dir = o.appData || appDataDir();
+        const game = readGame(dir);
+        if (!game.ok) return;
+        const [{ openBrain, brainFile }, { warmFromState }] = await Promise.all([import('../brain/db.mjs'), import('../brain/web.mjs')]);
+        const db = openBrain(brainFile(dir));
+        try { const n = await warmFromState(db, game.state); if (n) log('brain-web', `${n} tooltips cached`); } finally { db.close(); }
+      } catch (e) { log('brain-web', `skipped: ${String(e?.message || e).slice(0, 120)}`); } finally { warming = false; }
+    };
+    setTimeout(warm, 15000).unref?.();
+    setInterval(warm, 60000).unref?.();
+  }
   server.listen(o.port, o.host, () => log(`voice companion on http://localhost:${o.port} (model ${o.model}, ${o.persona}, voice ${o.voiceSet ? o.voice : personaOf(o.persona).voice}, ${o.lang}, web ${o.web ? 'on' : 'off'}, app data ${o.appData || appDataDir()})`));
 }
