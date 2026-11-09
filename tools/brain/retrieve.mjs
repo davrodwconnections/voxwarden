@@ -7,6 +7,8 @@
 //
 // lines is what goes to the model: one fact per line, "[source] text", at most MAX_FACTS.
 import { tooltipFact } from './web.mjs';
+import { bossLoot, dungeonFact, factionOf, farmFact, isInstance, questForMe, slotFact } from './gear.mjs';
+export { factionOf };
 
 export const MAX_FACTS = 14;
 export const MAX_SPAWNS = 3;
@@ -18,6 +20,34 @@ const STOP = new Set(['Dónde', 'Donde', 'Cómo', 'Como', 'Qué', 'Que', 'Quién
 
 const json = s => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 const fmt = n => (Number.isFinite(n) ? (Math.round(n * 10) / 10).toFixed(1) : '?');
+
+const letters = s => String(s).toLowerCase().normalize('NFD').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+function lev(a, b) {
+  if (a === b) return 0;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+/** Whether a spoken question names a title approximately: some run of its words, joined, is within
+ * 40% edits of the title ("viet hides" ~ "Deviate Hides"). Only for the player's own quest titles. */
+export function soundsLike(question, title) {
+  const t = letters(title).join('');
+  if (t.length < 6) return false;
+  const w = letters(question);
+  const n = letters(title).length;
+  for (let k = Math.max(1, n - 1); k <= n + 1; k++) {
+    for (let i = 0; i + k <= w.length; i++) {
+      const s = w.slice(i, i + k).join('');
+      if (Math.abs(s.length - t.length) > t.length * 0.4) continue;
+      if (lev(s, t) <= Math.floor(t.length * 0.4)) return true;
+    }
+  }
+  return false;
+}
 
 /** The names a question may be about: quoted phrases, runs of capitalised words, quest titles from the log. */
 export function candidates(question, state) {
@@ -31,7 +61,7 @@ export function candidates(question, state) {
   const low = q.toLowerCase();
   for (const quest of Array.isArray(state?.quests) ? state.quests : []) {
     const t = typeof quest?.title === 'string' ? quest.title : '';
-    if (t.length >= 4 && low.includes(t.toLowerCase())) out.add(t);
+    if (t.length >= 4 && (low.includes(t.toLowerCase()) || soundsLike(low, t))) out.add(t);
   }
   return [...out].slice(0, 8);
 }
@@ -61,6 +91,7 @@ function where(db, kind, id) {
   const spawns = db.prepare('SELECT area_id, x, y FROM spawn WHERE kind = ? AND id = ? LIMIT ?').all(kind, id, MAX_SPAWNS);
   return spawns.map(s => {
     const z = zoneName(db, s.area_id);
+    if (s.x === -1 && s.y === -1) return `inside ${z?.name || `zone ${s.area_id}`} (dungeon, no map coordinates)`;
     return `${z?.name || `zone ${s.area_id}`} ${fmt(s.x)},${fmt(s.y)}${z?.ui_map_id ? ` (map ${z.ui_map_id})` : ''}`;
   }).join('; ');
 }
@@ -83,9 +114,19 @@ function whoText(db, list) {
   return parts.join(' or ');
 }
 
-function questFact(db, id, mine) {
+/** The faction/class patch QuestieDB keeps for a conditional field (null when none). */
+function variantOf(db, kind, id, state) {
+  const f = factionOf(state), c = String(state?.char?.class || '').toUpperCase();
+  if (!f || !c) return null;
+  try { return json(db.prepare('SELECT raw FROM questie_variant WHERE kind = ? AND id = ? AND faction = ? AND class = ?').get(kind, id, f, c)?.raw); } catch { return null; }
+}
+
+function questFact(db, id, mine, state = null) {
   const q = db.prepare('SELECT * FROM quest WHERE id = ?').get(id);
   if (!q) return null;
+  const v = variantOf(db, 'quest', id, state);
+  if (v && Number.isInteger(v.nextQuestInChain)) q.next_quest = v.nextQuestInChain;
+  const logged = (Array.isArray(state?.quests) ? state.quests : []).find(l => l?.id === id);
   const starts = whoText(db, json(q.starts));
   const ends = whoText(db, json(q.ends));
   const parts = [`Quest ${q.id} "${q.name}"${q.level ? ` (level ${q.level}${q.req_level ? `, from ${q.req_level}` : ''})` : ''}`];
@@ -95,36 +136,51 @@ function questFact(db, id, mine) {
   const targets = [];
   // Questie keeps objectives by position: creatures, objects, items (then reputation, kill credit,
   // spell); an importer may also have named them.
+  // QuestieDB: {1: creatures, 2: objects, 3: items} (Lua's 1-based positions); arrays and named keys too.
   for (const [kind, key, pos] of [['npc', 'creatures', 0], ['object', 'objects', 1], ['item', 'items', 2]]) {
-    const list = Array.isArray(obj) ? obj[pos] : obj?.[key];
+    const list = Array.isArray(obj) ? obj[pos] : (obj?.[key] ?? obj?.[String(pos + 1)]);
     for (const o of Array.isArray(list) ? list.slice(0, 3) : []) {
       const oid = Array.isArray(o) ? o[0] : o;
       if (!Number.isInteger(oid)) continue;
       const n = nameOf(db, kind, oid) || `${kind} ${oid}`;
       const w = kind === 'item' ? itemWhere(db, oid, 2) : where(db, kind, oid);
-      targets.push(w ? `${n}: ${w}` : n);
+      const prog = logged && Array.isArray(logged.obj) ? logged.obj.find(o => typeof o?.text === 'string' && n && o.text.toLowerCase().includes(String(n).toLowerCase())) : null;
+      targets.push(`${n}${prog ? ` (you have ${prog.have}/${prog.need})` : ''}${w ? `: ${w}` : ''}`);
     }
   }
+  if (q.objectives_text) parts.push(`objective: ${String(q.objectives_text).replace(/^\["|"\]$/g, '').slice(0, 200)}`);
   if (targets.length) parts.push(`objectives: ${targets.join(' | ')}`);
-  else if (q.objectives_text) parts.push(`objective: ${String(q.objectives_text).slice(0, 160)}`);
+  if (logged && Array.isArray(logged.obj) && !targets.length && logged.obj.length) parts.push(`your progress: ${logged.obj.slice(0, 4).map(o => `${o.text} ${o.have}/${o.need}`).join(', ')}`);
+  if (logged?.complete) parts.push('complete: ready to turn in');
   const pre = json(q.pre_quests);
-  const preIds = Array.isArray(pre) ? pre.flat().filter(Number.isInteger).slice(0, 2) : [];
+  const preIds = (Array.isArray(pre) ? pre.flat() : [...(pre?.single || []), ...(pre?.group || [])]).filter(Number.isInteger).slice(0, 2);
   if (preIds.length) parts.push(`needs first: ${preIds.map(p => nameOf(db, 'quest', p) || p).join(', ')}`);
-  if (q.next_quest) parts.push(`next: ${nameOf(db, 'quest', q.next_quest) || q.next_quest}`);
+  if (q.next_quest) parts.push(`next step: quest ${q.next_quest} "${nameOf(db, 'quest', q.next_quest) || '?'}"`);
   if (mine) parts.push('(in your log)');
-  return { kind: 'quest', id: q.id, name: q.name, text: parts.join('; '), source: q.source };
+  return { kind: 'quest', id: q.id, name: q.name, next: q.next_quest || null, text: parts.join('; '), source: q.source };
 }
 
-function npcFact(db, id) {
+function npcFact(db, id, state = null) {
   const n = db.prepare('SELECT * FROM npc WHERE id = ?').get(id);
   if (!n) return null;
   const parts = [`NPC ${n.id} ${n.name}${n.subname ? ` <${n.subname}>` : ''}${n.min_level ? ` (level ${n.min_level}${n.max_level && n.max_level !== n.min_level ? `-${n.max_level}` : ''})` : ''}`];
   const w = where(db, 'npc', id);
   if (w) parts.push(`at ${w}`);
-  const starts = db.prepare("SELECT q.name FROM quest q, json_each(q.starts, '$.npc') j WHERE j.value = ? LIMIT 3").all(id).map(r => r.name);
-  const ends = db.prepare("SELECT q.name FROM quest q, json_each(q.ends, '$.npc') j WHERE j.value = ? LIMIT 3").all(id).map(r => r.name);
+  // Each quest with its id, only the ones open to this character, and which are in their log: several
+  // quests can share a name ("Call of Water" is a chain of them).
+  const mine = new Set((Array.isArray(state?.quests) ? state.quests : []).map(q => q?.id).filter(Number.isInteger));
+  const list = col => db.prepare(`SELECT q.id, q.name FROM quest q, json_each(q.${col}, '$.npc') j WHERE j.value = ? LIMIT 12`).all(id)
+    .filter(r => !state || questForMe(db, r.id, state)).slice(0, 4)
+    .map(r => `${r.name} (quest ${r.id}${mine.has(r.id) ? ', in your log' : ''})`);
+  const starts = list('starts');
+  const ends = list('ends');
   if (starts.length) parts.push(`gives: ${starts.join(', ')}`);
   if (ends.length) parts.push(`takes: ${ends.join(', ')}`);
+  const raw = json(n.raw) || {};
+  if (raw.rank === 1 || raw.rank === 3 || isInstance(db, n.zone_area)) {
+    const loot = bossLoot(db, n.id, state);
+    if (loot.length) parts.push(`its gear loot: ${loot.join('; ')}`);
+  }
   return { kind: 'npc', id: n.id, name: n.name, text: parts.join('; '), source: n.source };
 }
 
@@ -147,11 +203,35 @@ function itemFact(db, id) {
   return { kind: 'item', id: it.id, name: it.name, text: parts.join('; '), source: it.source };
 }
 
-function zoneFact(db, id) {
+function zoneFact(db, id, state = null) {
   const z = db.prepare('SELECT * FROM zone WHERE area_id = ?').get(id);
   if (!z) return null;
+  if (isInstance(db, id)) { const d = dungeonFact(db, id, state); if (d) return d; }
   return { kind: 'zone', id: z.area_id, name: z.name, text: `Zone ${z.name}${z.ui_map_id ? ` (map ${z.ui_map_id})` : ''}`, source: z.source };
 }
+
+const CLASS_WORDS = { shaman: /cham[aá]n(?:es)?|shaman/i, warrior: /guerrer[oa]s?|warrior/i, paladin: /palad[ií]n(?:es)?|paladin/i, hunter: /cazador(?:es)?|hunter/i, rogue: /p[ií]car[oa]s?|rogue/i, priest: /sacerdot(?:e|isa)s?|priest/i, mage: /\bmag[oa]s?\b|\bmage\b/i, warlock: /brujos?|warlock/i, druid: /druidas?|druid/i };
+
+/** Class trainers in the zone asked about or the player's zone ("el entrenador de chamanes"). */
+function trainerFact(db, question, state, areaHint) {
+  const q = String(question || '');
+  if (!/entrenador|trainer|entrenar/i.test(q)) return null;
+  const cls = Object.keys(CLASS_WORDS).find(k => CLASS_WORDS[k].test(q)) || String(state?.char?.class || '').toLowerCase();
+  if (!cls) return null;
+  const title = cls[0].toUpperCase() + cls.slice(1) + ' Trainer';
+  const rows = db.prepare("SELECT DISTINCT n.id, n.name, s.area_id, s.x, s.y FROM npc n JOIN spawn s ON s.kind = 'npc' AND s.id = n.id WHERE n.subname = ?").all(title);
+  const zoneArea = areaHint || db.prepare('SELECT area_id FROM zone WHERE name = ?').get(state?.loc?.zone || '')?.area_id;
+  const here = rows.filter(r => r.area_id === zoneArea);
+  const pick = (here.length ? here : rows).slice(0, 3);
+  if (!pick.length) return null;
+  const parts = pick.map(r => {
+    const z = zoneName(db, r.area_id);
+    return `${r.name} (${z?.name || r.area_id} ${fmt(r.x)},${fmt(r.y)}${z?.ui_map_id ? ` (map ${z.ui_map_id})` : ''})`;
+  });
+  return { kind: 'trainer', id: title, name: title, text: `${title}s: ${parts.join('; ')}`, source: 'questiedb-1.0.13' };
+}
+
+const NEXT_RE = /siguiente|pr[oó]xim[oa]|next|despu[eé]s|luego|continuar/i;
 
 /** The facts for one question. */
 export function retrieve({ db, question, state = null, now = Date.now() } = {}) {
@@ -160,18 +240,26 @@ export function retrieve({ db, question, state = null, now = Date.now() } = {}) 
   const seen = new Set();
   const mineIds = new Set((Array.isArray(state?.quests) ? state.quests : []).map(q => q?.id).filter(Number.isInteger));
   const add = f => { if (f && !seen.has(`${f.kind}:${f.id}`) && facts.length < MAX_FACTS) { seen.add(`${f.kind}:${f.id}`); facts.push(f); } };
+  let zoneHit = null;
+  // Questions about gear for a slot or what to farm come first: they name no entity.
+  try { add(slotFact(db, question, state)); } catch { /* a missing column or table: no gear fact */ }
+  try { add(farmFact(db, question, state)); } catch { /* idem */ }
   for (const name of candidates(question, state)) {
     for (const hit of findByName(db, name, 3)) {
       // A quest in the player's log wins over a same-named one they can't have.
       if (hit.kind === 'quest') {
         const sameName = db.prepare("SELECT q.id FROM quest q JOIN name_index n ON n.kind = 'quest' AND n.id = q.id WHERE name_index MATCH ?").all(phrase(name)).map(r => r.id);
         const mine = sameName.find(id => mineIds.has(id));
-        add(questFact(db, mine ?? hit.id, mine !== undefined));
-      } else if (hit.kind === 'npc') add(npcFact(db, hit.id));
+        const f = questFact(db, mine ?? hit.id, mine !== undefined, state);
+        add(f);
+        // "¿Cuál es el siguiente paso?": the next quest in the chain, with its giver and place.
+        if (f?.next && NEXT_RE.test(String(question || ''))) add(questFact(db, f.next, mineIds.has(f.next), state));
+      } else if (hit.kind === 'npc') add(npcFact(db, hit.id, state));
       else if (hit.kind === 'item') add(itemFact(db, hit.id));
-      else if (hit.kind === 'zone') add(zoneFact(db, hit.id));
+      else if (hit.kind === 'zone') { zoneHit = zoneHit ?? hit.id; add(zoneFact(db, hit.id, state)); }
     }
   }
+  try { add(trainerFact(db, question, state, zoneHit)); } catch { /* idem */ }
   // Wowhead's cached tooltip for a quest or item found (B9): what QuestieDB doesn't hold (stats, text).
   const lines = [];
   for (const f of facts) {

@@ -77,12 +77,13 @@ async function main() {
   const state = latestState(appData);
   if (!state) { console.error('No game state in', appData); process.exit(2); }
   const results = [];
+  const brainHistory = []; // brain mode: its own last exchanges, as the voice keeps them
   for (const [i, q] of QUESTIONS.entries()) {
     if (only && !only.has(i + 1)) continue;
     let body, meta = {};
     if (mode === 'brain') {
       const { brainRequest } = await import('./turn.mjs');
-      const r = await brainRequest({ appData, question: q, state, history: lastTurns(appData, chat, historyN) });
+      const r = await brainRequest({ appData, question: q, state, history: brainHistory.slice(-8) });
       body = { model, max_tokens: r.maxTokens, messages: r.messages };
       meta = r.meta;
     } else {
@@ -92,6 +93,7 @@ async function main() {
     const chars = body.messages.reduce((n, m) => n + String(m.content).length, 0);
     const r = await ask(base, body);
     results.push({ n: i + 1, question: q, ms: r.ms, chars, ok: r.ok, error: r.error, answer: r.text, meta });
+    if (mode === 'brain' && r.ok) brainHistory.push({ role: 'user', content: q }, { role: 'assistant', content: r.text.replace(/```wowmap[\s\S]*?```/g, '').trim() });
     console.log(`${String(i + 1).padStart(2)} ${String(r.ms).padStart(6)} ms ${String(chars).padStart(6)} chars ${r.ok ? '' : 'ERROR ' + r.error} | ${r.text.replace(/\s+/g, ' ').slice(0, 110)}`);
   }
   const done = results.filter(r => r.ok);

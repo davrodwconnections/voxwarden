@@ -5,6 +5,8 @@
 //
 //   node tools/voice/e2e.mjs --wav <question.wav> [--key-file ~/.config/neverquestalone/api-keys.json]
 //        [--chrome /usr/bin/google-chrome] [--expect <regex the answer must match>] [--timeout 60]
+//        [--from-app <app data dir>]   copy that app's game state and brain into the throwaway folder
+//                                        (the player's real data; nothing is written back there)
 //
 // It builds a throwaway app folder with a game state (Wailing Caverns quest, The Barrens), so the
 // model's get_game_state call has something to read, and prints what was heard, what was answered,
@@ -39,6 +41,14 @@ fs.writeFileSync(path.join(appData, 'bridge', 'companion.json'), JSON.stringify(
     { id: 959, title: 'Trouble at the Docks', level: 18, complete: false, obj: [{ t: 'Mad Magglish', have: 0, need: 1 }] },
   ],
 } } } }));
+// The player's real game state and brain, copied (odd/tasks/nqa-brain.md B13).
+const fromApp = opt('from-app');
+if (fromApp) {
+  fs.copyFileSync(path.join(fromApp, 'bridge', 'companion.json'), path.join(appData, 'bridge', 'companion.json'));
+  const brain = path.join(fromApp, 'brain', 'brain.sqlite');
+  if (fs.existsSync(brain)) { fs.mkdirSync(path.join(appData, 'brain')); fs.copyFileSync(brain, path.join(appData, 'brain', 'brain.sqlite')); }
+  console.log('using the game state and brain of', fromApp);
+}
 
 const o = { ...DEFAULTS, appData, port: 0 };
 const server = createServer(o, { key, log: (...a) => console.log('[server]', ...a) });

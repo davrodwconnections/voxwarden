@@ -52,20 +52,24 @@ export function compactGame(raw, db = null) {
 }
 
 /** The request for one brain turn. db may be passed (tests); otherwise the app's brain file. */
-export async function brainRequest({ appData, question, state, history = [], db = null, lang = 'Spanish', name = 'NeverQuestAlone', maxHistory = 4 } = {}) {
+export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'NeverQuestAlone', maxHistory = 4 } = {}) {
   let own = null;
   if (!db) {
     const file = brainFile(appData);
     if (fs.existsSync(file)) own = db = openBrain(file, { readOnly: true });
   }
   try {
-    const found = db ? retrieve({ db, question, state }) : { lines: [], facts: [], ms: 0 };
+    // Spoken: retrieval looks at both the voice's wording and what the transcription heard.
+    const asked = heard && heard !== question ? `${question}
+${heard}` : question;
+    const found = db ? retrieve({ db, question: asked, state }) : { lines: [], facts: [], ms: 0 };
     const game = compactGame(state, db);
     const user = [
       'GAME DATA (from the game, now):', ...(game.length ? game : ['(none)']),
       ...(db ? (() => { const who = profileLines(db, charKey(state)); return who.length ? ['', 'PLAYER (what we know about them, with its source):', ...who] : []; })() : []),
       '', 'FACTS (sourced, for this question):', ...(found.lines.length ? found.lines : ['(nothing found for this question)']),
       '', `QUESTION: ${String(question || '').slice(0, 1000)}`,
+      ...(heard && heard !== question ? [`(spoken: the transcription heard "${String(heard).slice(0, 500)}"; names may be misheard in both)`] : []),
     ].join('\n');
     const hist = (Array.isArray(history) ? history : []).slice(-maxHistory)
       .filter(m => m && (m.role === 'user' || m.role === 'assistant') && String(m.content || '').trim())

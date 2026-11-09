@@ -6,7 +6,10 @@
 //   tooltipFact(db, kind, id) → "[wowhead] …" line for retrieval, or null
 //
 // Only ids from the game data or the brain leave the PC (one host, by id: tools/voice/wowhead.mjs).
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { lookupWowhead } from '../voice/wowhead.mjs';
+import { gearCandidates } from './gear.mjs';
 
 export const WEB_MAX_AGE_MS = 14 * 24 * 3600 * 1000; // tooltips change rarely
 export const WARM_LIMIT = 12; // per round
@@ -37,9 +40,12 @@ export function idsFromState(state) {
 }
 
 /** Fetch up to `limit` tooltips the cache lacks (or has old), one a second; errors are skipped. */
-export async function warmFromState(db, state, { lookup = lookupWowhead, limit = WARM_LIMIT, gapMs = WARM_GAP_MS, now = Date.now, sleep = pause } = {}) {
+export async function warmFromState(db, state, { lookup = lookupWowhead, limit = WARM_LIMIT, gapMs = WARM_GAP_MS, now = Date.now, sleep = pause, gear = true } = {}) {
   let fetched = 0;
-  for (const [kind, id] of idsFromState(state)) {
+  // Then usable gear near the player's level with a known source, so "a better chest" can be answered.
+  let more = [];
+  if (gear) { try { more = gearCandidates(db, state).map(id => ['item', id]); } catch { more = []; } }
+  for (const [kind, id] of [...idsFromState(state), ...more]) {
     if (fetched >= limit) break;
     const row = db.prepare('SELECT read_at FROM web_cache WHERE kind = ? AND id = ?').get(kind, id);
     if (row && now() - row.read_at < WEB_MAX_AGE_MS) continue;
@@ -55,4 +61,18 @@ export function tooltipFact(db, kind, id, max = 320) {
   try { row = db.prepare('SELECT text FROM web_cache WHERE kind = ? AND id = ?').get(kind, id); } catch { return null; }
   if (!row?.text) return null;
   return `[wowhead] ${kind} ${id}: ${String(row.text).replace(/\s+/g, ' ').trim().slice(0, max)}`;
+}
+
+// node tools/brain/web.mjs warm [--limit N] [--gap ms]: warm the cache now from the latest game state.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && process.argv[2] === 'warm') {
+  const { openBrain, brainFile } = await import('./db.mjs');
+  const { latestState } = await import('./bench.mjs');
+  const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? Number(process.argv[i + 1]) : d; };
+  const appData = path.join(process.env.APPDATA || '', 'NeverQuestAlone', 'dev');
+  const db = openBrain(brainFile(appData));
+  const state = latestState(appData);
+  const t0 = Date.now();
+  const n = await warmFromState(db, state, { limit: arg('--limit', 400), gapMs: arg('--gap', 600) });
+  console.log(JSON.stringify({ fetched: n, ms: Date.now() - t0, cached: db.prepare('SELECT count(*) AS n FROM web_cache').get().n }));
+  db.close();
 }

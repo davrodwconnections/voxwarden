@@ -133,15 +133,34 @@ export function tools({ web = false, brain = false } = {}) {
   return list;
 }
 
+/** Game names the player may say (quest titles in the log, zone, subzone), so the voice hears them
+ * right: English names said in Spanish come out misheard otherwise ("Debbie Heights"). */
+export function gameNames(state, max = 40) {
+  const out = [];
+  const add = v => { const t = typeof v === 'string' ? v.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60) : ''; if (t && !out.includes(t)) out.push(t); };
+  add(state?.loc?.zone); add(state?.loc?.subzone);
+  for (const q of Array.isArray(state?.quests) ? state.quests : []) add(q?.title);
+  for (const c of Array.isArray(state?.chainStarts) ? state.chainStarts : []) { add(c?.title); add(c?.zone); }
+  return out.slice(0, max);
+}
+
 /** The Realtime session the page connects to (GA shape: type realtime, audio in/out). */
 export function sessionConfig(o) {
+  const names = Array.isArray(o.names) ? o.names : [];
+  const namesLine = names.length ? `
+
+## Names in the player's game now
+
+The player may say these English game names, often with a Spanish accent; when what you hear sounds like one, it is that one (use it as written here when you ask the brain): ${names.join('; ')}.
+` : '';
   return {
     type: 'realtime',
     model: o.model,
-    instructions: instructions({ lang: o.lang, web: o.web, persona: o.persona, brain: o.brain }),
+    instructions: instructions({ lang: o.lang, web: o.web, persona: o.persona, brain: o.brain }) + namesLine,
     output_modalities: ['audio'],
     audio: {
       input: {
+        // The names go in the instructions only: the transcription model takes no prompt (HTTP 400).
         transcription: { model: o.transcribe || DEFAULTS.transcribe },
         noise_reduction: { type: 'near_field' },
         turn_detection: { type: 'semantic_vad', eagerness: 'high', create_response: true, interrupt_response: true },
@@ -176,7 +195,7 @@ async function mintSecret(o, key, fetchFn = fetch) {
   const res = await fetchFn('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
     headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ expires_after: { anchor: 'created_at', seconds: 600 }, session: sessionConfig(o) }),
+    body: JSON.stringify({ expires_after: { anchor: 'created_at', seconds: 600 }, session: sessionConfig({ ...o, names: o.names ?? (() => { try { const g = readGame(o.appData || appDataDir()); return g.ok ? gameNames(g.state) : []; } catch { return []; } })() }) }),
     redirect: 'error',
   });
   const j = await res.json().catch(() => ({}));
@@ -193,12 +212,12 @@ async function mintSecret(o, key, fetchFn = fetch) {
 export const BRAIN_TIMEOUT_MS = 45000;
 const brainHistory = [];
 const WOWMAP_RE = /```wowmap[ \t]*\r?\n([\s\S]*?)\n```/;
-export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData || appDataDir() } = {}) {
+export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData || appDataDir(), heard = '' } = {}) {
   if (!question) return { error: 'No question.' };
   const t0 = Date.now();
   const game = readGame(dir);
   const { brainRequest } = await import('../brain/turn.mjs');
-  const req = await brainRequest({ appData: dir, question, state: game.ok ? game.state : null, history: brainHistory });
+  const req = await brainRequest({ appData: dir, question, heard, state: game.ok ? game.state : null, history: brainHistory });
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), BRAIN_TIMEOUT_MS);
   let r, j;
@@ -274,7 +293,7 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
       }
       return out;
     }
-    if (name === 'ask_brain') return await askBrain(String(args?.question || '').trim(), o, { fetchFn, dir });
+    if (name === 'ask_brain') return await askBrain(String(args?.question || '').trim(), o, { fetchFn, dir, heard: String(args?.heard || '').slice(0, 500).trim() });
     if (name === 'place_map_pins') {
       const b = wowmapBlock(args || {});
       if (b.error) return { error: b.error };

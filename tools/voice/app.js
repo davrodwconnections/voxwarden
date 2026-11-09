@@ -70,6 +70,14 @@
       try { args = JSON.parse(c.arguments || '{}'); } catch { args = {}; }
       line('sys', '', c.name === 'get_game_state' ? 'Consultando tus datos del juego…' : c.name === 'place_map_pins' ? 'Poniendo pines en tu mapa…' : 'Consultando Wowhead…');
       let out;
+      // The brain also gets what the transcription heard: the voice's own wording can mishear a game
+      // name ("The Hive" for Deviate Hides). Its words may come a moment after the call: wait up to 0.8 s.
+      if (c.name === 'ask_brain' && lastCommitted) {
+        const until = performance.now() + 800;
+        while (!transcripts.has(lastCommitted) && performance.now() < until) await new Promise(r => setTimeout(r, 50));
+        const heard = transcripts.get(lastCommitted);
+        if (heard) args = { ...args, heard };
+      }
       try { out = await post('/tool', { name: c.name, args }); } catch (e) { out = { error: String(e.message || e) }; }
       if (c.name === 'get_game_state') ui.game.textContent = out.available ? ('Datos del juego: hace ' + (out.ageSeconds ?? '?') + ' s') : 'Datos del juego: no disponibles';
       send({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: c.call_id, output: JSON.stringify(out) } });
