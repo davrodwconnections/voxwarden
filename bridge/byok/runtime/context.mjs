@@ -378,6 +378,8 @@ export function buildRequest({
   const out = {};
   if (isObj(g.state)) out.state = sanitizeState(g.state);
   if (g.context) out.context = sanitizeLines(g.context, { maxLine: 240, maxLines: 12, questLine: true });
+  // The local brain's sourced facts for this question (odd/tasks/nqa-brain.md B6): "[source] text" lines.
+  if (g.facts) out.facts = sanitizeLines(g.facts, { maxLine: 600, maxLines: 14 });
   const links = linked.length ? linked : Array.isArray(g.linked) ? g.linked.slice(0, 8) : [];
   if (links.length) out.linked = sanitizeState(links, { max: 200 });
   const isEvent = !!(isObj(g.event) && EVENT_KINDS.has(g.event.kind));

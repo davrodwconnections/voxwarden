@@ -98,3 +98,17 @@ test('brain: compact game data names gear from the item table when the strip sen
   assert.ok(compactGame(STATE, db).some(l => l.includes('chest Grizzly Jerkin (16)')));
   assert.ok(compactGame(STATE).some(l => l.includes('chest item 15304')));
 });
+
+test('brain (B6): a typed turn\'s game data carries the brain\'s facts as quoted, sourced lines, bounded, and the pack explains them', async () => {
+  const { buildRequest } = await import('../bridge/byok/runtime/context.mjs');
+  const { loadPack } = await import('../bridge/byok/runtime/pack.mjs');
+  const { createPseudonymizer } = await import('../bridge/byok/runtime/pseudonym.mjs');
+  const facts = Array.from({ length: 20 }, (_, i) => `[questiedb-1.0.13] NPC ${i} Islen Waterseer at Thunder Bluff 22.5,20.9 (map 1456)`);
+  const req = buildRequest({ pack: loadPack(), game: { state: { v: 1, quests: [] }, facts }, userText: '¿Dónde está Islen Waterseer?', pseudonymizer: createPseudonymizer(), model: 'm' });
+  const content = req.messages.at(-1).content;
+  assert.match(content, /"facts":\["\[questiedb-1\.0\.13\] NPC 0 Islen Waterseer/);
+  assert.equal((content.match(/Islen Waterseer at Thunder Bluff/g) || []).length, 14, 'at most 14 lines');
+  assert.match(req.system[0].text, /`facts`: what the app's local database knows/);
+  assert.match(req.system[0].text, /Truth first\./);
+  assert.match(req.system[0].text, /one to three sentences or a short list/);
+});

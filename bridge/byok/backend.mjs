@@ -445,6 +445,30 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   try { fs.chmodSync(dataDir, 0o700); } catch { /* Windows: the per-user folder's ACL */ }
   const clock = () => +now();
+  // The local brain (odd/tasks/nqa-brain.md B6): sourced facts for what the player asks, from
+  // <dataDir>/brain/brain.sqlite when it exists (tools/brain). Loaded once in the background; a turn
+  // that comes before it, or any error, simply goes without facts.
+  const brain = { retrieve: null, db: null, tried: false };
+  const brainFacts = (question, state) => {
+    if (opts.brain === false || !question) return [];
+    if (!brain.tried) {
+      brain.tried = true;
+      const file = path.join(dataDir, 'brain', 'brain.sqlite');
+      if (fs.existsSync(file)) {
+        Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/retrieve.mjs')])
+          .then(([d, r]) => { brain.db = d.openBrain(file, { readOnly: true }); brain.retrieve = r.retrieve; log('byok-brain', { ready: true }); })
+          .catch(e => log('byok-brain', { ready: false, error: short(e) }));
+      }
+      return [];
+    }
+    if (!brain.retrieve || !brain.db) return [];
+    try {
+      const r = brain.retrieve({ db: brain.db, question, state });
+      if (r.lines.length) log('byok-brain-facts', { facts: r.lines.length, ms: r.ms });
+      return r.lines;
+    } catch (e) { log('byok-brain', { error: short(e) }); return []; }
+  };
+  brainFacts('', null); // start loading it now
   const manifests = opts.manifests ?? loadManifests({ onWarning: w => log('byok-manifest-warn', { provider: w.id, reason: String(w.reason).slice(0, 160) }) });
   const priceBook = opts.priceBook ?? createPriceBook();
   let settings = settingsOf(opts.config);
@@ -944,6 +968,8 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     } else if (stateDoc) game.state = stateDoc;
     // The core's mark for a state older than the one the turn named (rawTurn): the count line says so.
     if (game.state && w.stale === true) game.stale = true;
+    // Sourced facts for what the player typed (the brain): data, quoted, with their source.
+    if (t.wowKind === 'msg') { const facts = brainFacts(t.typed, w.state); if (facts.length) game.facts = facts; }
     const notes = keyFree(Array.isArray(w.notes) ? w.notes.filter(x => typeof x === 'string' && x) : [], 'notes', t.chatId);
     if (notes.length) game.notes = notes;
     // The first meeting (onboarding spec §9.3, §9.6): Say Hi's "hi" before any first reply. The pack's
