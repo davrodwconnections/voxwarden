@@ -600,7 +600,7 @@ test('voice inventory (T15): asked for bags or gear the newest state lacks, the 
   fs.writeFileSync(path.join(dir2, 'bridge', 'companion.json'), JSON.stringify({ states: { tok: { sid: SID, seq: 1, state: { v: 1, quests: [], omitted: ['bags'] }, at: at0 } } }));
   let c2 = at0;
   const none = await runTool('get_game_state', { sections: ['bags'] }, { ...DEFAULTS, appData: dir2 }, { sleep: async () => { c2 += 1000; }, clock: () => c2, now: at0 });
-  assert.match(none.inventoryNote, /did not arrive/);
+  assert.match(none.inventoryNote, /not everything arrived in time/);
 });
 
 test('voice read-aloud (T16): with read on, new non-voice replies queue their summary for the voice; voice replies never do; /say hands them out oldest first and drops stale ones', async () => {

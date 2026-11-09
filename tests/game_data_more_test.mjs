@@ -73,6 +73,8 @@ test('T18 rewards: selection is never changed; no selection or a quest outside t
   vm.run(`C_QuestLog.GetSelectedQuest=function() return 748 end; STUB.q={}
     for i=1,20 do STUB.q[i]={id=i} end; STUB.q[21]={id=748}`);
   assert.equal(vm.evaluate('NS.Companion.Rewards(STUB.q)'),null);
+  vm.run(`GetNumQuestLogRewards=function() return 1 end; GetNumQuestLogChoices=nil; GetQuestLogChoiceInfo=nil`);
+  assert.equal(gather(vm).rewards[0].items.length,1,'missing choices never duplicate guaranteed rewards');
 });
 
 test('T18 detail readers handle throwing APIs and cap talent/durability gathering',()=>{
@@ -126,7 +128,7 @@ test('T18 drop orders and encoding: extras go before quest detail, inventory fit
   const order=name=>[...src.match(new RegExp(`local ${name} = \\{([\\s\\S]*?)\\}`))[1].matchAll(/"([^"]+)"/g)].map(m=>m[1]);
   const normal=order('DROP_ORDER'), inv=order('INV_DROP_ORDER');
   for(const k of ['rewards','durability','rested','hearth','talents']) assert.ok(normal.indexOf(k)<normal.indexOf('quests.obj.done'),k);
-  assert.equal(inv.indexOf('rewards')+1,inv.indexOf('quests.obj.done'));
+  for(const k of ['rewards','rested','hearth','talents']) assert.ok(inv.indexOf(k)>inv.indexOf('quests.level'),"the voice's fit keeps "+k+' past the quest detail');
   assert.ok(inv.indexOf('durability')>inv.indexOf('quests.level'));
   assert.ok(Math.abs(inv.indexOf('durability')-inv.indexOf('gear'))===1);
   const vm=newVM({extra:DATA}).login();

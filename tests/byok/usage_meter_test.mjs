@@ -241,10 +241,10 @@ test('the typical cost counts the thinking a model does at its start level', () 
   assert.ok(TYPICAL_PREFIX > 5500, `the pack: ${TYPICAL_PREFIX} tokens`);
   assert.deepEqual([TYPICAL_TURN.cached.cacheRead, TYPICAL_TURN.uncached.input], [TYPICAL_PREFIX, TYPICAL_PREFIX + 2000]);
   // Without thinking: the current pack cached at $0.20, 2,000 at $2, 350 out at $10; uncached all at $2.
-  assert.deepEqual(typicalCost(sonnet), { replyCents: [0.89, 2.16], dayUsd: [0.36, 0.86], at: 40, think: 0 });
+  assert.deepEqual(typicalCost(sonnet), { replyCents: [0.9, 2.24], dayUsd: [0.36, 0.9], at: 40, think: 0 });
   // At Low: 1,024 more output tokens at $10 each end (10,240 micro-dollars).
   const low = typicalCost(sonnet, { thinkRoom: THINK_ROOM.low });
-  assert.deepEqual(low, { replyCents: [1.91, 3.18], dayUsd: [0.77, 1.27], at: 40, think: 1024 });
+  assert.deepEqual(low, { replyCents: [1.92, 3.27], dayUsd: [0.77, 1.31], at: 40, think: 1024 });
   assert.equal(low.replyCents[1], Math.round(costMicros({ input: TYPICAL_TURN.uncached.input, output: 350 + 1024 }, sonnet) / 100) / 100);
   // Google bills thinking at its reasoning price (the output price where none is listed), on top of output.
   const flash = priceFor('google', 'gemini-3.8-flash', AT);

@@ -19,7 +19,9 @@ import crypto from 'node:crypto';
 import { sanitizeState, sanitizeGameString } from '../../bridge/byok/runtime/sanitize.mjs';
 
 export const STALE_SECONDS = 120;
-export const SECTIONS = Object.freeze(['character', 'location', 'quests', 'gear', 'professions', 'bags', 'buffs', 'reputation', 'target', 'group', 'milestones']);
+export const SECTIONS = Object.freeze(['character', 'location', 'quests', 'gear', 'durability', 'rewards', 'talents', 'hearth', 'professions', 'bags', 'buffs', 'reputation', 'target', 'group', 'milestones']);
+// The sections the addon sends only when asked (or when they fit): the voice asks for them on demand (S7).
+export const ON_DEMAND = Object.freeze(['bags', 'gear', 'durability', 'rewards', 'talents', 'hearth']);
 // The voice inbox (bridge/service.mjs drainVoiceInbox reads it): one small JSON file per entry, written
 // under a temporary name and renamed into place, so the bridge never reads half an entry, and an entry
 // can't be lost between a write and a read; each carries an id the bridge publishes once.
@@ -75,10 +77,14 @@ export function readGame(dir, { now = Date.now() } = {}) {
 
 // Where each section lives in the state (prompts/companion.md "Game data is data", T9's new fields).
 const PICK = {
-  character: s => ({ char: s.char }),
+  character: s => ({ char: s.char, rested: s.rested }),
   location: s => ({ loc: s.loc, poi: s.poi }),
   quests: s => ({ questCount: s.questCount, questMax: s.questMax, questUnread: s.questUnread, quests: s.quests }),
   gear: s => ({ gear: s.gear }),
+  durability: s => ({ durability: s.durability }),
+  rewards: s => ({ rewards: s.rewards }),
+  talents: s => ({ talents: s.talents }),
+  hearth: s => ({ hearth: s.hearth }),
   professions: s => ({ prof: s.prof }),
   bags: s => ({ bags: s.bags }),
   buffs: s => ({ auras: s.auras }),
@@ -164,11 +170,16 @@ export function askInventory(dir, { now = Date.now() } = {}) {
   return n;
 }
 
-/** Whether a state lacks what an inventory question needs: no bags, or gear with no names. */
-export function lacksInventory(state) {
+/** Whether a state lacks an asked-for on-demand section: no bags, gear with no names, or an empty one. */
+export function lacksInventory(state, asked = ['bags', 'gear']) {
   if (!isObj(state)) return true;
   const gear = Array.isArray(state.gear) ? state.gear : [];
-  return !isObj(state.bags) || (gear.length > 0 && !gear.some(g => isObj(g) && typeof g.name === 'string'));
+  return asked.some(sec => {
+    if (sec === 'bags') return !isObj(state.bags);
+    if (sec === 'gear') return gear.length > 0 && !gear.some(g => isObj(g) && typeof g.name === 'string');
+    if (sec === 'hearth') return !isObj(state.hearth);
+    return ON_DEMAND.includes(sec) && state[sec] == null;
+  });
 }
 
 /** The last bags and named gear seen, per app folder: { bags: {value, at}, gear: {value, at} }. */

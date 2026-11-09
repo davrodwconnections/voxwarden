@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { appDataDir, readGame, gameSections, wowmapBlock, appendVoiceInbox, readVoiceControl, writeVoiceStatus, takeVoiceSay, askInventory, lacksInventory, rememberInventory, SECTIONS } from './game.mjs';
+import { appDataDir, readGame, gameSections, wowmapBlock, appendVoiceInbox, readVoiceControl, writeVoiceStatus, takeVoiceSay, askInventory, lacksInventory, rememberInventory, SECTIONS, ON_DEMAND } from './game.mjs';
 import { lookupWowhead, WOWHEAD_TYPES } from './wowhead.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -86,7 +86,7 @@ export function tools({ web = false } = {}) {
   const list = [
     {
       type: 'function', name: 'get_game_state',
-      description: 'Read the player\'s current game data from the NeverQuestAlone app: only the sections needed. Read-only. Asking for "bags" or "gear" fetches them fresh from the game (a few seconds: say you are checking); they come with item names. A *AgeSeconds field means that part is from an earlier look.',
+      description: 'Read the player\'s current game data from the NeverQuestAlone app: only the sections needed. Read-only. Asking for "bags", "gear", "durability", "rewards", "talents" or "hearth" fetches them fresh from the game (a few seconds: say you are checking); bags and gear come with item names, quality and vendor price (copper). A *AgeSeconds field means that part is from an earlier look.',
       parameters: { type: 'object', properties: { sections: { type: 'array', items: { type: 'string', enum: [...SECTIONS] } } }, required: ['sections'], additionalProperties: false },
     },
     {
@@ -187,13 +187,14 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
       let game = readGame(dir, { now });
       let waited = false;
       // Bags or gear asked for by name and missing: ask the addon, and wait a few seconds for them.
-      if (game.ok && (asked.includes('bags') || asked.includes('gear')) && lacksInventory(game.state) && askInventory(dir, { now: clock() })) {
+      const onDemand = asked.filter(sec => ON_DEMAND.includes(sec));
+      if (game.ok && onDemand.length && lacksInventory(game.state, onDemand) && askInventory(dir, { now: clock() })) {
         const until = clock() + INVENTORY_WAIT_MS, before = game.at;
         waited = true;
         while (clock() < until) {
           await sleep(250);
           const next = readGame(dir, { now: clock() });
-          if (next.ok && next.at > before) { game = next; if (!lacksInventory(next.state)) break; }
+          if (next.ok && next.at > before) { game = next; if (!lacksInventory(next.state, onDemand)) break; }
         }
       }
       const mem = rememberInventory(dir, game);
@@ -205,7 +206,7 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
         if ((wantAll || asked.includes('bags')) && !out.bags && mem.bags) { out.bags = mem.bags.value; out.bagsAgeSeconds = ageOf(mem.bags.at); }
         if ((wantAll || asked.includes('gear')) && mem.gear && !(Array.isArray(out.gear) && out.gear.some(g => g && g.name))) { out.gear = mem.gear.value; out.gearAgeSeconds = ageOf(mem.gear.at); }
         if (Array.isArray(out.missing)) { out.missing = out.missing.filter(m => !((m === 'bags' || m === 'gear') && out[m])); if (!out.missing.length) delete out.missing; }
-        if (waited && lacksInventory(game.state) && !out.bags) out.inventoryNote = 'Asked the game for bags and gear but they did not arrive in time (in combat, or the addon is busy): say you could not see them right now.';
+        if (waited && lacksInventory(game.state, onDemand) && !(onDemand.length === 1 && onDemand[0] === 'bags' && out.bags)) out.inventoryNote = 'Asked the game for ' + onDemand.join(', ') + ' but not everything arrived in time (in combat, the data is not cached yet, or the addon is busy): say what you could not see right now.';
       }
       return out;
     }

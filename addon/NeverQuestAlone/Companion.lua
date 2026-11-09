@@ -81,8 +81,9 @@ local DROP_ORDER = { "bags", "auras", "rep", "target", "group", "rewards", "rest
 	"prof", "pending", "quests.title.short", "quests.title.tiny", "quests.title" }
 -- When the voice companion asks for bags and gear (odd/tasks/nqa-voice-controls.md T15): they stay
 -- until the quests' detail has gone, so a long quest log can't push them out of the frame.
-local INV_DROP_ORDER = { "rested", "hearth", "talents", "auras", "rep", "target", "group", "poi", "rewards", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
-	"prof", "pending", "bags", "gear", "durability", "quests.title.short", "quests.title.tiny", "quests.title" }
+-- The small sections (rested, hearth, talents) stay too: they cost a few bytes and the voice asked for them.
+local INV_DROP_ORDER = { "auras", "rep", "target", "group", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
+	"prof", "pending", "rewards", "rested", "hearth", "talents", "bags", "gear", "durability", "quests.title.short", "quests.title.tiny", "quests.title" }
 local FIRED_MAX = 300
 local LEVEL_SETTLE = 2 -- s: during PLAYER_LEVEL_UP the unit's level and XP can still be the old ones
 local QUEUE_STALE = 1800 -- s: a queued event older than this (a long fight, a relog) is dropped
@@ -390,9 +391,11 @@ function P.Rewards(quests)
 	if not inLog then return nil end
 	local items = {}
 	for _, choice in ipairs({ false, true }) do
-		local n = Int(Try(choice and GetNumQuestLogChoices or GetNumQuestLogRewards))
+		local countFn, infoFn = GetNumQuestLogRewards, GetQuestLogRewardInfo
+		if choice then countFn, infoFn = GetNumQuestLogChoices, GetQuestLogChoiceInfo end
+		local n = Int(Try(countFn))
 		for i = 1, math.min(n or 0, 6 - #items) do
-			local name, _, count, quality, _, id = Try(choice and GetQuestLogChoiceInfo or GetQuestLogRewardInfo, i)
+			local name, _, count, quality, _, id = Try(infoFn, i)
 			id = Int(id)
 			if id and id > 0 then
 				local info = P.ItemData(id)
