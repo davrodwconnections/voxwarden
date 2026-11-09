@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in NeverQuestAlone doesn’t work as described
+about: Something in Voxwarden doesn’t work as described
 title: ''
 labels: bug
 assignees: ''
@@ -29,14 +29,14 @@ use the repository's private vulnerability report (Security tab) instead.
 
 **Diagnostics**
 
-<!-- In the NeverQuestAlone app: Diagnostics → Copy diagnostics, then paste it below. -->
+<!-- In the Voxwarden app: Diagnostics → Copy diagnostics, then paste it below. -->
 
 ```
 ```
 
 **Setup**
 
-- NeverQuestAlone version (app → About):
+- Voxwarden version (app → About):
 - Operating system and version (for example macOS 15.3, Windows 11 24H2):
 - WoW client build (shown on the login screen, for example `1.60.1.70009`):
 - Display mode (Windowed (Fullscreen) or Windowed; on macOS, say if the game was in its own full-screen Space):

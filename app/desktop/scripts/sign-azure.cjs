@@ -56,7 +56,7 @@ function signCommand(configuration, env = process.env, exists = fs.existsSync) {
 async function signWith(configuration, { env = process.env, spawn = spawnSync, log = s => console.log(s) } = {}) {
   const c = signCommand(configuration, env);
   if (c.skip) return false;
-  log(`  • NeverQuestAlone signing: ${path.basename(c.env.NQA_SIGN_FILE)} with Azure Artifact Signing (the pinned module at ${c.env.NQA_TRUSTED_SIGNING_MODULE})`);
+  log(`  • Voxwarden signing: ${path.basename(c.env.NQA_SIGN_FILE)} with Azure Artifact Signing (the pinned module at ${c.env.NQA_TRUSTED_SIGNING_MODULE})`);
   const opts = { env: c.env, stdio: 'inherit', windowsHide: true };
   let r = spawn('pwsh', c.args, opts);
   if (r.error?.code === 'ENOENT') r = spawn('powershell.exe', c.args, opts);

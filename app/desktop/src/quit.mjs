@@ -1,4 +1,4 @@
-// The quit lifecycle (fix-102): what main runs when NeverQuestAlone quits, and the log lines that
+// The quit lifecycle (fix-102): what main runs when Voxwarden quits, and the log lines that
 // say how far a quit got.
 //
 // Electron's before-quit is a request, not a quit: after it, a window can still stay open or the

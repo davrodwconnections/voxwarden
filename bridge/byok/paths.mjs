@@ -8,9 +8,9 @@
 //     bridgeState, <state>/bridge: the core's store (outbox, records, companion state)
 //     logs,        the bridge's log folder
 //   }
-//   macOS    ~/Library/Application Support/NeverQuestAlone (logs ~/Library/Logs/NeverQuestAlone)
-//   Windows  %APPDATA%\NeverQuestAlone (logs %LOCALAPPDATA%\NeverQuestAlone\logs)
-//   Linux    $XDG_CONFIG_HOME/neverquestalone (state and data $XDG_STATE_HOME/neverquestalone,
+//   macOS    ~/Library/Application Support/Voxwarden (logs ~/Library/Logs/Voxwarden)
+//   Windows  %APPDATA%\Voxwarden (logs %LOCALAPPDATA%\Voxwarden\logs)
+//   Linux    $XDG_CONFIG_HOME/voxwarden (state and data $XDG_STATE_HOME/voxwarden,
 //            logs under state)
 // The desktop app keeps its data in Electron's userData (the same folder on macOS and Windows),
 // but its locks always come from here, so the developer command line (bridge/nqa.mjs) finds

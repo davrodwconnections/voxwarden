@@ -6,11 +6,11 @@
 //   before  a fake World of Warcraft folder (a path with non-ASCII characters in it) holding the
 //           addon and its 200 slot folders, installed the app's own way (installAddon), the chats
 //           the game would keep for it under two accounts, and another addon with its own saved
-//           variables; the app's data folder (%APPDATA%\NeverQuestAlone) with its settings and the
+//           variables; the app's data folder (%APPDATA%\Voxwarden) with its settings and the
 //           uninstaller's list of WoW folders, written the app's way (recordAddonFolder); a canary
 //           key in Credential Manager through the app's key store; the login item; the update cache
 //   then    the installer (/S), the installed app's --self-test, the uninstaller (/S)
-//   after   the install folder, its shortcuts, %APPDATA%\NeverQuestAlone, the key, the login item,
+//   after   the install folder, its shortcuts, %APPDATA%\Voxwarden, the key, the login item,
 //           the update cache, the addon's folders and its saved chats are gone; the other addon,
 //           its saved variables and a folder whose name only looks like the addon's stay
 //
@@ -52,7 +52,7 @@ const skipUpdate = !WIN ? 'Windows only (the NSIS installer)'
   : (INSTALLER && fs.existsSync(INSTALLER) && PREVIOUS && fs.existsSync(PREVIOUS)) || REQUIRED ? false
     : "no previous installer: set NQA_INSTALLER and NQA_PREVIOUS_INSTALLER (test.yml's windows-smoke job builds both and runs this)";
 
-const APP_ID = 'com.neverquestalone.app';
+const APP_ID = 'com.voxwarden.app';
 const RUN_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 const system32 = exe => path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', exe);
 const reg = args => spawnSync(system32('reg.exe'), args, { encoding: 'utf8', windowsHide: true });
@@ -74,14 +74,14 @@ async function until(cond, ms, what) {
 function places() {
   const LOCAL = process.env.LOCALAPPDATA;
   const ROAMING = process.env.APPDATA;
-  const INSTALL_DIR = path.join(LOCAL, 'Programs', 'neverquestalone');
+  const INSTALL_DIR = path.join(LOCAL, 'Programs', 'voxwarden');
   return {
     LOCAL, ROAMING, INSTALL_DIR,
-    EXE: path.join(INSTALL_DIR, 'NeverQuestAlone.exe'),
-    UNINSTALLER: path.join(INSTALL_DIR, 'Uninstall NeverQuestAlone.exe'),
-    DATA: path.join(ROAMING, 'NeverQuestAlone'),
-    CACHE: path.join(LOCAL, 'neverquestalone-updater'),
-    SHORTCUTS: [path.join(ROAMING, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'NeverQuestAlone.lnk'), path.join(process.env.USERPROFILE ?? '', 'Desktop', 'NeverQuestAlone.lnk')],
+    EXE: path.join(INSTALL_DIR, 'Voxwarden.exe'),
+    UNINSTALLER: path.join(INSTALL_DIR, 'Uninstall Voxwarden.exe'),
+    DATA: path.join(ROAMING, 'Voxwarden'),
+    CACHE: path.join(LOCAL, 'voxwarden-updater'),
+    SHORTCUTS: [path.join(ROAMING, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Voxwarden.lnk'), path.join(process.env.USERPROFILE ?? '', 'Desktop', 'Voxwarden.lnk')],
   };
 }
 
@@ -106,8 +106,8 @@ async function seedWorld(P, ks, { updateCache = true } = {}) {
   for (const acct of ['FAKEACCOUNT', 'SECOND']) {
     const sv = path.join(accounts, acct, 'SavedVariables');
     fs.mkdirSync(sv, { recursive: true });
-    fs.writeFileSync(path.join(sv, 'NeverQuestAlone.lua'), 'NQADB = { chats = { { text = "where do I turn in this quest?" } } }\n');
-    fs.writeFileSync(path.join(sv, 'NeverQuestAlone.lua.bak'), 'NQADB = {}\n');
+    fs.writeFileSync(path.join(sv, 'Voxwarden.lua'), 'NQADB = { chats = { { text = "where do I turn in this quest?" } } }\n');
+    fs.writeFileSync(path.join(sv, 'Voxwarden.lua.bak'), 'NQADB = {}\n');
     fs.writeFileSync(path.join(sv, 'OtherAddon.lua'), 'OtherAddonDB = {}\n');
   }
   const ours = () => fs.readdirSync(addons).filter(isAddonFolder);
@@ -122,7 +122,7 @@ async function seedWorld(P, ks, { updateCache = true } = {}) {
   // A canary key through the app's key store; the login item; the update cache.
   await ks.set('anthropic', CANARY_KEYS.anthropic);
   assert.equal(await ks.get('anthropic'), CANARY_KEYS.anthropic);
-  assert.match(cmdkeyList(), /anthropic\.NeverQuestAlone/);
+  assert.match(cmdkeyList(), /anthropic\.Voxwarden/);
   assert.equal(reg(['add', RUN_KEY, '/v', APP_ID, '/t', 'REG_SZ', '/d', `"${P.EXE}"`, '/f']).status, 0);
   if (updateCache) {
     fs.mkdirSync(path.join(P.CACHE, 'pending'), { recursive: true });
@@ -164,9 +164,9 @@ async function uninstallLeavesNothing(t, P, w, ks, shortcuts) {
 
   assert.ok(!exists(P.INSTALL_DIR), 'the install folder is gone');
   for (const s of shortcuts) assert.ok(!exists(s), `${s} is gone`);
-  assert.ok(!exists(P.DATA), '%APPDATA%\\NeverQuestAlone is gone');
+  assert.ok(!exists(P.DATA), '%APPDATA%\\Voxwarden is gone');
   assert.equal(await ks.get('anthropic'), null, 'the key is gone from Credential Manager');
-  assert.doesNotMatch(cmdkeyList(), /anthropic\.NeverQuestAlone/);
+  assert.doesNotMatch(cmdkeyList(), /anthropic\.Voxwarden/);
   assert.notEqual(reg(['query', RUN_KEY, '/v', APP_ID]).status, 0, 'the login item is gone');
   assert.ok(!exists(P.CACHE), 'the update cache is gone');
   assert.deepEqual(w.ours(), [], 'the addon, its data folder and every slot folder are gone');
@@ -184,7 +184,7 @@ async function uninstallLeavesNothing(t, P, w, ks, shortcuts) {
  * test failed at "nothing installed before"). installed is set just before the test's first
  * install, after its check that nothing was installed before, so only its own install is touched:
  * the installed app stopped if a failure left it running, its uninstaller (/S), then whatever is
- * left of it (the install folder, %APPDATA%\NeverQuestAlone, the update cache, the shortcuts).
+ * left of it (the install folder, %APPDATA%\Voxwarden, the update cache, the shortcuts).
  * Nothing here throws: the test's own failure is the one reported.
  */
 async function cleanUp(ks, w, P = null, { installed = false } = {}) {
@@ -192,7 +192,7 @@ async function cleanUp(ks, w, P = null, { installed = false } = {}) {
   reg(['delete', RUN_KEY, '/v', APP_ID, '/f']);
   if (w?.base) { try { fs.rmSync(w.base, { recursive: true, force: true, maxRetries: 5 }); } catch { /* left */ } }
   if (!installed || !P) return;
-  const ps = 'Get-Process -Name NeverQuestAlone -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path.StartsWith($env:NQA_CLEAN_DIR, [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force';
+  const ps = 'Get-Process -Name Voxwarden -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path.StartsWith($env:NQA_CLEAN_DIR, [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force';
   spawnSync(system32(path.join('WindowsPowerShell', 'v1.0', 'powershell.exe')), ['-NoProfile', '-Command', ps], { windowsHide: true, timeout: 60_000, env: { ...process.env, NQA_CLEAN_DIR: P.INSTALL_DIR } });
   if (exists(P.UNINSTALLER)) {
     spawnSync(P.UNINSTALLER, ['/S'], { windowsHide: true, timeout: 300_000 });
@@ -243,7 +243,7 @@ function kept(P, w, transcripts, chat) {
     settings: read(path.join(P.DATA, 'config.json')),
     uninstallList: read(path.join(P.DATA, UNINSTALL_RECORD)),
     appChats: transcripts.rows(chat, 0),
-    gameChats: ['FAKEACCOUNT', 'SECOND'].map(acct => read(path.join(w.accounts, acct, 'SavedVariables', 'NeverQuestAlone.lua'))),
+    gameChats: ['FAKEACCOUNT', 'SECOND'].map(acct => read(path.join(w.accounts, acct, 'SavedVariables', 'Voxwarden.lua'))),
     addonFolders: w.ours().sort(),
     loginItem: reg(['query', RUN_KEY, '/v', APP_ID]).status === 0,
   };
@@ -307,7 +307,7 @@ test('an update in place (SY-25): the previous version installed, then this buil
     // Electron's app, as electron-updater's ElectronAppAdapter reads it, for the installed previous version.
     const quitHandlers = [];
     const app = {
-      version: previous, name: 'NeverQuestAlone', isPackaged: true,
+      version: previous, name: 'Voxwarden', isPackaged: true,
       appUpdateConfigPath: path.join(P.INSTALL_DIR, 'resources', 'app-update.yml'),
       userDataPath: P.DATA, baseCachePath: getAppCacheDir(),
       whenReady: () => Promise.resolve(), relaunch() {}, quit() {}, onQuit: h => quitHandlers.push(h),
@@ -368,12 +368,12 @@ test('an update in place (SY-25): the previous version installed, then this buil
     await until(() => running(image), 60_000, 'the update\'s installer to start');
     await until(() => !running(image), 480_000, 'the update\'s installer to finish');
     t.diagnostic(`updated in place in ${Date.now() - t1} ms (${image})`);
-    assert.ok(!running('NeverQuestAlone.exe'), 'a silent update on quit leaves the app closed');
+    assert.ok(!running('Voxwarden.exe'), 'a silent update on quit leaves the app closed');
 
     // 3. This build is installed, and the player's things are as they were.
     assert.equal(installedSelfTest(t, P), version, 'this build is what\'s installed now');
     assert.equal(await ks.get('anthropic'), CANARY_KEYS.anthropic, 'the saved key is kept');
-    assert.match(cmdkeyList(), /anthropic\.NeverQuestAlone/);
+    assert.match(cmdkeyList(), /anthropic\.Voxwarden/);
     assert.deepEqual(kept(P, w, transcripts, CHAT), before, 'the chats (the app\'s and the game\'s), the settings, the uninstaller\'s list, the addon\'s folders and the login item are kept');
     for (const s of shortcuts) assert.ok(exists(s), `${s} is kept`);
 

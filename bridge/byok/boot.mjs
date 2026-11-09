@@ -12,7 +12,7 @@
 //     → { api, bridge, backend, keystore, config, egress, stop(), restart() }
 //
 // In order: the config (<userData>/config.json unless one is passed); the key store ('os', service
-// 'NeverQuestAlone', every key it reads registered with log.addSecret before use; outside the app
+// 'Voxwarden', every key it reads registered with log.addSecret before use; outside the app
 // (plain node: a test, a script) only a key store the caller passes, since a Keychain item written
 // through node's identity is readable by any script node runs; on Linux without a Secret Service,
 // and on Windows when Credential Manager or its binding can't be used, it fails closed to this
@@ -297,7 +297,7 @@ export async function bootByok(opts = {}) {
     // Outside the app (a stock node): a Keychain item written through node's code identity is
     // readable by any script any official node runs, with no prompt (§8.1 "Never"), so boot takes
     // only a key store its caller passes there. There is no headless bridge (systems plan D6).
-    if (!ks && !electron) throw bootError('NOT_THE_APP', 'the public bridge runs inside the NeverQuestAlone app; pass a key store to boot it anywhere else');
+    if (!ks && !electron) throw bootError('NOT_THE_APP', 'the public bridge runs inside the Voxwarden app; pass a key store to boot it anywhere else');
     ks ??= keystoreFactory({ backend: 'os', service: SERVICE, platform });
     if (!opts.keystore && platform !== 'darwin') {
       // Linux without a Secret Service; Windows where Credential Manager, or the keyring binding
@@ -497,7 +497,7 @@ export async function bootByok(opts = {}) {
       const addonsDir = flavorDir ? path.join(flavorDir, 'Interface', 'AddOns') : null;
       // No game, or no addon in it yet: nothing to publish to, so the backend runs alone until
       // installAddon (onboarding step 2) calls restart().
-      if (!flavorDir || !fs.existsSync(path.join(addonsDir, 'NeverQuestAlone', 'NeverQuestAlone.toc'))) {
+      if (!flavorDir || !fs.existsSync(path.join(addonsDir, 'Voxwarden', 'Voxwarden.toc'))) {
         log('byok-no-bridge', { reason: flavorDir ? 'addon_not_installed' : 'wow_not_found' });
         core.backend = createLocalBackend(hub({}), backendOpts());
         await core.backend.start();
@@ -505,7 +505,7 @@ export async function bootByok(opts = {}) {
       }
       // One lock (code health BR-27): the AddOns folder's, else this state folder's for it.
       core.releaseLock = takeBridgeLock({ lockDir, addonsDir, platform, alive });
-      if (!core.releaseLock.folder) log('byok-folder-lock', { taken: false, reason: 'no real NeverQuestAlone/sig folder to lock', held: 'state folder' });
+      if (!core.releaseLock.folder) log('byok-folder-lock', { taken: false, reason: 'no real Voxwarden/sig folder to lock', held: 'state folder' });
       // Patch day (SY-29): a new World of Warcraft's interface number, and the installed TOCs set to
       // it; checked at start, at the game's launch and exit, at each hello (the client's own number)
       // and at the slow check while WoW is closed (a stat of .build.info). The window and the tray say
@@ -519,11 +519,11 @@ export async function bootByok(opts = {}) {
       const account = config.wow.account || null;
       core.bridge = createBridge(config, {
         stateDir: P.state, addonsDir, log,
-        // Reload mode reads the NeverQuestAlone.lua the game wrote last, looked up at each poll: two WoW
+        // Reload mode reads the Voxwarden.lua the game wrote last, looked up at each poll: two WoW
         // accounts, a stale account folder, or none until the first login all work (SY-18). An
         // account named in the config is read alone.
         ...(account
-          ? { savedVariablesFile: path.join(flavorDir, 'WTF', 'Account', account, 'SavedVariables', 'NeverQuestAlone.lua') }
+          ? { savedVariablesFile: path.join(flavorDir, 'WTF', 'Account', account, 'SavedVariables', 'Voxwarden.lua') }
           : { wtfDir: path.join(flavorDir, 'WTF') }),
         slotInterface: () => slotInterface(addonsDir),
         // The runaway fuse paused or resumed automatic help, or the typed guard paused or resumed

@@ -126,7 +126,7 @@
           ui.game.dataset.latency = String(latencies.at(-1));
           ui.cost.title = 'Respuesta en ' + latencies.at(-1) + ' ms';
         }
-        if (!botLine) { botText = ''; botLine = line('bot', 'NeverQuestAlone', ''); }
+        if (!botLine) { botText = ''; botLine = line('bot', 'Voxwarden', ''); }
         botText += ev.delta || '';
         botLine.lastChild.textContent = botText;
         ui.log.scrollTop = ui.log.scrollHeight;

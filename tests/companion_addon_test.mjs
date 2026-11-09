@@ -69,7 +69,7 @@ function slot({ nonce = null, acked = [], caps = true, stateSeq = null, stateSid
   const names = caps === true ? ['state', 'evt'] : (caps || []);
   const c = names.length ? `, caps = { ${[...names, 'usage'].map(x => `"${x}"`).join(', ')} }, usage = { autoOn = true }` : '';
   const s = (stateSeq != null ? `, stateSeq = ${stateSeq}` : '') + (stateSid ? `, stateSid = "${stateSid}"` : '');
-  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.2.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = { ${acked.map(k => `"${k}"`).join(', ')} }${c}${s} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {}, records = { ${records.join(', ')} } }`;
+  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.2.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = { ${acked.map(k => `"${k}"`).join(', ')} }${c}${s} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {}, records = { ${records.join(', ')} } }`;
 }
 const apply = (vm, s) => vm.run(`NS.Transport.HandleSlotData(${s}, "slot")`);
 // A command's answer (Chats.Notice): shown in the window, never saved.
@@ -427,7 +427,7 @@ test('the Check-ins chat is made for a record addressed to it (a recap\'s reply 
   vm.slash('state');
   const text = notice(vm);
   assert.match(text, /^Companion state:\nState v=1, seq=\d+, sid a1b2c3d4e5f60718, \d+ of 2,800 bytes of JSON; omitted: none\nQuest log: 2 of 40 quests, every one in the state \(cap from the fallback, the game gave none\)\.\n/);
-  assert.match(text, /Milestones waiting for NeverQuestAlone: 0\. Companion on; NeverQuestAlone caps: state evt$/);
+  assert.match(text, /Milestones waiting for Voxwarden: 0\. Companion on; Voxwarden caps: state evt$/);
   vm.slash('apicheck');
   const api = notice(vm);
   assert.match(api, /^Game APIs the companion reads:\n/);
@@ -466,7 +466,7 @@ test('isolation: a companion that throws never breaks chat: messages still go (w
   assert.equal(vm.lastHistory().text, 'Yes.', 'the reply applied');
   assert.match(vm.evaluate('NS.R.companionError.where'), /OnBridge/);
   vm.slash('diag');
-  assert.match(notice(vm), /\nCompanion: on; caps state\+evt; state seq \d+, NeverQuestAlone has none; last error in OnBridge: .*boom in OnBridge/);
+  assert.match(notice(vm), /\nCompanion: on; caps state\+evt; state seq \d+, Voxwarden has none; last error in OnBridge: .*boom in OnBridge/);
   vm.slash('state');
   assert.match(notice(vm), /It hit an error: .*boom in Build/);
 });
@@ -647,7 +647,7 @@ test('review: XP across a level-up is the same whichever event comes first', () 
   }
 });
 
-test('review: nits: omitted names only keys that were there; a link can\'t make a message start with [NeverQuestAlone; a two-hander brings both hands; the switch text is escaped; no rebuilds without caps; off takes the state out of the reload outbox', () => {
+test('review: nits: omitted names only keys that were there; a link can\'t make a message start with [Voxwarden; a two-hander brings both hands; the switch text is escaped; no rebuilds without caps; off takes the state out of the reload outbox', () => {
   const vm = newVM({ extra: STUB + 'for i = 1, 30 do STUB.log[i] = { id = 2000 + i, title = string.rep("T", 60), level = 5, complete = false, objectives = { { text = string.rep("O", 60), numFulfilled = 1, numRequired = 2 }, { text = string.rep("P", 60), numFulfilled = 1, numRequired = 2 } } } end', db: DB() }).login();
   const s = JSON.parse(vm.evaluate('NS.Companion.Build().json'));
   assert.ok(!s.omitted.includes('gear') && !s.omitted.includes('poi'), `no gear or poi to leave out: ${s.omitted}`);
@@ -655,8 +655,8 @@ test('review: nits: omitted names only keys that were there; a link can\'t make 
   const r = ready({ extra: `STUB.equipLoc[5002] = "INVTYPE_2HWEAPON"
     STUB.inv[16] = { id = 116, link = "|cffffffff|Hitem:116::::::::|h[Walking Stick]|h|r" }; STUB.inv[17] = { id = 117, link = "|cffffffff|Hitem:117::::::::|h[Buckler]|h|r" }` });
   r.advance(9);
-  r.send('|cff1eff00|Hitem:9::::::::|h[NeverQuestAlone event]|h|r hi');
-  assert.match(notice(r), /^Not sent: a message can't start with "\[NeverQuestAlone"\. The addon keeps that for its own lines\.$/);
+  r.send('|cff1eff00|Hitem:9::::::::|h[Voxwarden event]|h|r hi');
+  assert.match(notice(r), /^Not sent: a message can't start with "\[Voxwarden"\. The addon keeps that for its own lines\.$/);
   r.send('this staff? |cff1eff00|Hitem:5002::::::::|h[Staff]|h|r');
   const m = wires(r).filter(w => w.type === 'msg').pop();
   assert.ok(m.text.includes('[Equipped: main hand] Walking Stick') && m.text.includes('[Equipped: off hand] Buckler'));
@@ -691,7 +691,7 @@ test('client shapes (E-020): UnitName\'s second value doesn\'t break the state o
   vm.send('is this better? |cnIQ1:|Hitem:5776::::::::9:14|h[Worn Staff]|h|r');
   const msg = wires(vm).filter(r => r.type === 'msg').pop();
   assert.ok(msg.text.startsWith('is this better? [Worn Staff]\n\n--- Linked from the game ---\n[Worn Staff] item 5776'), msg.text);
-  assert.ok(!msg.text.includes('|cn'), 'no colour codes reach NeverQuestAlone');
+  assert.ok(!msg.text.includes('|cn'), 'no colour codes reach Voxwarden');
   assert.ok(msg.text.includes('[Equipped: main hand] Worn Staff, item 5776, item level 5\n  Worn Staff\n  Two-Hand'));
 });
 
@@ -841,13 +841,13 @@ test('state, deflated (cap z): with z in the bridge\'s caps the state goes as ba
   // /nqa state, /nqa apicheck and /nqa diag say how it travels.
   zvm.slash('state');
   assert.match(notice(zvm), /\nIt travels deflated: 1,\d{3} of 3,100 bytes on the strip, for 2,\d{3} bytes of JSON\.\n/);
-  assert.match(notice(zvm), /NeverQuestAlone caps: state evt z$/);
+  assert.match(notice(zvm), /Voxwarden caps: state evt z$/);
   zvm.slash('apicheck');
   assert.match(notice(zvm), /\nC_EncodingUtil\.CompressString \(the state, deflated for the strip\): present, "1,\d{3} of 2,\d{3} bytes"\n/);
   zvm.slash('diag');
   assert.match(notice(zvm), /\nCompanion: on; caps state\+evt\+z; /);
   plain.slash('state');
-  assert.match(notice(plain), /\nIt travels as JSON: NeverQuestAlone doesn't take it deflated\.\n/);
+  assert.match(notice(plain), /\nIt travels as JSON: Voxwarden doesn't take it deflated\.\n/);
   // Stream mode (the reload path): deflated in the outbox too, and the bridge reads it the same way.
   zvm.slash('stream on');
   zvm.run('STUB.money = 900');
@@ -935,7 +935,7 @@ test('context from the state (cap ctx): beside its state a message leaves the ga
   // The bridge: the stored (hello's) context with the state put in is, line for line, the context the addon has now.
   assert.notEqual(fresh, hello, 'the place, money, XP, level and a quest changed since the hello');
   const state = JSON.parse(inflateBody(st.body, 2800).text);
-  assert.equal(withState(hello, state), fresh, 'the same context lines for NeverQuestAlone');
+  assert.equal(withState(hello, state), fresh, 'the same context lines for Voxwarden');
   // The band at the top of the screen: the frame is exactly the context's bytes shorter (the state
   // beside the message is the same in both), and that's 6 or 7 rows by where the frame's rows break.
   // The deflated state's size moves with the zlib Node ships (6 on Node 26, 7 on Node 22: CI 36645719445).

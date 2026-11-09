@@ -1,6 +1,6 @@
 // The shell's write queue (bridge/write-queue.mjs; open-shell lane 2a) runs the plugin's jobs (write())
 // with the runner the plugin gives it (use()): in its worker thread, by the module and export named, and on
-// the main thread when it writes in place. It knows nothing of what they are (NeverQuestAlone's are slot
+// the main thread when it writes in place. It knows nothing of what they are (Voxwarden's are slot
 // tables: transport/slots.mjs SLOT_JOB, the WoW plugin's). Here a stand-in plugin writes a file per job.
 import test from 'node:test';
 import assert from 'node:assert/strict';

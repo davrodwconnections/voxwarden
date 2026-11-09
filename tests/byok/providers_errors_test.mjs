@@ -207,8 +207,8 @@ test('an egress-guard block is its own kind: never retried, never "check your in
     }
   }
   const l = userLine(classify(getManifest('anthropic'), { networkPhase: 'before_send', networkError: blocked }), NAMES);
-  assert.equal(l.headline, 'NeverQuestAlone blocked the connection to Anthropic.');
-  assert.equal(l.detail, 'Check Connections in the NeverQuestAlone app.');
+  assert.equal(l.headline, 'Voxwarden blocked the connection to Anthropic.');
+  assert.equal(l.detail, 'Check Connections in the Voxwarden app.');
   assert.deepEqual(l.action, { id: 'connections', label: 'Open Connections', desktop: true });
   assert.doesNotMatch(l.headline + l.detail, /internet|when it's back/);
 });
@@ -294,36 +294,36 @@ test('retryPlan: transient kinds only, at most two retries, honoring retry-after
   assert.equal(retryPlan(r({ kind: 'rate_limited', retryAfterMs: 10 * 60000 }), 0).retry, false, 'a long wait is not retried automatically');
 });
 
-const NAMES = { provider: 'Anthropic', model: 'Claude Haiku 4.5', companion: 'NeverQuestAlone', product: 'NeverQuestAlone', now: NOW, timeZone: 'America/Los_Angeles' };
+const NAMES = { provider: 'Anthropic', model: 'Claude Haiku 4.5', companion: 'Voxwarden', product: 'Voxwarden', now: NOW, timeZone: 'America/Los_Angeles' };
 const line = (fields, names = NAMES) => userLine(makeError({ provider: 'anthropic', ...fields }), names);
 
 test('userLine: the exact §10 lines, with the product and companion names', () => {
   const cases = [
-    [{ kind: 'auth_invalid' }, {}, 'Your Anthropic key was rejected.', 'Replace it in the NeverQuestAlone app.'],
-    [{ kind: 'out_of_credit' }, {}, 'Your Anthropic account is out of credit.', 'Add credit at Anthropic, or pick another AI in the NeverQuestAlone app.'], // the HUD's words (UX-W31)
+    [{ kind: 'auth_invalid' }, {}, 'Your Anthropic key was rejected.', 'Replace it in the Voxwarden app.'],
+    [{ kind: 'out_of_credit' }, {}, 'Your Anthropic account is out of credit.', 'Add credit at Anthropic, or pick another AI in the Voxwarden app.'], // the HUD's words (UX-W31)
     [{ kind: 'spend_limit', resetAt: Date.parse('2026-10-01T00:00:00Z') }, {}, "You've reached the spend limit you set at Anthropic.", 'Raise it there, or wait until Sep 30 at 5:00 PM.'],
     [{ kind: 'spend_limit' }, {}, "You've reached the spend limit you set at Anthropic.", 'Raise it there, or wait until it resets.'],
-    [{ kind: 'cap_spend' }, { capMicros: 1000000 }, "You've reached your daily spend limit ($1.00).", 'Raise it or turn it off in the NeverQuestAlone app, or it resets at midnight.'],
-    [{ kind: 'cap_spend' }, {}, "You've reached your daily spend limit.", 'Raise it or turn it off in the NeverQuestAlone app, or it resets at midnight.'],
+    [{ kind: 'cap_spend' }, { capMicros: 1000000 }, "You've reached your daily spend limit ($1.00).", 'Raise it or turn it off in the Voxwarden app, or it resets at midnight.'],
+    [{ kind: 'cap_spend' }, {}, "You've reached your daily spend limit.", 'Raise it or turn it off in the Voxwarden app, or it resets at midnight.'],
     // Held because today's spend couldn't be read (code health BR-09): never "reached" (bones-ux-writer UX-W02).
-    [{ kind: 'cap_spend' }, { capMicros: 1000000, capHeld: 'load_error' }, "Today's spend couldn't be read, so NeverQuestAlone rests.", 'Set your limit again in the NeverQuestAlone app.'],
-    [{ kind: 'cap_spend' }, { capHeld: 'load_error', companion: 'Nyx' }, "Today's spend couldn't be read, so Nyx rests.", 'Set your limit again in the NeverQuestAlone app.'],
-    [{ kind: 'rate_limited', retryAfterMs: 17200 }, {}, 'Anthropic asked NeverQuestAlone to slow down.', 'Trying again in 18 seconds.'],
+    [{ kind: 'cap_spend' }, { capMicros: 1000000, capHeld: 'load_error' }, "Today's spend couldn't be read, so Voxwarden rests.", 'Set your limit again in the Voxwarden app.'],
+    [{ kind: 'cap_spend' }, { capHeld: 'load_error', companion: 'Nyx' }, "Today's spend couldn't be read, so Nyx rests.", 'Set your limit again in the Voxwarden app.'],
+    [{ kind: 'rate_limited', retryAfterMs: 17200 }, {}, 'Anthropic asked Voxwarden to slow down.', 'Trying again in 18 seconds.'],
     [{ kind: 'rate_limited_daily', resetAt: Date.parse('2026-09-27T00:00:00Z') }, {}, "Anthropic's daily limit is used up.", 'It resets at 5:00 PM.'],
     [{ kind: 'rate_limited_daily' }, {}, "Anthropic's daily limit is used up.", 'It resets tomorrow.'],
     [{ kind: 'overloaded' }, {}, 'Anthropic is busy right now.', 'Trying again…'],
     [{ kind: 'overloaded' }, { final: true }, 'Anthropic is busy right now.', 'Still busy. Try again in a minute.'],
-    [{ kind: 'model_not_found' }, { fallbackModel: 'Claude Haiku 4.5', model: 'Claude Sonnet 5' }, "Claude Sonnet 5 isn't available on your Anthropic account.", 'Switched to Claude Haiku 4.5 for now. Change it in the NeverQuestAlone app.'],
-    [{ kind: 'model_not_found' }, {}, 'Claude Haiku 4.5 was retired.', 'Pick another model in the NeverQuestAlone app.'],
+    [{ kind: 'model_not_found' }, { fallbackModel: 'Claude Haiku 4.5', model: 'Claude Sonnet 5' }, "Claude Sonnet 5 isn't available on your Anthropic account.", 'Switched to Claude Haiku 4.5 for now. Change it in the Voxwarden app.'],
+    [{ kind: 'model_not_found' }, {}, 'Claude Haiku 4.5 was retired.', 'Pick another model in the Voxwarden app.'],
     [{ kind: 'context_too_long' }, {}, 'This chat is too long for Claude Haiku 4.5.', 'Start a new chat.'],
     [{ kind: 'content_blocked' }, {}, 'Claude Haiku 4.5 declined to answer that.', 'Try asking another way.'],
     [{ kind: 'network_before_send' }, {}, "Can't reach Anthropic. Check your internet.", "Your message will send when it's back."],
     [{ kind: 'network_after_send' }, {}, 'No answer: the connection dropped.', ''],
-    [{ kind: 'local_unreachable' }, { provider: 'Ollama' }, "NeverQuestAlone can't reach Ollama.", 'Start Ollama, then click Retry.'],
-    [{ kind: 'oauth_expired' }, { provider: 'OpenRouter' }, 'Your OpenRouter sign-in ended.', 'Sign in again in the NeverQuestAlone app.'],
-    [{ kind: 'region_blocked' }, { provider: 'OpenAI' }, "OpenAI isn't available where you are.", 'Pick another AI in the NeverQuestAlone app.'],
-    [{ kind: 'identifier_blocked' }, { provider: 'OpenAI' }, 'OpenAI has blocked this install.', 'See the details in the NeverQuestAlone app.'],
-    [{ kind: 'interrupted' }, {}, 'NeverQuestAlone restarted before NeverQuestAlone answered.', ''],
+    [{ kind: 'local_unreachable' }, { provider: 'Ollama' }, "Voxwarden can't reach Ollama.", 'Start Ollama, then click Retry.'],
+    [{ kind: 'oauth_expired' }, { provider: 'OpenRouter' }, 'Your OpenRouter sign-in ended.', 'Sign in again in the Voxwarden app.'],
+    [{ kind: 'region_blocked' }, { provider: 'OpenAI' }, "OpenAI isn't available where you are.", 'Pick another AI in the Voxwarden app.'],
+    [{ kind: 'identifier_blocked' }, { provider: 'OpenAI' }, 'OpenAI has blocked this install.', 'See the details in the Voxwarden app.'],
+    [{ kind: 'interrupted' }, {}, 'Voxwarden restarted before Voxwarden answered.', ''],
     [{ kind: 'timeout', afterMs: 60000 }, {}, 'No answer from Anthropic after 60 seconds.', ''],
     [{ kind: 'timeout', afterMs: 180000 }, {}, 'No answer from Anthropic after 3 minutes.', ''],
   ];
@@ -339,10 +339,10 @@ test('userLine: the fix buttons use the app\'s words, and a line with no AI name
   assert.equal(line({ kind: 'model_not_found' }).action.label, 'Pick Another Model');
   assert.equal(line({ kind: 'context_too_long', reason: 'num_ctx' }).action.label, 'Pick Another Model');
   assert.equal(line({ kind: 'no_key', code: 'keystore_error' }).action.label, 'Open Your AI');
-  const bare = fields => userLine(makeError({ ...fields }), { product: 'NeverQuestAlone' });
+  const bare = fields => userLine(makeError({ ...fields }), { product: 'Voxwarden' });
   const noName = bare({ kind: 'out_of_credit' });
   assert.equal(noName.headline, 'Your AI company account is out of credit.');
-  assert.equal(noName.detail, 'Add credit at your AI company, or pick another AI in the NeverQuestAlone app.');
+  assert.equal(noName.detail, 'Add credit at your AI company, or pick another AI in the Voxwarden app.');
   assert.equal(bare({ kind: 'overloaded' }).headline, 'Your AI company is busy right now.');
   assert.equal(bare({ kind: 'auth_invalid' }).headline, 'Your AI company key was rejected.');
   for (const kind of KINDS) {
@@ -363,10 +363,10 @@ test('userLine: a spend-limit reset reads as the player\'s local time', () => {
 
 test('userLine: no key set up, or a keychain that couldn\'t be read, is never "rejected"', () => {
   const missing = line({ kind: 'no_key', code: 'missing_key' });
-  assert.deepEqual([missing.headline, missing.detail], ['No Anthropic key is set up.', 'Add one in the NeverQuestAlone app.']);
+  assert.deepEqual([missing.headline, missing.detail], ['No Anthropic key is set up.', 'Add one in the Voxwarden app.']);
   assert.deepEqual(missing.action, { id: 'add_key', label: 'Add Key', desktop: true });
   const unreadable = line({ kind: 'no_key', code: 'keystore_error' });
-  assert.deepEqual([unreadable.headline, unreadable.detail], ["Couldn't read your Anthropic key.", 'Check it in the NeverQuestAlone app.']);
+  assert.deepEqual([unreadable.headline, unreadable.detail], ["Couldn't read your Anthropic key.", 'Check it in the Voxwarden app.']);
   assert.deepEqual(unreadable.action, { id: 'keys', label: 'Open Your AI', desktop: true }, 'the app has no Keys page (UX-W07)');
   for (const l of [missing, unreadable]) assert.doesNotMatch(l.headline + l.detail, /rejected|Replace/);
 });
@@ -399,11 +399,11 @@ test('userLine covers every kind with a headline, and never echoes provider text
 
 test('userLine: an empty reply, twice in one turn (fix-empty-reply), has its own line: ask again, or lower Thinking; another model where the model has no levels; never the generic one', () => {
   const l = line({ kind: 'empty_reply', code: 'length' });
-  assert.deepEqual([l.headline, l.detail], ["NeverQuestAlone couldn't finish a reply.", 'Ask again, or lower Thinking.']);
+  assert.deepEqual([l.headline, l.detail], ["Voxwarden couldn't finish a reply.", 'Ask again, or lower Thinking.']);
   assert.deepEqual(l.action, { id: 'retry', label: 'Retry', desktop: false }, 'Retry sends it again; nothing to fix first');
   assert.equal(line({ kind: 'empty_reply', code: 'stop' }).detail, 'Ask again, or lower Thinking.');
   const none = line({ kind: 'empty_reply', code: 'length' }, { ...NAMES, thinking: false });
-  assert.deepEqual([none.headline, none.detail], ["NeverQuestAlone couldn't finish a reply.", 'Ask again, or pick another model in the NeverQuestAlone app.']);
+  assert.deepEqual([none.headline, none.detail], ["Voxwarden couldn't finish a reply.", 'Ask again, or pick another model in the Voxwarden app.']);
   assert.equal(line({ kind: 'empty_reply' }, { ...NAMES, companion: 'Mortimer' }).headline, "Mortimer couldn't finish a reply.", 'the companion\'s name');
   for (const x of [l, none]) assert.doesNotMatch(`${x.headline} ${x.detail}`, /Something went wrong|Anthropic|Claude/);
   assert.ok(KINDS.includes('empty_reply'));

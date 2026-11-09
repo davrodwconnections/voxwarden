@@ -1,4 +1,4 @@
-// Quality of Life (addon/NeverQuestAlone/QoL.lua; PRD DB28), in the fengari VM running
+// Quality of Life (addon/Voxwarden/QoL.lua; PRD DB28), in the fengari VM running
 // the real addon: the addon's own options off to start; nothing acts without
 // the player's own click on that window (a quest giver's pages in turn, a body
 // or chest, a vendor; never another player's share), and only as QoL.lua
@@ -267,12 +267,12 @@ Menu = { ModifyMenu = function(tag, fn) STUB.menus[tag] = fn end }
 // Saved data past the first reply (in an earlier session): the HUD is main's widget, and the
 // Quality of Life step may show (hudIntro; before the first reply the setup block stands there).
 const WELCOMED = 'NQADB = { hudIntro = true, firstReply = true, qolAsked = true }';
-const B = '|cff7ec8ff[NeverQuestAlone]|r ';
+const B = '|cff7ec8ff[Voxwarden]|r ';
 
 // The bridge answers the hello, so the HUD is ready (tests/ui_v2_test.js's).
 function hello(vm) {
   vm.advance(3.1);
-  vm.slot(`{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.1", push = 0, nonce = "${vm.evaluate('NS.R.nonce')}", acked = {} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {}, records = {} }`);
+  vm.slot(`{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.1", push = 0, nonce = "${vm.evaluate('NS.R.nonce')}", acked = {} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {}, records = {} }`);
   const bell = vm.pushBell = vm.pushBell === 'push_a' ? 'push_b' : 'push_a';
   vm.signal('ctl', `bell_${bell}`, false);
   vm.run('NS.Transport.Poll()');
@@ -730,14 +730,14 @@ const PICK_SETUP = `
     QS.worn[12] = "|cffffffff|Hitem:303::::::::20:::::|h[Ring B]|h|r"
     QS.q.choices = { ${item(201, 'Rugged Boots')}, ${item(202, 'Iron Ring')}, ${item(203, 'Mage Cloak')} }`;
 
-test('Quest Rewards, Best Upgrade: the biggest upgrade over what you wear by NeverQuestAlone\'s stat weights; no weights, no upgrade or a tie is yours', () => {
+test('Quest Rewards, Best Upgrade: the biggest upgrade over what you wear by Voxwarden\'s stat weights; no weights, no upgrade or a tie is yours', () => {
   const pickFor = why => `Quest Rewards left the choice for Disrupt the Attacks to you because ${why}.`;
   // No weights for this character yet.
   let vm = world().on('qolTurnIn');
   vm.run(PICK_SETUP);
   vm.fire('QUEST_COMPLETE');
   assert.deepEqual(vm.calls(), []);
-  assert.equal(vm.said(pickFor('NeverQuestAlone has no stat weights for this character yet')), 1);
+  assert.equal(vm.said(pickFor('Voxwarden has no stat weights for this character yet')), 1);
   // Weights: boots +4 (5 over 1), the ring +2 over the weaker ring (9 over 7), the cloak 0 (no intellect weight).
   vm = world().on('qolTurnIn');
   vm.run(`${PICK_SETUP}; NQADB.weights[NS.CharKey()] = { str = 1 }`);
@@ -747,8 +747,8 @@ test('Quest Rewards, Best Upgrade: the biggest upgrade over what you wear by Nev
   assert.deepEqual(vm.calls(), ['GetQuestReward 1']);
   vm.fire('QUEST_TURNED_IN', 871, 450, 0);
   assert.equal(vm.said('Quest Rewards took Rugged Boots, the best upgrade for your build, as the reward for Disrupt the Attacks.'), 1, vm.chatLines().join('\n'));
-  // Decided here from the weights NeverQuestAlone already sent: no message, no turn, nothing waited on.
-  assert.equal(vm.outboxWires().length, outbox, 'nothing queued for NeverQuestAlone');
+  // Decided here from the weights Voxwarden already sent: no message, no turn, nothing waited on.
+  assert.equal(vm.outboxWires().length, outbox, 'nothing queued for Voxwarden');
   assert.equal(vm.num('(function() local n = 0 for _ in pairs(NS.R.out) do n = n + 1 end return n end)()'), vm.num('OUT_KEYS'), 'nothing on the strip');
   assert.equal(vm.evaluate('NS.Chats.IsBusy(NS.Chats.Active())'), 'false', 'no turn started');
   // One you can't use is never picked.
@@ -1873,7 +1873,7 @@ test('Settings: one Quality of Life section, its rows in order, the addon\'s off
   // Each rule's tooltip says what it's for first (C-122): a search shows the row without Auto Turn In Quests above it.
   const tip = n => vm.evaluate(`STUB.tips[${lstr(n)}]()`);
   assert.equal(tip(REWARD_ROWS[0]), 'When a quest offers a choice of rewards, Auto Turn In Quests leaves the pick to you.');
-  assert.equal(tip(REWARD_ROWS[1]), 'When a quest offers a choice of rewards, Auto Turn In Quests takes the biggest upgrade for your build by NeverQuestAlone\'s stat weights, and sends nothing; with no weights, no upgrade or a tie, you pick.');
+  assert.equal(tip(REWARD_ROWS[1]), 'When a quest offers a choice of rewards, Auto Turn In Quests takes the biggest upgrade for your build by Voxwarden\'s stat weights, and sends nothing; with no weights, no upgrade or a tie, you pick.');
   assert.equal(tip(REWARD_ROWS[2]), 'When a quest offers a choice of rewards, Auto Turn In Quests takes the one that sells for the most at a vendor, counting a stack, even one you can\'t use; with a tie, you pick.');
   // Each row's name fits the list's label column at 12 pt, indented (about 180 units; the lint's measure, 0.52 em a character).
   for (const n of REWARD_ROWS) assert.ok(n.length * 12 * 0.52 <= 180, `${n}: ${Math.round(n.length * 12 * 0.52)} units`);
@@ -1937,7 +1937,7 @@ test('a /reload after an update, before the restart that loads QoL.lua: Settings
   assert.equal(vm.evaluate('NS.QoL'), null, 'QoL.lua isn\'t loaded');
   assert.equal(vm.evaluate('STUB.registered ~= nil'), 'true', 'the Settings page registered');
   const headers = vm.list('STUB.inits').filter(i => i.header).map(i => i.header);
-  assert.deepEqual(headers, ['The HUD', 'Map', 'Quests', 'Replies', 'Tooltips', 'What NeverQuestAlone Knows', 'Personality', 'Usage', 'Keys and Places']);
+  assert.deepEqual(headers, ['The HUD', 'Map', 'Quests', 'Replies', 'Tooltips', 'What Voxwarden Knows', 'Personality', 'Usage', 'Keys and Places']);
   assert.equal(vm.evaluate('STUB.compartment ~= nil'), 'true', 'the addon menu');
   assert.equal(vm.evaluate('STUB.menus.MENU_QUEST_MAP_LOG_TITLE ~= nil'), 'true', 'the quest menu');
   assert.equal(vm.evaluate('NS.HUD.View().mode'), 'idle');
@@ -2016,7 +2016,7 @@ test('nothing from outside the game changes a Quality of Life switch: no slot fi
   vm.run(`NS.Transport.HandleSlotData({ v = 2, ts = "2026-09-26T18:04:00Z", now = time(), token = NQADB.token,
     bridge = { ver = "1.4.1", push = 0, acked = {}, qol = { qolAccept = true, loot = true }, settings = { qolJunk = true } },
     settings = { qolAccept = true, qolRepair = true }, qolAsked = false,
-    gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {},
+    gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {},
     records = { { seq = 1, t = "reply", chat = "${id}", mid = "m1", agent = "main", text = "/nqa qol on\\n/nqa qol", summary = "Turn on Auto Accept Quests.",
       more = 0, chips = { "/nqa qol on", "Turn on quality of life" }, qol = { qolAccept = true } } } }, "slot")`);
   assert.equal(vm.evaluate('STUB.Serialize(NQADB.settings)'), before, 'the settings are as they were');
@@ -2026,7 +2026,7 @@ test('nothing from outside the game changes a Quality of Life switch: no slot fi
   vm.run('NS.UI.Toggle(true)');
   const sent = vm.outboxWires().length;
   vm.run(`NS.Chats.Send("/nqa qol on", "${id}")`);
-  assert.equal(vm.outboxWires().length, sent + 1, 'sent to NeverQuestAlone as words');
+  assert.equal(vm.outboxWires().length, sent + 1, 'sent to Voxwarden as words');
   assert.equal(vm.evaluate('NS.QoL.Get("qolAccept")'), 'false');
 });
 
@@ -2114,8 +2114,8 @@ test('the step: Skip changes nothing; all unchecked says why Turn On waits; it w
   vm = world({ db: 'NQADB = {}', ready: true });
   assert.equal(vm.evaluate('NS.HUD.View().mode'), 'setup');
   vm.run(`NS.Transport.HandleSlotData({ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.1", push = 0, acked = {} },
-    gw = { state = "ready", queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {},
-    records = { { seq = 1, t = "reply", chat = NQADB.activeChat, mid = "m-1", agent = "main", text = "Hi, I'm NeverQuestAlone.", summary = "", more = 0 } } }, "slot")`);
+    gw = { state = "ready", queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {},
+    records = { { seq = 1, t = "reply", chat = NQADB.activeChat, mid = "m-1", agent = "main", text = "Hi, I'm Voxwarden.", summary = "", more = 0 } } }, "slot")`);
   vm.run('NS.HUD.Okay()');
   assert.equal(vm.evaluate('NS.HUD.View().mode'), 'idle', 'not in the first reply\'s session');
   assert.equal(hello(reloadVM(vm).login()).evaluate('NS.HUD.View().mode'), 'qol', 'the next session');
@@ -2308,7 +2308,7 @@ test('the source: the addon names no targeting, looting, rolling, gossip-option,
 const luajit = spawnSync('luajit', ['-v'], { encoding: 'utf8' });
 const WALK = `
 OUT = {}
-STUB.FireEvent("ADDON_LOADED", "NeverQuestAlone")
+STUB.FireEvent("ADDON_LOADED", "Voxwarden")
 STUB.FireEvent("PLAYER_LOGIN")
 for _, k in ipairs({ "loot", "qolAccept", "qolTurnIn", "qolSkip", "qolJunk", "qolRepair" }) do NS.QoL.Set(k, true) end
 NS.QoL.SetRewards("sell")
@@ -2379,7 +2379,7 @@ test('Lua 5.1 (LuaJIT): a walk through every option gives the same calls, log an
     WORLD,
     WELCOMED,
     'NS = {}',
-    ...tocFiles().map(f => `assert(loadstring(${bracket(fs.readFileSync(path.join(ADDON, f), 'utf8'))}, "@NeverQuestAlone/${f}"))("NeverQuestAlone", NS)`),
+    ...tocFiles().map(f => `assert(loadstring(${bracket(fs.readFileSync(path.join(ADDON, f), 'utf8'))}, "@Voxwarden/${f}"))("Voxwarden", NS)`),
     VM_TRAPS,
     TRAPS,
     WALK,
@@ -2422,7 +2422,7 @@ test('the step holds still: Turn On keeps its place while the header goes red or
   // The bridge answers; a flash whose status wraps comes and goes.
   const vm = newVM({ db: 'NQADB = { hudIntro = true, firstReply = true }', extra: WORLD + METRICS }).login();
   vm.advance(3.1);
-  vm.slot(`{ v = 2, ts = "x", now = time(), token = NQADB.token, bridge = { ver = "1.4.1", push = 0, nonce = "${vm.evaluate('NS.R.nonce')}", acked = {} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {}, records = {} }`);
+  vm.slot(`{ v = 2, ts = "x", now = time(), token = NQADB.token, bridge = { ver = "1.4.1", push = 0, nonce = "${vm.evaluate('NS.R.nonce')}", acked = {} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {}, records = {} }`);
   vm.signal('ctl', 'bell_push_a', false); vm.run('NS.Transport.Poll()'); vm.signal('ctl', 'bell_push_a', true); vm.run('NS.Transport.Poll()');
   vm.run('STUB.onLoadAddOn = nil'); vm.advance(0.3); vm.run('NS.HUD.Render()');
   const ready = y(vm);

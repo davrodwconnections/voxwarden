@@ -179,7 +179,7 @@ test('quit (SY-102-3): a launch during the committed quit relaunches once, so th
   assert.equal(app.relaunches, 0);
   app.fire('will-quit');
   await tick();
-  // The owner's case: Cmd+Q, then NeverQuestAlone opened again 1.8 s later, while the bridge stopped.
+  // The owner's case: Cmd+Q, then Voxwarden opened again 1.8 s later, while the bridge stopped.
   assert.equal(q.reopen(), true, 'committed: the quit takes the launch (no window opens)');
   assert.equal(app.relaunches, 1, 'app.relaunch(): the exit under way starts the app again');
   assert.equal(lines.at(-1), 'quit: reopened during the quit');

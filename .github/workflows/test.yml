@@ -1,4 +1,4 @@
-# The tests, on every push and pull request: written by tools/shell-tree.mjs from the test.yml NeverQuestAlone
+# The tests, on every push and pull request: written by tools/shell-tree.mjs from the test.yml Voxwarden
 # builds with, without its private jobs and without any secret. The token is read-only, and every action is
 # pinned to a commit SHA. Change it there, not here: each release rewrites this file.
 name: test
@@ -174,7 +174,7 @@ jobs:
       - name: A throwaway code-signing certificate that only this runner trusts (the signing dry run; SY-20)
         shell: pwsh
         run: |
-          $subject = 'CN=NeverQuestAlone CI, O=NeverQuestAlone contributors'
+          $subject = 'CN=Voxwarden CI, O=Voxwarden contributors'
           $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $subject -CertStoreLocation Cert:\CurrentUser\My -KeyExportPolicy Exportable -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -NotAfter (Get-Date).AddDays(2)
           $password = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24))
           Write-Output "::add-mask::$password"
@@ -205,7 +205,7 @@ jobs:
           NQA_REQUIRE_UPDATER: '1'
           NQA_REQUIRE_HELPER: '1'
         run: |
-          NQA_SIGNED_FILE="$(ls app/desktop/dist/NeverQuestAlone-Setup-*.exe | head -1)"
+          NQA_SIGNED_FILE="$(ls app/desktop/dist/Voxwarden-Setup-*.exe | head -1)"
           export NQA_SIGNED_FILE NQA_SIGNED_PUBLISHER="$NQA_PUBLISHER_NAME"
           node --test --test-concurrency=1 --test-reporter=spec tests/byok/app_updater_test.mjs tests/byok/updater_windows_test.mjs
       - name: The previous version's installer, for the update in place (SY-25)
@@ -217,16 +217,16 @@ jobs:
         env:
           NQA_REQUIRE_INSTALLER: '1'
         run: |
-          NQA_INSTALLER="$(ls app/desktop/dist/NeverQuestAlone-Setup-*.exe | head -1)"
-          NQA_PREVIOUS_INSTALLER="$(ls app/desktop/dist-previous/NeverQuestAlone-Setup-*.exe | head -1)"
+          NQA_INSTALLER="$(ls app/desktop/dist/Voxwarden-Setup-*.exe | head -1)"
+          NQA_PREVIOUS_INSTALLER="$(ls app/desktop/dist-previous/Voxwarden-Setup-*.exe | head -1)"
           export NQA_INSTALLER NQA_PREVIOUS_INSTALLER
           node --test --test-concurrency=1 --test-reporter=spec tests/byok/windows_install_test.mjs
       - name: Fuses (SC-9)
         run: node tools/check-fuses.mjs app/desktop/dist/win-unpacked
       - name: The packaged app's self-test and its real quit (the real bridge from inside app.asar; SY-102-2)
-        run: node app/desktop/scripts/self-test.mjs "app/desktop/dist/win-unpacked/NeverQuestAlone.exe"
+        run: node app/desktop/scripts/self-test.mjs "app/desktop/dist/win-unpacked/Voxwarden.exe"
       - name: Memory with the window shown and with the tray alone, private bytes of every app process (SY-11)
-        run: node app/desktop/scripts/footprint.mjs "app/desktop/dist/win-unpacked/NeverQuestAlone.exe"
+        run: node app/desktop/scripts/footprint.mjs "app/desktop/dist/win-unpacked/Voxwarden.exe"
 
   supply-chain:
     runs-on: ubuntu-latest

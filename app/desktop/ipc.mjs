@@ -267,7 +267,7 @@ export function usdText(dollars) {
  * instead). A first limit, or a lower one, asks nothing: it only lowers what can be spent. A
  * previous value that can't be read asks, whatever the change.
  */
-export function capsConfirm(next, prev, name = 'NeverQuestAlone') {
+export function capsConfirm(next, prev, name = 'Voxwarden') {
   const before = isPlainObject(prev) && (prev.dailyUsd === null || typeof prev.dailyUsd === 'number') ? prev.dailyUsd : undefined;
   const cancelLabel = st('limitConfirm.cancelLabel');
   if (next === null) {
@@ -293,14 +293,14 @@ export function storeName(platform) {
 }
 /** The last step of an uninstall, per OS (the app can't remove itself). */
 export function finishLine(platform) {
-  if (platform === 'darwin') return 'To finish, drag NeverQuestAlone from Applications to the Trash.';
-  if (platform === 'win32') return 'To finish, remove NeverQuestAlone in Settings > Apps.';
-  return 'To finish, delete the NeverQuestAlone AppImage.';
+  if (platform === 'darwin') return 'To finish, drag Voxwarden from Applications to the Trash.';
+  if (platform === 'win32') return 'To finish, remove Voxwarden in Settings > Apps.';
+  return 'To finish, delete the Voxwarden AppImage.';
 }
 const cleanName = (v, n = 60) => String(v ?? '').replace(UNSAFE_TEXT, '').trim().slice(0, n);
 function companionName(ctx) {
-  const n = String(ctx.companion?.() ?? 'NeverQuestAlone').replace(UNSAFE_TEXT, '').trim().slice(0, 24);
-  return n || 'NeverQuestAlone';
+  const n = String(ctx.companion?.() ?? 'Voxwarden').replace(UNSAFE_TEXT, '').trim().slice(0, 24);
+  return n || 'Voxwarden';
 }
 const pname = id => PROVIDER_NAMES[id] ?? 'this AI company';
 
@@ -871,7 +871,7 @@ export const HANDLERS = {
     input: obj({ deleteAll: BOOL }),
     confirm: (ctx, v) => (v.deleteAll ? {
       message: 'Delete all chat history?',
-      detail: 'Every chat’s history that NeverQuestAlone keeps on this computer is deleted. The chat window in the game keeps its own copy of what it showed: /nqa delete removes a chat there. This can’t be undone.',
+      detail: 'Every chat’s history that Voxwarden keeps on this computer is deleted. The chat window in the game keeps its own copy of what it showed: /nqa delete removes a chat there. This can’t be undone.',
       okLabel: 'Delete all',
       destructive: true,
     } : null),
@@ -934,7 +934,7 @@ export const HANDLERS = {
     input: obj({ flavorDir: { type: 'string', minLength: 1, maxLength: 1024 }, tighten: BOOL, whenClosed: BOOL }, [], { optional: true }),
     confirm: (ctx, v) => (v?.tighten === true ? {
       message: 'Fix the addon folder’s permissions?',
-      detail: 'NeverQuestAlone takes away the write access other accounts on this computer have to World of Warcraft’s AddOns folder and the addon’s folders, where your account owns them. Folders another account or an administrator owns stay as they are.',
+      detail: 'Voxwarden takes away the write access other accounts on this computer have to World of Warcraft’s AddOns folder and the addon’s folders, where your account owns them. Folders another account or an administrator owns stay as they are.',
       okLabel: 'Fix permissions',
     } : null),
     run: async (ctx, v) => {
@@ -997,7 +997,7 @@ export const HANDLERS = {
     input: NONE,
     confirm: () => ({
       message: 'Fix the addon folder’s permissions?',
-      detail: 'NeverQuestAlone takes away the write access other accounts on this computer have to World of Warcraft’s AddOns folder and the addon’s folders, where your account owns them. Nothing else changes, and WoW can stay open.',
+      detail: 'Voxwarden takes away the write access other accounts on this computer have to World of Warcraft’s AddOns folder and the addon’s folders, where your account owns them. Nothing else changes, and WoW can stay open.',
       okLabel: 'Fix permissions',
     }),
     run: ctx => ctx.api.tightenAddonPermissions(),
@@ -1097,8 +1097,8 @@ export const HANDLERS = {
       return { version: s.available?.version };
     },
     confirm: (ctx, v, prep) => ({
-      message: prep.version ? `Restart NeverQuestAlone to update to ${prep.version}?` : 'Restart NeverQuestAlone to update?',
-      detail: 'NeverQuestAlone quits, installs the update and starts again. Anything waiting in game is sent once it’s back.',
+      message: prep.version ? `Restart Voxwarden to update to ${prep.version}?` : 'Restart Voxwarden to update?',
+      detail: 'Voxwarden quits, installs the update and starts again. Anything waiting in game is sent once it’s back.',
       okLabel: 'Restart to update',
     }),
     run: ctx => ctx.updater.installNow(),
@@ -1108,16 +1108,16 @@ export const HANDLERS = {
   uninstall: {
     input: obj({ removeAddon: BOOL }),
     confirm: (ctx, v) => ({
-      message: 'Uninstall NeverQuestAlone?',
+      message: 'Uninstall Voxwarden?',
       detail: [
         'This removes:',
         // The game's copy of the chats goes with the addon (code health AP-11; app-api uninstall).
-        v.removeAddon ? '• the NeverQuestAlone addon, its folders and chats in WoW' : null,
+        v.removeAddon ? '• the Voxwarden addon, its folders and chats in WoW' : null,
         '• the app’s data (chat history, memory, usage, settings)',
         `• your saved keys in ${storeName(ctx.platform)}`,
         '• the login item',
         ctx.platform === 'darwin' ? '• the Screen Recording permission' : null,
-        `Then NeverQuestAlone quits. ${finishLine(ctx.platform)}`,
+        `Then Voxwarden quits. ${finishLine(ctx.platform)}`,
       ].filter(Boolean).join('\n'),
       okLabel: 'Uninstall',
       destructive: true,
@@ -1157,7 +1157,7 @@ export async function diagnosticsText(ctx) {
   const shell = ctx.ledger.snapshot();
   const upd = ctx.updater.status();
   const lines = [
-    '== NeverQuestAlone (desktop shell) ==',
+    '== Voxwarden (desktop shell) ==',
     `version ${info.version} · Electron ${info.electron} · Chrome ${info.chrome} · Node ${info.node}`,
     `${info.platform} ${info.arch} · ${info.packaged ? 'packaged' : 'unpackaged'} · bridge: ${info.apiMode}`,
     `shell connections: ${shell.allowed.map(r => `${r.host}:${r.port} ×${r.count} (${r.feature})`).join(', ') || 'none'}`,

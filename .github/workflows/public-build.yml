@@ -2,17 +2,17 @@
 # GitHub's runners and attested (GitHub artifact attestations), so anyone can check that a build came from
 # this repository's tag and was made by this workflow:
 #
-#   gh run download <run id> -R tommygeoco/neverquestalone -p 'public-build-*'
-#   gh attestation verify <file> -R tommygeoco/neverquestalone \
-#     --signer-workflow tommygeoco/neverquestalone/.github/workflows/public-build.yml \
+#   gh run download <run id> -R davrodwconnections/voxwarden -p 'public-build-*'
+#   gh attestation verify <file> -R davrodwconnections/voxwarden \
+#     --signer-workflow davrodwconnections/voxwarden/.github/workflows/public-build.yml \
 #     --source-ref refs/tags/v<version>
 #
 # What it proves: the tagged source builds, and these files are what this workflow built from it. What it
-# doesn't: NeverQuestAlone's own downloads are built privately and signed (Apple's notarization,
+# doesn't: Voxwarden's own downloads are built privately and signed (Apple's notarization,
 # Microsoft-verified signing), so they aren't these files, and nothing yet shows that a signed download holds
 # this source (reproducible builds come later).
 #
-# It builds the app the tree's package.json names (its "plugin": plugins/wow/, NeverQuestAlone), for macOS
+# It builds the app the tree's package.json names (its "plugin": plugins/wow/, Voxwarden), for macOS
 # (the universal DMG and one zip per architecture, as a release has them) and Windows (the installer),
 # unsigned: no certificate, keychain discovery off, no publisher pinned. It runs on a v* tag (the release
 # workflow makes one per release) and by hand (Actions > public-build > Run workflow, on a tag). Only a tag's

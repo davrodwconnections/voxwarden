@@ -53,7 +53,7 @@ function writeSavedVariables(flavorDir, entries, { ageMs = 0 } = {}) {
   const dir = path.join(flavorDir, 'WTF', 'Account', 'TESTACCOUNT', 'SavedVariables');
   fs.mkdirSync(dir, { recursive: true });
   const rows = entries.map(e => `\t\t{\n\t\t\t["key"] = "${e.key}",\n\t\t\t["hex"] = "${Buffer.from(e.wire, 'utf8').toString('hex')}",\n\t\t},\n`).join('');
-  const file = path.join(dir, 'NeverQuestAlone.lua');
+  const file = path.join(dir, 'Voxwarden.lua');
   const tmp = `${file}.tmp`;
   fs.writeFileSync(tmp, `NQADB = {\n\t["token"] = "${TOKEN}",\n\t["outbox"] = {\n${rows}\t},\n}\n`);
   if (ageMs) { const at = new Date(Date.now() - ageMs); fs.utimesSync(tmp, at, at); }

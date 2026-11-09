@@ -182,6 +182,6 @@ test('keystore: the real OS keychain (opt-in: NQA_TEST_REAL_KEYCHAIN=1)', { skip
   assert.equal(await ks.get('anthropic'), null);
 });
 
-// D-06: keys an earlier alpha build saved under the service "NeverQuestAlone" move to "NeverQuestAlone"
+// D-06: keys an earlier alpha build saved under the service "Voxwarden" move to "Voxwarden"
 // once: read, write, delete; a key already under the new name wins; the first refusal stops it
 // (the player is asked at most once), and nothing ever reaches the log.

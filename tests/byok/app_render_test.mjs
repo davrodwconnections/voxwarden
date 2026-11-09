@@ -86,14 +86,14 @@ test('index.html: a CSP meta with no inline script, no remote anything, and no i
   }
   assert.doesNotMatch(html, /\son[a-z]+\s*=/i, 'no inline handlers');
   // The only image is the welcome's route on the map, a local SVG file (CL-design-23; the in-game still is
-  // gone in the app trim); NeverQuestAlone is the Dock icon's glass skull, lit and unlit, drawn by the stylesheet in the panel.
+  // gone in the app trim); Voxwarden is the Dock icon's glass skull, lit and unlit, drawn by the stylesheet in the panel.
   const imgs = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"[^>]*>/g)].map(m => m[1]);
   assert.deepEqual(imgs, ['img/route-map.svg']);
-  assert.deepEqual([...html.matchAll(/<span class="bones" data-face="([a-z]+)"><\/span>/g)].map(m => m[1]), ['active', 'inactive'], 'NeverQuestAlone: lit and unlit, in the panel');
+  assert.deepEqual([...html.matchAll(/<span class="bones" data-face="([a-z]+)"><\/span>/g)].map(m => m[1]), ['active', 'inactive'], 'Voxwarden: lit and unlit, in the panel');
   assert.doesNotMatch(html, /<use\b|<svg\b/, 'no inline mark');
   assert.doesNotMatch(html, /\sstyle\s*=|<style/i, 'no inline style');
   assert.doesNotMatch(html, /https?:\/\//, 'no remote URLs');
-  // The stylesheet loads only the renderer's own files: its fonts, its line icons and NeverQuestAlone's skull.
+  // The stylesheet loads only the renderer's own files: its fonts, its line icons and Voxwarden's skull.
   const css = read(path.join(R, 'style.css'));
   assert.doesNotMatch(css, /@import|https?:\/\/|data:/, 'nothing remote, nothing inline');
   const urls = [...css.matchAll(/url\(([^)]+)\)/g)].map(m => m[1]);
@@ -184,7 +184,7 @@ test('the window and the tray read the one vocabulary the bridge publishes (stat
   const main = read(path.join(APP, 'main.mjs'));
   assert.match(main, /trayLine\(lastStatus, \{ setup: !onboarded \}\)/);
   assert.match(main, /STRINGS\.tray\.tooltip\.replace\('\{line\}', line\)/);
-  assert.doesNotMatch(main, /'(Pause|Quit) NeverQuestAlone'/, 'the items are the table’s');
+  assert.doesNotMatch(main, /'(Pause|Quit) Voxwarden'/, 'the items are the table’s');
   // No copy of the words anywhere in the app.
   for (const f of [path.join(R, 'format.js'), path.join(APP, 'src', 'status-text.mjs')]) {
     const src = code(read(f));
@@ -195,7 +195,7 @@ test('desktop notifications (ER-5): once per condition, held in combat, off with
   const shown = [];
   let enabled = true;
   const n = createNotifier({ show: x => shown.push(x), enabled: () => enabled });
-  const st = (state, extra = {}) => ({ backend: { rt: { state }, provider: { name: 'Anthropic', companion: 'NeverQuestAlone' }, usage: { capMicros: 1000000 } }, wow: extra });
+  const st = (state, extra = {}) => ({ backend: { rt: { state }, provider: { name: 'Anthropic', companion: 'Voxwarden' }, usage: { capMicros: 1000000 } }, wow: extra });
   n.update(st('ready'));
   assert.equal(shown.length, 0);
   n.update(st('out_of_credit', { combat: true }));
@@ -218,12 +218,12 @@ test('desktop notifications (ER-5): once per condition, held in combat, off with
   const all = [];
   const m = createNotifier({ show: x => all.push(x) });
   const said = (rt, provider) => { m.update({ backend: { rt, provider, usage: {} } }); m.update({ backend: { rt: { state: 'ready' }, provider } }); return all.at(-1); };
-  assert.deepEqual([said({ state: 'out_of_credit' }, { name: 'Anthropic' }).title, all.at(-1).body], ['Your Anthropic account is out of credit.', 'Add credit at Anthropic, then test your key in NeverQuestAlone.']);
+  assert.deepEqual([said({ state: 'out_of_credit' }, { name: 'Anthropic' }).title, all.at(-1).body], ['Your Anthropic account is out of credit.', 'Add credit at Anthropic, then test your key in Voxwarden.']);
   assert.deepEqual([said({ state: 'local_down' }, { name: 'Ollama', companion: 'Nova' }).title, all.at(-1).body], ['Nova can’t reach Ollama.', 'Start Ollama, then click Retry in game.']);
-  assert.deepEqual([said({ state: 'key_invalid' }, { name: 'OpenAI' }).title, all.at(-1).body], ['Your OpenAI key was rejected.', 'Replace it in NeverQuestAlone.']);
-  assert.deepEqual([said({ state: 'out_of_credit' }, {}).title, all.at(-1).body], ['Your account at your AI company is out of credit.', 'Add credit at your AI company, then test your key in NeverQuestAlone.']);
+  assert.deepEqual([said({ state: 'key_invalid' }, { name: 'OpenAI' }).title, all.at(-1).body], ['Your OpenAI key was rejected.', 'Replace it in Voxwarden.']);
+  assert.deepEqual([said({ state: 'out_of_credit' }, {}).title, all.at(-1).body], ['Your account at your AI company is out of credit.', 'Add credit at your AI company, then test your key in Voxwarden.']);
   assert.equal(said({ state: 'key_invalid' }, {}).title, 'Your key was rejected.');
-  assert.equal(said({ state: 'local_down' }, {}).title, 'NeverQuestAlone can’t reach the app that runs your model.');
+  assert.equal(said({ state: 'local_down' }, {}).title, 'Voxwarden can’t reach the app that runs your model.');
   for (const x of all) assert.doesNotMatch(`${x.title} ${x.body}`, /provider|press |\{[a-z]+\}|Your your|undefined/i);
 });
 
@@ -231,7 +231,7 @@ test('update notices go through the same notifier: off with the setting, held in
   const shown = [];
   let enabled = true;
   const n = createNotifier({ show: x => shown.push(x), enabled: () => enabled });
-  const upd = { title: 'NeverQuestAlone 0.2.0 is available', body: 'Click to download it.', page: 'updates' };
+  const upd = { title: 'Voxwarden 0.2.0 is available', body: 'Click to download it.', page: 'updates' };
   const st = combat => ({ backend: { rt: { state: 'ready' } }, wow: { combat } });
   assert.equal(n.notify(upd), upd);
   assert.equal(shown.length, 1);
@@ -271,7 +271,7 @@ test('the window has the switch for desktop notifications (ER-5: can be turned o
 
 // ---------------------------------------------------------------------------
 // The window itself, run in a small DOM (helpers/mini-dom.mjs) over the real IPC layer and the mock
-// API (helpers/page-rig.mjs): NeverQuestAlone's panel, Home and its one card, the banners and notices, Your AI,
+// API (helpers/page-rig.mjs): Voxwarden's panel, Home and its one card, the banners and notices, Your AI,
 // Usage and the daily spend limit, Connections, Last request, Settings and its pages (the redesign's
 // build spec §4–§6; setup is tests/byok/app_setup_test.mjs).
 
@@ -300,7 +300,7 @@ const open = async (r, page) => {
 };
 const rowLine = r => r.document.querySelector('#page .set-line');
 
-test('NeverQuestAlone’s panel after setup (the 1.3 refresh): no name label, pill, dot or speech line; his state is in his eye (lit in game, red when something needs you, dark when WoW is closed), its word beside the portrait on hover and in the portrait button’s name, said in the live region when it changes; the button opens Home; his eyes, never on the stage', async () => {
+test('Voxwarden’s panel after setup (the 1.3 refresh): no name label, pill, dot or speech line; his state is in his eye (lit in game, red when something needs you, dark when WoW is closed), its word beside the portrait on hover and in the portrait button’s name, said in the live region when it changes; the button opens Home; his eyes, never on the stage', async () => {
   const cases = [
     [IN_GAME, 'In game', 'ok', 'happy'],
     [READY, 'WoW closed', 'neutral', 'away'],
@@ -324,7 +324,7 @@ test('NeverQuestAlone’s panel after setup (the 1.3 refresh): no name label, pi
     assert.equal(tip.getAttribute('data-tone'), tone, word);
     assert.equal(tip.getAttribute('aria-hidden'), 'true', 'the button’s name says it once');
     const bb = r.document.getElementById('bones-btn');
-    assert.equal(bb.getAttribute('aria-label'), `NeverQuestAlone: ${word}. Open Home.`, word);
+    assert.equal(bb.getAttribute('aria-label'), `Voxwarden: ${word}. Open Home.`, word);
     assert.equal(bb.getAttribute('aria-hidden'), null, word);
     assert.equal(r.document.getElementById('portrait').getAttribute('data-mood'), mood, word);
     for (const id of ['says', 'pill', 'who-name', 'badge']) assert.equal(r.document.getElementById(id), null, `no #${id}`);
@@ -343,8 +343,8 @@ test('NeverQuestAlone’s panel after setup (the 1.3 refresh): no name label, pi
   await ch.press(ch.document.querySelector('[data-nav="settings"]'));
   ch.mock.control.patch({ wow: { found: true, running: true } });
   await ch.push();
-  assert.ok(ch.liveText().includes('NeverQuestAlone: In game.'), ch.liveText().join(' | '));
-  // NeverQuestAlone is the panel's alone: the stage never draws him (spec §5), and no stage words are his.
+  assert.ok(ch.liveText().includes('Voxwarden: In game.'), ch.liveText().join(' | '));
+  // Voxwarden is the panel's alone: the stage never draws him (spec §5), and no stage words are his.
   const html = read(path.join(R, 'index.html'));
   assert.match(html, /<aside class="companion"[\s\S]*<button type="button" class="bones-btn" id="bones-btn"[^>]*>\s*<span class="portrait" id="portrait" data-mood="idle" data-state="inactive"[^>]*>\s*<span class="bones" data-face="active"><\/span><span class="bones" data-face="inactive"><\/span>[\s\S]*<p class="wordmark" id="wordmark"[^>]*>[\s\S]*<\/aside>/);
   assert.equal((html.match(/class="bones"/g) || []).length, 2, 'one place draws him');
@@ -427,9 +427,9 @@ test('the nav: four pages (Home, Your AI, Your data, Settings) and a warn dot on
   assert.equal(r.live(), live, 'the same live region after every page');
 });
 
-test('Home: NeverQuestAlone’s condition as the title (in game, joining, WoW closed, paused, no AI); the route card (what NeverQuestAlone does in game); one compact row for the AI and today’s spend (values as data) that opens Your AI', async () => {
+test('Home: Voxwarden’s condition as the title (in game, joining, WoW closed, paused, no AI); the route card (what Voxwarden does in game); one compact row for the AI and today’s spend (values as data) that opens Your AI', async () => {
   const r = await pageRig({ state: IN_GAME });
-  assert.equal(titleText(r), 'NeverQuestAlone is in game');
+  assert.equal(titleText(r), 'Voxwarden is in game');
   assert.deepEqual(primaries(r).map(label), [], 'nothing to do: Pause is quiet');
   assert.equal(label(fk(r, 'pause')), 'Pause');
   // No route drawn yet: no card and no slogan, nothing but the page's own title and the AI row (APP-D-28).
@@ -462,7 +462,7 @@ test('Home: NeverQuestAlone’s condition as the title (in game, joining, WoW cl
   await r.press(fk(r, 'pause'));
   assert.ok(r.calls.some(c => c[0] === 'setPaused'), 'Pause pauses');
   await r.push();
-  assert.equal(titleText(r), 'NeverQuestAlone is paused');
+  assert.equal(titleText(r), 'Voxwarden is paused');
   assert.deepEqual(primaries(r).map(label), ['Resume'], 'Resume, the way out, is the one primary');
   const closed = await pageRig({ state: READY });
   assert.equal(titleText(closed), 'WoW is closed');
@@ -471,9 +471,9 @@ test('Home: NeverQuestAlone’s condition as the title (in game, joining, WoW cl
   await closed.press(primaries(closed)[0]);
   assert.ok(closed.calls.some(c => c[0] === 'openGame'));
   const joining = await pageRig({ state: { ...IN_GAME, capture: { state: 'waiting', mode: 'capture', signals: 'unknown', steps: { game: true, strip: false, message: false, reply: false } } } });
-  assert.equal(titleText(joining), 'NeverQuestAlone is joining the game');
+  assert.equal(titleText(joining), 'Voxwarden is joining the game');
   const noAi = await pageRig({ state: {} });
-  assert.equal(titleText(noAi), 'NeverQuestAlone has no AI yet');
+  assert.equal(titleText(noAi), 'Voxwarden has no AI yet');
   assert.deepEqual(primaries(noAi).map(label), ['Pick an AI']);
   // A daily limit the player set: the XP bar, 10 segments, a meter with words.
   const lim = await pageRig({ state: { ...IN_GAME, caps: { dailyUsd: 1 }, spentMicros: 420_000 } });
@@ -518,13 +518,13 @@ test('Home’s card (spec §6.2): the title says one thing needs you; one card, 
   assert.equal(alert(r), null);
   // Every state card's words (spec §6.2's table): whole sentences, the AI company named, no "provider".
   const words = async (state) => { const x = await pageRig({ state }); const c = alert(x); return c ? [c.querySelector('.alert-head').textContent, c.querySelector('.alert-sub')?.textContent ?? null, c.querySelectorAll('button').map(label)] : null; };
-  assert.deepEqual(await words({ choice: HAIKU, addonInstalled: true }), ['No key from Anthropic yet.', 'Add one so NeverQuestAlone can answer.', ['Add key', 'Pick another AI']]);
-  assert.deepEqual(await words({ ...READY, rt: { state: 'slowed', retryIn: 18 } }), ['Anthropic asked NeverQuestAlone to slow down.', 'Trying again in 18 seconds.', []]);
-  assert.deepEqual(await words({ ...READY, rt: { state: 'slowed' } }), ['Anthropic asked NeverQuestAlone to slow down.', 'Trying again soon.', []]);
+  assert.deepEqual(await words({ choice: HAIKU, addonInstalled: true }), ['No key from Anthropic yet.', 'Add one so Voxwarden can answer.', ['Add key', 'Pick another AI']]);
+  assert.deepEqual(await words({ ...READY, rt: { state: 'slowed', retryIn: 18 } }), ['Anthropic asked Voxwarden to slow down.', 'Trying again in 18 seconds.', []]);
+  assert.deepEqual(await words({ ...READY, rt: { state: 'slowed' } }), ['Anthropic asked Voxwarden to slow down.', 'Trying again soon.', []]);
   assert.deepEqual(await words({ ...READY, rt: { state: 'out_of_credit' } }), ['Your Anthropic account is out of credit.', 'Add credit, then test.', ['Add credit at Anthropic', 'Test key']], 'the fix first: a banner shows only its first (CL-words-22)');
-  assert.deepEqual(await words({ ...READY, caps: { dailyUsd: 1 }, spentMicros: 1_000_000 }), ['You’ve reached your daily spend limit.', 'NeverQuestAlone rests until midnight.', ['Raise limit']], 'the numbers are beside it already (CL-words-24)');
-  assert.deepEqual(await words({ ...READY, caps: { dailyUsd: 1 }, spentMicros: 860_000 }), ['Today’s spend is near your limit.', 'NeverQuestAlone stops at $1.00, back at midnight.', ['Raise limit']]);
-  assert.deepEqual(await words({ ...READY, rt: { state: 'provider_down' } }), ['Anthropic isn’t answering.', 'NeverQuestAlone tries again with your next message.', ['Check again', 'Pick another AI']], 'not the key (CL-words-22)');
+  assert.deepEqual(await words({ ...READY, caps: { dailyUsd: 1 }, spentMicros: 1_000_000 }), ['You’ve reached your daily spend limit.', 'Voxwarden rests until midnight.', ['Raise limit']], 'the numbers are beside it already (CL-words-24)');
+  assert.deepEqual(await words({ ...READY, caps: { dailyUsd: 1 }, spentMicros: 860_000 }), ['Today’s spend is near your limit.', 'Voxwarden stops at $1.00, back at midnight.', ['Raise limit']]);
+  assert.deepEqual(await words({ ...READY, rt: { state: 'provider_down' } }), ['Anthropic isn’t answering.', 'Voxwarden tries again with your next message.', ['Check again', 'Pick another AI']], 'not the key (CL-words-22)');
   assert.deepEqual(await words({ ...CUSTOM_LOCAL, rt: { state: 'local_down' } }), ['Can’t reach localhost:11434.', 'Start your model app.', ['Check again']]);
   assert.deepEqual(await words({ ...READY, choice: { provider: 'anthropic', model: 'claude-sonnet-5', effort: 'low' }, notice: { kind: 'model_retired', model: 'claude-sonnet-5', at: 1 } }), ['Your model was retired.', 'Pick another to keep playing.', ['Pick another model']]);
   // No limits of ours (the owner, 2026-09-26): spending a lot is no state at all without a limit the player set.
@@ -577,7 +577,7 @@ test('code health BR-11, BR-09: chats that can’t be saved, and a limit held be
   const full = { file: 'records.json', code: 'ENOSPC', at: 1, diskFull: true };
   const r = await pageRig({ state: { ...IN_GAME, writeError: full } });
   assert.equal(titleText(r), 'One thing needs you');
-  assert.deepEqual(words(r), ['Your disk is full, so chats aren’t saved.', 'Free up space, and NeverQuestAlone saves them.', []]);
+  assert.deepEqual(words(r), ['Your disk is full, so chats aren’t saved.', 'Free up space, and Voxwarden saves them.', []]);
   assert.match(alert(r).className, /\balert-bad\b/);
   assert.equal(r.byText('Okay').length, 0, 'no Okay while it holds');
   assert.equal(r.statusText(), 'Needs you', 'his word says it too');
@@ -595,14 +595,14 @@ test('code health BR-11, BR-09: chats that can’t be saved, and a limit held be
   assert.equal(r.statusText(), 'In game');
   // Any other write error: not a full disk (the store says which), so not that step (bones-ux-writer UX-W03).
   assert.deepEqual(words(await pageRig({ state: { ...IN_GAME, writeError: { file: 'outbox.jsonl', code: 'EROFS', at: 2, diskFull: false } } })),
-    ['NeverQuestAlone can’t save your chats.', 'Restart your computer if it keeps happening.', []]);
+    ['Voxwarden can’t save your chats.', 'Restart your computer if it keeps happening.', []]);
   // One card: a state with a fix of its own comes first, and the full disk's card follows it.
   assert.deepEqual(words(await pageRig({ state: { ...IN_GAME, writeError: full, rt: { state: 'out_of_credit' } } }))[0], 'Your Anthropic account is out of credit.');
   // A limit held because today's spend couldn't be read (BR-09: rt cap, reason load_error, usage.held): its own words,
   // and its fix, Set limit, is the page's one primary.
   const held = await pageRig({ state: { ...IN_GAME, caps: { dailyUsd: 1 }, spentMicros: 120_000, held: true } });
   assert.equal(titleText(held), 'One thing needs you');
-  assert.deepEqual(words(held), ['Today’s spend couldn’t be read, so NeverQuestAlone rests.', 'Set your limit again to count from now.', ['Set limit']]);
+  assert.deepEqual(words(held), ['Today’s spend couldn’t be read, so Voxwarden rests.', 'Set your limit again to count from now.', ['Set limit']]);
   assert.deepEqual(primaries(held).map(label), ['Set limit']);
   assert.equal(held.statusText(), 'Needs you');
   // The spend the bridge reports while held is the limit, not what was spent: the strip says it's unknown, with
@@ -633,19 +633,19 @@ test('code health BR-11, BR-09: chats that can’t be saved, and a limit held be
   const shown = [];
   const n = createNotifier({ show: x => shown.push(x) });
   n.update(hs);
-  assert.deepEqual(shown.map(x => [x.kind, x.title, x.body, x.page]), [['cap_unread', 'Today’s spend couldn’t be read, so Nova rests.', 'Set your limit again in NeverQuestAlone.', 'home']]);
+  assert.deepEqual(shown.map(x => [x.kind, x.title, x.body, x.page]), [['cap_unread', 'Today’s spend couldn’t be read, so Nova rests.', 'Set your limit again in Voxwarden.', 'home']]);
   n.update({ backend: { ...hs.backend, rt: { state: 'cap', reason: 'cap_spend' }, usage: { capMicros: 1_000_000, needs: 'cap' } } });
   assert.equal(shown.at(-1).title, 'You’ve reached your daily spend limit ($1.00).', 'a limit reached later is said as before');
 });
 
 // A message the bridge couldn't record because a write on this computer failed (local_write: a full disk, a folder
 // it can't write). The card's line is the bridge's step, the first time too, and it has no button: Retry is the
-// game's (bones-ux-writer UX-W07). The desktop notification's "Open NeverQuestAlone for the fix." leads to it.
+// game's (bones-ux-writer UX-W07). The desktop notification's "Open Voxwarden for the fix." leads to it.
 test('UX-W07: a message a write on this computer kept from going: Home’s card says the step, the first time too, with no button (Retry is in game), for a full disk and any other write error; the notification leads there', async () => {
   const words = x => { const c = alert(x); return c ? [c.querySelector('.alert-head').textContent, c.querySelector('.alert-sub')?.textContent ?? null, c.querySelectorAll('button').map(label)] : null; };
   for (const [code, head, sub] of [
     ['ENOSPC', 'Your disk is full, so nothing was sent.', 'Free up space, then click Retry in game.'],
-    ['EACCES', 'NeverQuestAlone couldn’t save on this computer, so nothing was sent.', 'Click Retry in game, or restart your computer.'],
+    ['EACCES', 'Voxwarden couldn’t save on this computer, so nothing was sent.', 'Click Retry in game, or restart your computer.'],
   ]) {
     const r = await pageRig({ state: { ...IN_GAME, lastError: { kind: 'local_write', code, at: 7 } } });
     assert.equal(titleText(r), 'One thing needs you', code);
@@ -655,15 +655,15 @@ test('UX-W07: a message a write on this computer kept from going: Home’s card 
     // Main's notifier on the same status: a click opens Home, where the card above has the fix.
     const shown = [];
     createNotifier({ show: x => shown.push(x) }).update(await r.api.status());
-    assert.deepEqual(shown.map(x => [x.title, x.body, x.page]), [[head, 'Open NeverQuestAlone for the fix.', 'home']], code);
+    assert.deepEqual(shown.map(x => [x.title, x.body, x.page]), [[head, 'Open Voxwarden for the fix.', 'home']], code);
   }
 });
 
 test('D-05: a start that failed says “couldn’t start” and stays, with Quit and reopen and Copy diagnostics; setup shows it too', async () => {
-  const r = await pageRig({ state: { ...READY, rt: { state: 'provider_down', reason: 'bridge_unavailable' } }, apiMode: 'error', apiReason: 'the bridge failed to start: Another copy of NeverQuestAlone is already running for this World of Warcraft (pid 4242). Quit it first.' });
+  const r = await pageRig({ state: { ...READY, rt: { state: 'provider_down', reason: 'bridge_unavailable' } }, apiMode: 'error', apiReason: 'the bridge failed to start: Another copy of Voxwarden is already running for this World of Warcraft (pid 4242). Quit it first.' });
   assert.equal(titleText(r), 'One thing needs you', 'the card says what; the title never repeats it');
   const a = alert(r);
-  assert.equal(a.querySelector('.alert-head').textContent, 'NeverQuestAlone couldn’t start.');
+  assert.equal(a.querySelector('.alert-head').textContent, 'Voxwarden couldn’t start.');
   assert.equal(a.querySelector('.alert-sub').textContent, 'Another copy’s open.');
   assert.doesNotMatch(a.textContent, /bridge|pid/i, 'no plumbing words, no error text');
   assert.equal(r.byText('Okay').length, 0);
@@ -678,7 +678,7 @@ test('D-05: a start that failed says “couldn’t start” and stays, with Quit
   await other.press(fk(other, 'quit-reopen'));
   assert.ok(other.calls.some(c => c[0] === 'relaunch'));
   const s = await pageRig({ onboarded: false, apiMode: 'error', apiReason: 'x' });
-  assert.match(s.bannerText(), /NeverQuestAlone couldn’t start\./);
+  assert.match(s.bannerText(), /Voxwarden couldn’t start\./);
 });
 
 test('D-01 (rest): a failure no rt state covers, which the game sends to the desktop, is the card from the bridge’s line with its fix; two bad requests in a row say so; it goes with the next reply', async () => {
@@ -730,15 +730,15 @@ test('D-01 (rest): a failure no rt state covers, which the game sends to the des
 test('fix-102: a bridge that stopped while the window stayed says it needs a restart (not that it couldn’t start), with Quit and reopen; Your AI’s Test key whose fix is a restart has the same button', async () => {
   const r = await pageRig({ state: { ...READY, rt: { state: 'not_running', reason: 'app_stopped' } } });
   const a = alert(r);
-  assert.equal(a.querySelector('.alert-head').textContent, 'NeverQuestAlone needs a restart.');
+  assert.equal(a.querySelector('.alert-head').textContent, 'Voxwarden needs a restart.');
   assert.equal(a.querySelector('.alert-sub').textContent, 'Your keys and settings are kept.');
   assert.doesNotMatch(a.textContent, /couldn’t start|internet/i);
   await r.press(fk(r, 'quit-reopen'));
   assert.ok(r.calls.some(c => c[0] === 'relaunch'));
-  const y = await pageRig({ state: { ...READY, results: { testKey: { ok: false, error: 'egress_blocked', action: 'restart', headline: 'NeverQuestAlone needs a restart.', detail: 'Click Quit and reopen.' } } }, hash: 'provider' });
+  const y = await pageRig({ state: { ...READY, results: { testKey: { ok: false, error: 'egress_blocked', action: 'restart', headline: 'Voxwarden needs a restart.', detail: 'Click Quit and reopen.' } } }, hash: 'provider' });
   await y.press(fk(y, 'now-test'));
   const out = y.document.querySelector('#key-row .set-line');
-  assert.match(out.textContent, /^NeverQuestAlone needs a restart\./);
+  assert.match(out.textContent, /^Voxwarden needs a restart\./);
   assert.deepEqual(out.querySelectorAll('button').map(b => b.textContent.trim()), ['Quit and reopen']);
   await y.press(out.querySelector('button'));
   assert.ok(y.calls.some(c => c[0] === 'relaunch'));
@@ -764,7 +764,7 @@ test('D-36 and D-38: a card’s check that passes clears the trouble behind it a
   assert.equal(c.document.querySelector('#banners .notice-ok'), null, 'and no “ready again” notice takes its place');
   const d = await pageRig({ state: { ...READY, rt: { state: 'provider_down' } } });
   // Not the key (CL-words-22): Check again, and the next message tries again anyway.
-  assert.equal(alert(d).querySelector('.alert-sub').textContent, 'NeverQuestAlone tries again with your next message.');
+  assert.equal(alert(d).querySelector('.alert-sub').textContent, 'Voxwarden tries again with your next message.');
   d.mock.control.reset({ ...READY });
   await d.click('Check again');
   await d.push();
@@ -792,7 +792,7 @@ test('UX-W31: a test on Your AI that fails for the reason a card says is the car
     ['rejected', { ...READY, keys: { anthropic: { masked: 'sk-ant-…xxxx', state: 'invalid' } }, results: fail('auth_invalid', { action: 'replace_key' }) }, 'Anthropic still rejects this key.'],
     ['spend limit', { ...READY, lastError: { kind: 'spend_limit', at: 1 }, results: fail('spend_limit', { action: 'provider_limits' }) }, 'Still at the spend limit you set at Anthropic.'],
     ['daily limit', { ...READY, caps: { dailyUsd: 1 }, spentMicros: 1_000_000, results: fail('cap_spend', { action: 'caps' }) }, 'Still at your daily spend limit.'],
-    ['slowed', { ...READY, rt: { state: 'slowed', retryIn: 18 }, results: fail('rate_limited', { action: 'retry' }) }, 'Anthropic still asks NeverQuestAlone to slow down.'],
+    ['slowed', { ...READY, rt: { state: 'slowed', retryIn: 18 }, results: fail('rate_limited', { action: 'retry' }) }, 'Anthropic still asks Voxwarden to slow down.'],
     ['region', { ...OPENAI, lastError: { kind: 'region_blocked', at: 1 }, results: fail('region_blocked', { action: 'pick_provider' }) }, 'OpenAI still isn’t available where you are.'],
     ['blocked install', { ...OPENAI, lastError: { kind: 'identifier_blocked', at: 1 }, results: fail('identifier_blocked', { action: 'pick_provider' }) }, 'OpenAI still blocks this install.'],
     ['retired model', { ...READY, choice: { provider: 'anthropic', model: 'claude-sonnet-5', effort: 'low' }, notice: { kind: 'model_retired', model: 'claude-sonnet-5', at: 1 }, results: fail('model_not_found', { action: 'pick_model' }) }, 'Claude Sonnet 5 is still retired.'],
@@ -1017,7 +1017,7 @@ test('Your AI, Change: step 2’s rows here with ‹ Your AI; a key for another 
   await r.press(fk(r, 'card-openai'));
   r.setClipboard(`sk-proj-CANARY${'x'.repeat(60)}`);
   await r.press(fk(r, 'paste-key'));
-  assert.equal(r.confirms.at(-1).message, 'Switch NeverQuestAlone to ChatGPT with this key?');
+  assert.equal(r.confirms.at(-1).message, 'Switch Voxwarden to ChatGPT with this key?');
   assert.equal(r.document.querySelector('#result-slot .result').textContent, 'ChatGPT is connected.');
   await r.press(fk(r, 'continue'));
   assert.equal(titleText(r), 'Your AI');
@@ -1065,7 +1065,7 @@ test('Spending (Your AI’s group, spec §6.4): today’s spend; the daily spend
   assert.equal(active(r).id, 'cap-dailyUsd', 'the amount, focused');
   assert.equal(field().value, '', 'empty: nothing pre-filled');
   assert.deepEqual(primaries(r).map(label), ['Save limit'], 'the one primary while editing');
-  assert.match(r.document.getElementById('limit-row').textContent, /NeverQuestAlone stops here, back at midnight\./, 'what the limit does, under the amount');
+  assert.match(r.document.getElementById('limit-row').textContent, /Voxwarden stops here, back at midnight\./, 'what the limit does, under the amount');
   await r.click('Cancel');
   assert.equal(field(), null, 'Cancel: No limit again');
   await r.click('Set a limit');
@@ -1121,7 +1121,7 @@ test('Spending (Your AI’s group, spec §6.4): today’s spend; the daily spend
   assert.equal(r.document.getElementById('sheet-title').textContent, 'Claude, in detail');
   const sheetText = r.sheetText();
   assert.match(sheetText, /Estimated from list prices/);
-  assert.match(sheetText, /NeverQuestAlone stops at your limit and starts again at midnight\./, 'one subject, as the page and the card (CL-words-50)');
+  assert.match(sheetText, /Voxwarden stops at your limit and starts again at midnight\./, 'one subject, as the page and the card (CL-words-50)');
   assert.equal(r.document.querySelectorAll('#sheet-host td').length, 0, 'no history cells');
   assert.equal(r.document.querySelectorAll('#sheet-host table').length, 0, 'no history tables');
   assert.doesNotMatch(sheetText, /Last replies|Last 30 days|By AI company/);
@@ -1183,7 +1183,7 @@ test('the notices (spec §4.14): a switched model (Pick another model, Okay for 
   const { needsPlayer } = await import('../../app/desktop/src/status-text.mjs');
   const running = await pageRig({ state: { ...READY, wow: { found: true, running: true, patch: { to: '16100', version: '1.61.0.71000', restart: true } } } });
   const n = running.document.querySelector('#banners .notice-warn');
-  assert.equal(n.querySelector('.notice-text').textContent, 'NeverQuestAlone updated the addon for the new version of World of Warcraft. Restart WoW to load it.');
+  assert.equal(n.querySelector('.notice-text').textContent, 'Voxwarden updated the addon for the new version of World of Warcraft. Restart WoW to load it.');
   assert.equal(running.document.querySelector('#banners .notice-stack'), null, 'Okay alone: one line');
   assert.equal(needsPlayer(await running.ipc.call('status')), true, 'the tray’s attention');
   await running.click('Okay');
@@ -1222,7 +1222,7 @@ test('SY-04: screen reading that fails while WoW runs is one notice with its nex
   const lost = await pageRig({ state: { ...READY, wow: { found: true, running: true }, capture: { ...waiting, state: 'window_not_found' } } });
   const note = lost.document.querySelectorAll('#banners .notice').find(n => n.textContent.includes('can’t see the game'));
   assert.ok(note, lost.bannerText());
-  assert.match(note.querySelector('.notice-text').textContent, /^NeverQuestAlone can’t see the game\. /);
+  assert.match(note.querySelector('.notice-text').textContent, /^Voxwarden can’t see the game\. /);
   assert.doesNotMatch(lost.bannerText(), /capture|strip|signal|pixel/i);
   await lost.press(note.querySelector('button'));
   assert.equal(lost.document.querySelectorAll('#banners .notice').filter(n => n.textContent.includes('can’t see the game')).length, 0, 'Okay puts it away until the state changes');
@@ -1357,7 +1357,7 @@ test('Your data (the nav’s page): three switches with short labels under who t
   const inGameOff = await pageRig({ state: { ...READY, setup: { game: { hello: { at: 1, sig: 'ok', mode: 'stream' } } } }, hash: 'privacy' });
   // A warning line, since the switch shows on (APP-D-48), saying where (SRS-W-05).
   assert.equal(inGameOff.document.querySelector('#pv-screenReading .set-sub'), null);
-  assert.equal(inGameOff.document.querySelector('#pv-screenReading .set-line-warn').textContent, 'Off in the addon’s Settings, under What NeverQuestAlone Knows.');
+  assert.equal(inGameOff.document.querySelector('#pv-screenReading .set-line-warn').textContent, 'Off in the addon’s Settings, under What Voxwarden Knows.');
   assert.equal(r.document.getElementById('sw-echo'), null, 'the chat-frame echo is Settings’');
   await r.press(r.document.getElementById('sw-identity'));
   assert.ok(r.calls.some(c => c[0] === 'setPrivacy' && c[1].identity === true));
@@ -1383,12 +1383,12 @@ test('Your data (the nav’s page): three switches with short labels under who t
   await nav(r, 'privacy');
   await r.press(fk(r, 'details'));
   const sheet = r.sheetText();
-  // Where it goes, first: your computer, straight to Anthropic; NeverQuestAlone gets nothing (CL-words-75).
+  // Where it goes, first: your computer, straight to Anthropic; Voxwarden gets nothing (CL-words-75).
   assert.deepEqual(r.document.querySelectorAll('#sheet-host .sheet-sec .label').map(l => l.textContent).slice(0, 2), ['Where it goes', 'At Anthropic']);
   // The picture is the first row of its card (the owner, 2026-10-03: organized, less cluttered).
   const flow = r.document.querySelector('#sheet-host .sheet-card .sheet-flow');
-  assert.equal(flow.getAttribute('aria-label'), 'Your messages and game data go from your Mac straight to Anthropic. Nothing goes to NeverQuestAlone.');
-  assert.match(r.document.querySelector('#sheet-host .sheet-card .sheet-row-off').textContent, /NeverQuestAloneGets nothing: no account, no tracking/);
+  assert.equal(flow.getAttribute('aria-label'), 'Your messages and game data go from your Mac straight to Anthropic. Nothing goes to Voxwarden.');
+  assert.match(r.document.querySelector('#sheet-host .sheet-card .sheet-row-off').textContent, /VoxwardenGets nothing: no account, no tracking/);
   assert.doesNotMatch(sheet, /Option to keep nothing|sales team/, 'no keep-nothing options');
   assert.doesNotMatch(sheet, /What the app asks|Uncheck the Game Data box|Other players’ chat is never sent|Other companies’ policies/, 'nothing but what it keeps, whether it trains, and the policy');
   assert.doesNotMatch(sheet, /sends only your message/, 'game data goes with every message, so the row never says only your message does (CL-words-69)');
@@ -1455,7 +1455,7 @@ test('Show more (Settings), Diagnostics, About with its updates: what protects y
   const asked = m.confirms.length;
   await m.press(fk(m, 'forget-all'));
   assert.equal(m.confirms.length, asked + 1, 'one confirm for every character (CL-player-60)');
-  assert.equal(m.confirms.at(-1).message, 'Forget what NeverQuestAlone remembers about all your characters?');
+  assert.equal(m.confirms.at(-1).message, 'Forget what Voxwarden remembers about all your characters?');
   assert.deepEqual(m.calls.filter(c => c[0] === 'forgetMemory').map(c => c[1]), ['Thokk-Testrealm', 'Brakka-Testrealm'], 'every character’s notes');
   assert.deepEqual(m.document.querySelectorAll('#memory-row .set-line').map(e => e.textContent), ['Forgotten.']);
   assert.equal(fk(m, 'forget-all'), null, 'nothing left to forget');
@@ -1479,7 +1479,7 @@ test('Show more (Settings), Diagnostics, About with its updates: what protects y
   assert.equal((await m.api.privacy()).echo, true, 'privacy echo, as in 1.1.0');
   assert.equal(m.document.querySelector('#pv-echo .set-line').textContent, 'Saved.');
   assert.equal(active(m).id, 'sw-echo', 'focus stays on the switch');
-  const tip = fs.readFileSync(path.join(HERE, '..', '..', 'addon', 'NeverQuestAlone', 'Settings.lua'), 'utf8');
+  const tip = fs.readFileSync(path.join(HERE, '..', '..', 'addon', 'Voxwarden', 'Settings.lua'), 'utf8');
   assert.ok(tip.includes('turn on Replies in chat frame under Settings, Show more.'), 'the game names this switch as the app does');
   // Diagnostics: one line about what the copy holds, the one button; no version, system or status rows.
   const d = await pageRig({ state: READY, hash: 'diagnostics' });
@@ -1514,26 +1514,26 @@ test('Show more (Settings), Diagnostics, About with its updates: what protects y
   assert.deepEqual(modes, ['never'], 'one switch for the one setting (the monthly-reminder mode is no longer offered)');
   // Checks off (CL-words-79): the line says so, and the download page is one quiet click away; never a dead end.
   const off = { ...st, mode: 'never', state: 'idle', available: null };
-  const co = await pageRig({ state: READY, hash: 'about', releases: 'https://github.com/bones-co/neverquestalone/releases', info: { releases: true }, updater: { ...updater, status: () => ({ ...off }) } });
+  const co = await pageRig({ state: READY, hash: 'about', releases: 'https://github.com/bones-co/voxwarden/releases', info: { releases: true }, updater: { ...updater, status: () => ({ ...off }) } });
   assert.equal(co.document.querySelector('#page [data-key="updates"] .update-state').textContent, 'Update checks are off.');
   assert.deepEqual(co.document.querySelectorAll('#page [data-key="updates"] .row button').map(b => [label(b), b.className]), [['Open download page', 'btn btn-quiet btn-sm']]);
   assert.equal(co.document.getElementById('sw-auto-updates').getAttribute('aria-checked'), 'false');
   await co.press(fk(co, 'open-download'));
-  assert.deepEqual(co.opened, ['https://github.com/bones-co/neverquestalone/releases']);
+  assert.deepEqual(co.opened, ['https://github.com/bones-co/voxwarden/releases']);
   // An update already found stays said, checks off or not.
   const kept = await pageRig({ state: READY, hash: 'about', updater: { ...updater, status: () => ({ ...st, mode: 'never' }) } });
   assert.match(kept.pageText(), /Version 0\.2\.0 is available\./);
   const ab = await pageRig({ state: READY, hash: 'about' });
-  assert.match(ab.pageText(), /NeverQuestAlone 0\.1\.0\./);
+  assert.match(ab.pageText(), /Voxwarden 0\.1\.0\./);
   assert.doesNotMatch(ab.pageText(), /intelligent quest companion|picks which quests/, 'no second pitch: the welcome and Home say what he does');
-  assert.doesNotMatch(ab.pageText(), /not affiliated|an AI companion/, 'the legal text is one click away; NeverQuestAlone is never “an AI companion”');
+  assert.doesNotMatch(ab.pageText(), /not affiliated|an AI companion/, 'the legal text is one click away; Voxwarden is never “an AI companion”');
   assert.ok(fk(ab, 'legal').querySelector('.ico-chevron'), 'an inline disclosure’s chevron, never the sheet’s info icon (CL-design-57)');
   await ab.press(fk(ab, 'legal'));
   assert.equal(fk(ab, 'legal').getAttribute('aria-expanded'), 'true');
   assert.match(ab.pageText(), /not affiliated with or endorsed by Blizzard Entertainment/);
   assert.match(ab.pageText(), /Inter and JetBrains Mono, under the SIL Open Font License\./, 'the bundled faces credited');
   // The carve-out travels with the art (systems critic OS-06): under the license, as in the addon's NOTICE.txt.
-  assert.match(ab.document.querySelector('[data-key="license"]').textContent, /The license covers NeverQuestAlone’s code, not its name or its artwork: the skull logo, the icons and the pictures\.$/);
+  assert.match(ab.document.querySelector('[data-key="license"]').textContent, /The license covers Voxwarden’s code, not its name or its artwork: the original shield mark, icons and pictures\.$/);
   assert.equal(ab.document.querySelector('#page pre.code').getAttribute('tabindex'), '0');
   for (const x of [d, u, ab]) assert.equal(label(fk(x, 'back')), 'Back');
   for (const f of ['OFL-Inter.txt', 'OFL-JetBrainsMono.txt', 'inter-400.woff2', 'inter-500.woff2', 'jetbrains-mono-500.woff2']) assert.ok(fs.existsSync(path.join(R, 'fonts', f)), f);
@@ -1564,7 +1564,7 @@ test('L3-5, D-23, D-29, D-31, D-37: loose AddOns permissions: a calm line after 
   assert.match(adm.pageText(), /Stops other accounts from changing these folders; nothing else changes\./);
   const winLoose = { ...loose, fixable: false, paths: ['C:\\WoW\\_forever_\\Interface\\AddOns'], detail: 'Every account on this PC can change the AddOns folder, so another account could run addon code in your game.' };
   const w = await pageRig({ state: { addonInstalled: true, permissions: winLoose }, hash: 'diagnostics', platform: 'win32' });
-  assert.match(w.pageText(), /Other accounts can change your addons\. NeverQuestAlone works either way\./);
+  assert.match(w.pageText(), /Other accounts can change your addons\. Voxwarden works either way\./);
   assert.doesNotMatch(w.pageText(), /Optional\./, 'a sentence, never a fragment first (CL-words-53)');
   assert.doesNotMatch(w.pageText(), /has to fix it/, 'the detail is one click away');
   await w.press(fk(w, 'perm-details'));
@@ -1729,7 +1729,7 @@ test('format and tray words (D-05, D-21): views of the bridge’s states, the pl
   assert.equal(quiet[0].title, 'You’ve reached your daily spend limit.', 'no amount to name: no made-up $1.00');
   n.update({ backend: { rt: { state: 'key_invalid', reason: 'sign-in ended' }, provider: { name: 'OpenRouter' } } });
   assert.equal(shown[1].title, 'Your OpenRouter sign-in ended.');
-  assert.equal(shown[1].body, 'Sign in again in NeverQuestAlone.');
+  assert.equal(shown[1].body, 'Sign in again in Voxwarden.');
 });
 
 test('the Details sheet takes its clicks on a Mac: the top bar is the window\'s drag strip, so the sheet and its scrim opt out of it (the × closes, it never drags the window)', () => {
@@ -1748,7 +1748,7 @@ test('the panel (the 1.3 refresh): the wordmark in the title strip; no gradient 
   const html = read(path.join(R, 'index.html'));
   assert.doesNotMatch(css, /gradient\(/, 'no gradients: flat surfaces (the owner, 2026-10-02)');
   assert.doesNotMatch(read(path.join(R, 'img', 'route-map.svg')), /Gradient/, 'the welcome map is flat too');
-  assert.ok(html.indexOf('id="bones-btn"') < html.indexOf('id="wordmark"') && html.indexOf('id="wordmark"') < html.indexOf('id="tracker"') && html.indexOf('id="wordmark"') < html.indexOf('id="nav"'), 'the wordmark sits under NeverQuestAlone, above the steps and the menu (the owner, 2026-10-03)');
+  assert.ok(html.indexOf('id="bones-btn"') < html.indexOf('id="wordmark"') && html.indexOf('id="wordmark"') < html.indexOf('id="tracker"') && html.indexOf('id="wordmark"') < html.indexOf('id="nav"'), 'the wordmark sits under Voxwarden, above the steps and the menu (the owner, 2026-10-03)');
   assert.ok(html.indexOf('id="side-foot"') > html.indexOf('id="nav"'), 'the foot is its last');
   assert.match(css, /\.companion > \.wordmark \{[^}]*display: grid; grid-template-columns: 16px 1fr; gap: 10px;[^}]*padding: 0 10px;/, 'a row of the menu, on the nav’s grid: the diamond in the icons’ column, the name on the labels’ line (the owner, 2026-10-03)');
   assert.match(css, /\.companion > \.wordmark \{[^}]*height: 32px; margin: 12px 0 0;[^}]*font: 500 14px\/20px var\(--sans\);/, 'a nav row’s height and type');
@@ -1831,7 +1831,7 @@ test('the panel’s foot (the 1.3 refresh): the version, and the one small updat
   assert.equal(r.footText(), 'v0.1.0Up to date');
   assert.equal(btnIn(r), b0, 'the same button: focus stays on it');
   assert.equal(btnIn(r).getAttribute('aria-disabled'), 'true');
-  assert.ok(r.liveText().includes('NeverQuestAlone is up to date.'), r.liveText().join(' | '));
+  assert.ok(r.liveText().includes('Voxwarden is up to date.'), r.liveText().join(' | '));
   // A check the app runs by itself never flickers the foot.
   r.subs.updates.forEach(cb => cb({ supported: true, configured: true, mode: 'notify', state: 'checking' }));
   await r.settle();
@@ -1849,7 +1849,7 @@ test('the panel’s foot (the 1.3 refresh): the version, and the one small updat
   assert.equal(btnIn(r3).textContent, 'Restart to update');
   await r3.press(btnIn(r3));
   assert.deepEqual(c.calls, ['install']);
-  assert.deepEqual([r3.confirms[0].message, r3.confirms[0].okLabel], ['Restart NeverQuestAlone to update to 0.2.0?', 'Restart to update']);
+  assert.deepEqual([r3.confirms[0].message, r3.confirms[0].okLabel], ['Restart Voxwarden to update to 0.2.0?', 'Restart to update']);
   // Downloaded while WoW runs: Update ready, a note (it won't install while the game runs).
   const c2 = stub({ state: 'ready', available: { version: '0.2.0' } });
   const r5 = await pageRig({ state: IN_GAME, updater: c2.updater });
@@ -1857,7 +1857,7 @@ test('the panel’s foot (the 1.3 refresh): the version, and the one small updat
   assert.equal(btnIn(r5), null);
   // Checks off: the version alone, never a check.
   const d = stub({ mode: 'never' });
-  const r4 = await pageRig({ state: IN_GAME, updater: d.updater, releases: 'https://github.com/tommygeoco/neverquestalone/releases' });
+  const r4 = await pageRig({ state: IN_GAME, updater: d.updater, releases: 'https://github.com/davrodwconnections/voxwarden/releases' });
   assert.equal(r4.footText(), 'v0.1.0');
   // About has the details: the foot shows the version alone there.
   await r.press(r.document.querySelector('[data-nav="settings"]'));
@@ -1912,7 +1912,7 @@ test('the tokens (spec §2, SHARED-TOKENS): dark only; text and muted pass AA on
   assert.match(css, /:focus-visible \{ outline: 2px solid var\(--focus\); outline-offset: 2px; \}/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\n  \*, \*::before, \*::after \{ transition: none !important; animation: none !important; \}/);
   // Hover tints a colour, never moves, resizes or reveals anything. The one exception is the owner's
-  // (2026-10-02): NeverQuestAlone's state in a word beside his portrait, an overlay that moves nothing else.
+  // (2026-10-02): Voxwarden's state in a word beside his portrait, an overlay that moves nothing else.
   const tip = css.split('}').filter(r => /:hover/.test(r.split('{')[0]) && /\.status-tip\b/.test(r.split('{')[0]));
   assert.deepEqual(tip.map(r => r.split('{')[0].trim()), ['.bones-btn:hover .status-tip, .bones-btn:focus-visible .status-tip'], 'the one hover reveal, keyboard focus too');
   assert.doesNotMatch(tip[0].split('{')[1], /\b(transform|width|height|margin|padding|display|top|left|right|bottom)\s*:/, 'it only fades in');
@@ -1941,11 +1941,11 @@ test('clarity r4: a rejected key reads Rejected with one Replace key; a model on
   assert.equal(label(fk(loc, 'now-test')), 'Check again', 'the page’s own: there is no banner to own it any more (the app trim)');
   assert.match(loc.pageText(), /Runs on this computer/);
   // The couldn't-start banner over setup (CL-words-29): its cause, and its button the one primary.
-  const s = await pageRig({ onboarded: false, apiMode: 'error', apiReason: 'the bridge failed to start: Another copy of NeverQuestAlone is already running for this World of Warcraft (pid 4242). Quit it first.' });
+  const s = await pageRig({ onboarded: false, apiMode: 'error', apiReason: 'the bridge failed to start: Another copy of Voxwarden is already running for this World of Warcraft (pid 4242). Quit it first.' });
   assert.match(s.bannerText(), /^Another copy’s open\./);
   assert.deepEqual(primaries(s).map(label), ['Quit this copy']);
   const u = await pageRig({ onboarded: false, apiMode: 'error', apiReason: 'x' });
-  assert.match(u.bannerText(), /NeverQuestAlone couldn’t start\./, 'the headline when the cause is unknown');
+  assert.match(u.bannerText(), /Voxwarden couldn’t start\./, 'the headline when the cause is unknown');
   assert.equal(primaries(u).length, 1);
   // Game data off (CL-player-46): what the player loses, in one line.
   const pv = await pageRig({ state: READY, hash: 'privacy' });
@@ -2003,12 +2003,12 @@ test('the owner, 2026-10-03: SF Pro on a Mac with Inter after it; Your data, in 
   const cards = sheet.querySelectorAll('.sheet-card');
   assert.equal(cards.length, 3, 'two cards of where it goes and what the company keeps, then On your screen (the trust plan)');
   const rows = c => c.querySelectorAll('.sheet-row');
-  assert.equal(rows(cards[0]).length, 3, 'the picture, what each message carries, what NeverQuestAlone gets');
+  assert.equal(rows(cards[0]).length, 3, 'the picture, what each message carries, what Voxwarden gets');
   assert.equal(rows(cards[2]).length, 2, 'On your screen: what screen reading reads, and what off means');
   assert.match(rows(cards[0])[0].className, /\bsheet-flow\b/);
   assert.match(rows(cards[0])[0].getAttribute('aria-label'), /Anthropic/);
   assert.equal(rows(cards[0])[1].textContent, 'In each message: your question, level, zone, quests and gear.');
-  assert.equal(rows(cards[0])[2].textContent, 'NeverQuestAloneGets nothing: no account, no tracking');
+  assert.equal(rows(cards[0])[2].textContent, 'VoxwardenGets nothing: no account, no tracking');
   const at = rows(cards[1]);
   assert.equal(at[0].querySelector('.sheet-row-key').textContent, 'Keeps your messages');
   assert.equal(at[1].querySelector('.sheet-row-key').textContent, 'Trains on them');

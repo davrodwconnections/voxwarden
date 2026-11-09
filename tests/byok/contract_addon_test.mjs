@@ -44,7 +44,7 @@ function aliasReply(text, alias, o = {}) {
 // ---------------------------------------------------------------- the two sides
 
 const slotFile = s => path.join(s.addons, 'NQA_S001', 'Inbox.lua');
-const ctlDir = s => path.join(s.addons, 'NeverQuestAlone', 'sig', 'ctl');
+const ctlDir = s => path.join(s.addons, 'Voxwarden', 'sig', 'ctl');
 const BELLS = ['present', 'bell_push_a', 'bell_push_b', 'bell_alive_a', 'bell_alive_b', 'bell_act'];
 // The doorbells ring for 0.6 s here (3 s in game) and the game's clock runs 6 times the wall
 // clock, so a pulse is 3.6 s of game time: longer than the addon's 2 s poll and under its 10 s
@@ -186,7 +186,7 @@ test('contract: ready with a model and effort; usage.model is the id asked for, 
   // …and what the addon makes of it: the light, the HUD, the header.
   const [color, tip] = light(s);
   assert.equal(color, 'green');
-  assert.match(tip, /^Connected to Anthropic \(Claude Sonnet 5\)\. Last heard from the NeverQuestAlone app /);
+  assert.match(tip, /^Connected to Anthropic \(Claude Sonnet 5\)\. Last heard from the Voxwarden app /);
   assert.equal(hud(s)[0], 'Ready');
   assert.equal(header(s), 'Claude Sonnet 5 · Medium');
   // The in-game Thinking list is the model's own levels, from bridge.provider.efforts (fix-102).
@@ -240,7 +240,7 @@ test('contract: ready with a model and effort; usage.model is the id asked for, 
   d = await sync(s, x => errs(x, id).some(r => r.kind === 'model_not_found'), 'the refusal');
   const refused = errs(d, id).find(r => r.kind === 'model_not_found');
   assert.equal(refused.action, 'none');
-  assert.equal(refused.text, "gpt-9 isn't one of the Anthropic models you can pick. Nothing was changed. See them in the NeverQuestAlone app.");
+  assert.equal(refused.text, "gpt-9 isn't one of the Anthropic models you can pick. Nothing was changed. See them in the Voxwarden app.");
   assert.equal(vm.evaluate(`NS.Chats.Find("${id}").modelAsked`), null);
   assert.equal(header(s), 'Claude Haiku 4.5 · High', 'still the chat\'s own');
   assert.equal(chatOf(d, id).model, 'claude-haiku-4-5');
@@ -280,7 +280,7 @@ test('contract: with a daily cap the player set, usage.needs near_cap then cap, 
   const lines = vm.list('NS.UI.UsageLines()');
   assert.ok(lines.includes('Today: ~$0.82 of $1.00 · 1 message'), JSON.stringify(lines));
   assert.ok(lines.includes('Your daily spend limit resets at midnight, in 12 hours.'), JSON.stringify(lines)); // the stub's date("*t") is 12:00
-  assert.ok(lines.includes('Check-ins: off in the NeverQuestAlone app'), 'check-ins as information (off in the app until turned on), no allowance');
+  assert.ok(lines.includes('Check-ins: off in the Voxwarden app'), 'check-ins as information (off in the app until turned on), no allowance');
   assert.ok(!lines.some(l => /left today|a day/.test(l)), 'no automatic-turn allowance (usage.autoLeft is gone)');
   assert.equal(light(s)[0], 'green');
   input = 2_000_000;
@@ -289,8 +289,8 @@ test('contract: with a daily cap the player set, usage.needs near_cap then cap, 
   assert.equal(d.rt.reason, 'cap_spend');
   const [color, tip] = light(s);
   assert.equal(color, 'yellow');
-  assert.ok(tip.startsWith('You\'ve reached your daily spend limit ($1.00). Raise it in the NeverQuestAlone app, or it resets at midnight.'), tip);
-  assert.deepEqual(hud(s), ['You\'ve reached your daily spend limit ($1.00)', 'Raise it in the NeverQuestAlone app, or it resets at midnight.']);
+  assert.ok(tip.startsWith('You\'ve reached your daily spend limit ($1.00). Raise it in the Voxwarden app, or it resets at midnight.'), tip);
+  assert.deepEqual(hud(s), ['You\'ve reached your daily spend limit ($1.00)', 'Raise it in the Voxwarden app, or it resets at midnight.']);
   // A third message is refused at the cap: its line, "on your desktop".
   const e = await say(s, 'third');
   assert.equal(e.kind, 'cap_spend');
@@ -322,7 +322,7 @@ test('contract: no limits of ours (the default): spend past the old $1.00 day is
 });
 
 test('contract: automatic help paused as the addon loads it: one held line in the Companion chat, bridge.usage.autoPaused, never turnsLeft; held events ride along with the player\'s next typed message, which ends it', async (t) => {
-  const LINE = autoPausedLine('NeverQuestAlone');
+  const LINE = autoPausedLine('Voxwarden');
   const s = await session(t, { handler: () => reply('Noted.\n\nTL;DR: noted.') });
   const { vm } = s;
   assert.deepEqual(await setPrivacy(s, { companion: true }), { ok: true });
@@ -382,7 +382,7 @@ test('contract: out_of_credit then key_invalid: the rt state, usage.needs, the e
   assert.equal(d.bridge.usage.needs, 'out_of_credit');
   let [color, tip] = light(s);
   assert.equal(color, 'red');
-  assert.ok(tip.startsWith('Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the NeverQuestAlone app.'), tip);
+  assert.ok(tip.startsWith('Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the Voxwarden app.'), tip);
   let i = errBubble(vm);
   assert.deepEqual(acts(vm, i), ['Retry', 'Okay', 'Show Details']);
   assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.shown`), 'false', 'the line already says "on your desktop"');
@@ -394,8 +394,8 @@ test('contract: out_of_credit then key_invalid: the rt state, usage.needs, the e
   assert.equal(d.gw.state, 'key_invalid');
   [color, tip] = light(s);
   assert.equal(color, 'red');
-  assert.ok(tip.startsWith('Your Anthropic key was rejected. Replace it in the NeverQuestAlone app.'), tip);
-  assert.deepEqual(hud(s), ['Your Anthropic key was rejected', 'Replace it in the NeverQuestAlone app.']);
+  assert.ok(tip.startsWith('Your Anthropic key was rejected. Replace it in the Voxwarden app.'), tip);
+  assert.deepEqual(hud(s), ['Your Anthropic key was rejected', 'Replace it in the Voxwarden app.']);
 });
 
 test('contract: slowed (a rate-limit bucket at 0): rt slowed with retryIn, usage.needs slowed, the countdown in the addon', async (t) => {
@@ -413,8 +413,8 @@ test('contract: slowed (a rate-limit bucket at 0): rt slowed with retryIn, usage
   assert.equal(d.bridge.usage.needs, 'slowed');
   const [color, tip] = light(s);
   assert.equal(color, 'yellow');
-  assert.match(tip, /^Anthropic asked NeverQuestAlone to slow down\. Trying again in \d+ (seconds?|minutes?)\./);
-  assert.ok(s.vm.list('NS.UI.UsageLines()').some(l => l.startsWith('Anthropic asked NeverQuestAlone to slow down: trying again in ')));
+  assert.match(tip, /^Anthropic asked Voxwarden to slow down\. Trying again in \d+ (seconds?|minutes?)\./);
+  assert.ok(s.vm.list('NS.UI.UsageLines()').some(l => l.startsWith('Anthropic asked Voxwarden to slow down: trying again in ')));
 });
 
 test('contract: local_down: a local server that isn\'t running; the Retry line and the addon naming it', async (t) => {
@@ -431,7 +431,7 @@ test('contract: local_down: a local server that isn\'t running; the Retry line a
   d = await sync(s, x => x.rt.state === 'local_down', 'rt local_down');
   const [color, tip] = light(s);
   assert.equal(color, 'red');
-  assert.ok(tip.startsWith(`NeverQuestAlone can't reach ${host}. Start ${host}, then click Retry on your message.`), tip);
+  assert.ok(tip.startsWith(`Voxwarden can't reach ${host}. Start ${host}, then click Retry on your message.`), tip);
   assert.deepEqual(acts(s.vm, errBubble(s.vm)), ['Retry', 'Okay', 'Show Details']);
 });
 
@@ -449,7 +449,7 @@ test('contract: an error with each action (none, desktop, send_again, retry): ki
   const { vm } = s;
   const cases = [
     ['f-refuse', 'content_blocked', 'none', ['Okay', 'Show Details'], null],
-    ['f-spend', 'spend_limit', 'desktop', ['Retry', 'Okay', 'Show Details'], 'Fix it in the NeverQuestAlone app.'],
+    ['f-spend', 'spend_limit', 'desktop', ['Retry', 'Okay', 'Show Details'], 'Fix it in the Voxwarden app.'],
     ['f-drop', 'network_after_send', 'send_again', ['Retry', 'Okay', 'Show Details'], null],
     ['f-busy', 'overloaded', 'retry', ['Retry', 'Okay', 'Show Details'], null],
   ];
@@ -506,7 +506,7 @@ test('contract: the companion switch (bridge.usage.autoOn) and echo (bridge.echo
   assert.deepEqual(replyLines(s, 'Here.'), [], 'nothing in the chat frame');
   assert.equal(vm.evaluate('NS.Notify.EchoMode()'), 'off');
   vm.slash('echo');
-  assert.ok(vm.chatLines().at(-1).endsWith('Replies in Your Chat Frame: Whole Reply. It\'s off in the NeverQuestAlone app right now, so none show: turn on Replies in chat frame under Settings, Show more.'), vm.chatLines().at(-1));
+  assert.ok(vm.chatLines().at(-1).endsWith('Replies in Your Chat Frame: Whole Reply. It\'s off in the Voxwarden app right now, so none show: turn on Replies in chat frame under Settings, Show more.'), vm.chatLines().at(-1));
   // On in the app: this addon's own mode applies again.
   await setPrivacy(s, { echo: true });
   d = await sync(s, x => x.bridge.echo === 'on', 'echo on');
@@ -539,7 +539,7 @@ test('contract: a chat\'s own model the bridge drops (model_not_found) goes from
   assert.equal(header(s), 'Claude Haiku 4.5 · Low', 'the player\'s Low, which Haiku has (fix-102)');
   const e = await say(s, 'hi');
   assert.equal(e.kind, 'model_not_found');
-  assert.equal(e.text, "Claude Haiku 4.5 isn't available on your Anthropic account. Switched to Claude Sonnet 5 for now. Change it in the NeverQuestAlone app.");
+  assert.equal(e.text, "Claude Haiku 4.5 isn't available on your Anthropic account. Switched to Claude Sonnet 5 for now. Change it in the Voxwarden app.");
   await sync(s, x => chatOf(x, id) && chatOf(x, id).model === undefined, 'chats[].model dropped');
   assert.equal(header(s), 'Claude Sonnet 5 · Low');
   assert.equal(s.vm.evaluate(`NS.Chats.Find("${id}").model`), null, 'gone from the saved chat too');

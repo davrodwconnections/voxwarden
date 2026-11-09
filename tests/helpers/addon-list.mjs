@@ -4,7 +4,7 @@
 //
 // Each addon has a Group: its TOC's, or one the client sets (its own name, or,
 // for addons named alike that depend on each other, the first one's: before
-// 0.5.3 the slots showed under NeverQuestAlone's row). An addon whose Group is its own
+// 0.5.3 the slots showed under Voxwarden's row). An addon whose Group is its own
 // name starts a node, at the root or, with a Category, under that category's row
 // (made once, folded while g_addonCategoriesCollapsed[category] is set); one
 // whose Group names another joins that node (held until the node exists; a group

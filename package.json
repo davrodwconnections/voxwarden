@@ -1,11 +1,11 @@
 {
-  "name": "neverquestalone",
+  "name": "voxwarden",
   "version": "1.4.19",
   "private": true,
   "plugin": "wow",
-  "description": "NeverQuestAlone: the intelligent quest companion for World of Warcraft: Forever.",
+  "description": "Voxwarden: the intelligent quest companion for World of Warcraft: Forever.",
   "license": "MIT",
-  "author": "chelinho139 and The NeverQuestAlone authors",
+  "author": "David Rodriguez",
   "keywords": [
     "world-of-warcraft",
     "wow-addon",
@@ -20,7 +20,7 @@
   "scripts": {
     "start": "npm --prefix app/desktop start",
     "package:addon": "node tools/package-addon.mjs",
-    "test": "node tests/order_check.js addon/NeverQuestAlone && node tools/run-tests.mjs && node tests/codec_test.js",
+    "test": "node tests/order_check.js addon/Voxwarden && node tools/run-tests.mjs && node tests/codec_test.js",
     "test:e2e": "node --test --test-concurrency=1 tests/byok/bridge_byok_e2e_test.mjs",
     "probe": "python3 bridge/capture_x11.py --probe bridge/probe.png",
     "capture:build": "node bridge/capture/build.mjs"
@@ -32,5 +32,13 @@
   },
   "dependencies": {
     "@napi-rs/keyring": "2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davrodwconnections/voxwarden.git"
+  },
+  "homepage": "https://github.com/davrodwconnections/voxwarden",
+  "bugs": {
+    "url": "https://github.com/davrodwconnections/voxwarden/issues"
   }
 }

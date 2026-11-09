@@ -76,17 +76,17 @@ test('DR-07: "Sending…" says it hasn\'t been read once the record has 15 s of 
   assert.equal(vm.num('NS.HUD.h.stopBtn.y'), y, 'the button where Stop was: nothing moves');
   assert.equal(vm.evaluate('NS.HUD.h.stopBtn.disabled'), 'false');
   assert.deepEqual(vm.json('NS.HUD.h.stopBtn.tip'), { title: 'Reload', text: 'Reloads WoW\'s interface, which sends your message.' });
-  assert.equal(vm.evaluate('NS.HUD.h.view.detail'), 'NeverQuestAlone hasn\'t read your message yet. Click Reload to send it.', 'the whole of it a click on the line away');
+  assert.equal(vm.evaluate('NS.HUD.h.view.detail'), 'Voxwarden hasn\'t read your message yet. Click Reload to send it.', 'the whole of it a click on the line away');
   // The window: its one line, and the working line's Stop is Reload (so no banner over it).
   vm.run('NS.UI.Toggle(true); NS.Refresh("all")');
-  assert.equal(vm.evaluate('NS.UI.StatusText()'), '|cffffd100NeverQuestAlone hasn\'t read your message yet.|r');
+  assert.equal(vm.evaluate('NS.UI.StatusText()'), '|cffffd100Voxwarden hasn\'t read your message yet.|r');
   assert.match(vm.evaluate('NS.UI.ui.work.text.text'), /^Sending · 1\d s · not read yet$/);
   assert.equal(vm.evaluate('NS.UI.ui.work.stop.text'), 'Reload');
   assert.equal(vm.evaluate('NQABanner and NQABanner.shown'), 'false', 'one button: the working line has it');
   // Another chat in the window: the banner above it, with the words and the one button.
   vm.run('NS.Chats.New("Other"); NS.Refresh("all")');
   assert.equal(vm.evaluate('NQABanner.shown'), 'true');
-  assert.equal(vm.evaluate('NQABanner.text.text'), 'NeverQuestAlone hasn\'t read your message yet. Click Reload to send it.');
+  assert.equal(vm.evaluate('NQABanner.text.text'), 'Voxwarden hasn\'t read your message yet. Click Reload to send it.');
   assert.equal(vm.evaluate('NQABanner.reload.text'), 'Reload');
   // No cause guessed, no Screen Recording.
   assert.doesNotMatch(vm.evaluate('NS.HUD.h.view.detail'), /Screen Recording|corner|permission/);
@@ -254,17 +254,17 @@ test('DR-07: a published cause, once it has held 8 s on screen, is named in the 
     vm.send('where is the forge');
     wait(vm, 16);
     hud(vm);
-    assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'NeverQuestAlone can\'t see the game');
+    assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Voxwarden can\'t see the game');
     assert.equal(vm.evaluate('NS.HUD.h.stopBtn.text'), 'Reload');
-    assert.equal(vm.evaluate('NS.HUD.h.view.detail'), 'NeverQuestAlone can\'t see the game. Click Reload to send your message.');
+    assert.equal(vm.evaluate('NS.HUD.h.view.detail'), 'Voxwarden can\'t see the game. Click Reload to send your message.');
     vm.run('NS.UI.Toggle(true); NS.Chats.New("Other"); NS.Refresh("all")');
-    assert.equal(vm.evaluate('NQABanner.text.text'), 'NeverQuestAlone can\'t see the game. Click Reload to send your message.');
+    assert.equal(vm.evaluate('NQABanner.text.text'), 'Voxwarden can\'t see the game. Click Reload to send your message.');
     // Idle again (the message acked by the Reload's write): the warn line names the fix per system.
     vm.run('NS.UI.Toggle(false); for k in pairs(NS.R.out) do NS.Transport.Acked(k, "slot") end');
     vm.run('for _, c in ipairs(NQADB.chats) do c.pending = {} end');
     hud(vm);
     assert.equal(vm.evaluate('NS.HUD.h.view.mode'), 'warn');
-    assert.equal(vm.evaluate('NS.HUD.h.sub.text'), mac ? 'See why in the NeverQuestAlone app.' : 'Keep the top of WoW\'s window on screen.');
+    assert.equal(vm.evaluate('NS.HUD.h.sub.text'), mac ? 'See why in the Voxwarden app.' : 'Keep the top of WoW\'s window on screen.');
   }
 });
 
@@ -377,8 +377,8 @@ test('DR-09 (SY-20, SY-24): the warn line names a published cause only after 8 s
     apply(vm, cap('unsupported'));
     wait(vm, 9);
     hud(vm);
-    assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone can\'t read this screen');
-    assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Type /nqa mode reload to use NeverQuestAlone with no screen reading.');
+    assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden can\'t read this screen');
+    assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Type /nqa mode reload to use Voxwarden with no screen reading.');
     assert.equal(vm.evaluate('NS.UI.SetupRows().rows[3]'), 'Type /nqa mode reload for this screen.');
     apply(vm, cap('no_permission'));
     wait(vm, 9);

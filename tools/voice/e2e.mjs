@@ -21,7 +21,7 @@ const args = process.argv.slice(2);
 const opt = (n, d = null) => { const i = args.indexOf(`--${n}`); return i >= 0 ? args[i + 1] : d; };
 const wav = opt('wav');
 if (!wav || !fs.existsSync(wav)) { console.error('--wav <file> is required'); process.exit(2); }
-const key = readKey({ keyFile: opt('key-file', path.join(os.homedir(), '.config', 'neverquestalone', 'api-keys.json')) });
+const key = readKey({ keyFile: opt('key-file', path.join(os.homedir(), '.config', 'voxwarden', 'api-keys.json')) });
 if (!key) { console.error('no OpenAI key'); process.exit(2); }
 const chrome = opt('chrome', '/usr/bin/google-chrome');
 const expect = opt('expect') ? new RegExp(opt('expect'), 'i') : null;
@@ -88,7 +88,7 @@ try {
   let text = '';
   while (Date.now() - t0 < timeoutMs) {
     text = await evaluate("document.getElementById('log').innerText") || '';
-    const answered = /NeverQuestAlone: \S[\s\S]{20,}/.test(text) && /Tú: /.test(text);
+    const answered = /Voxwarden: \S[\s\S]{20,}/.test(text) && /Tú: /.test(text);
     const status = await evaluate("document.getElementById('status').innerText");
     if (answered && status === 'Escuchando') break;
     await sleep(500);
@@ -107,7 +107,7 @@ try {
   console.log('--- status ---', { seconds, cost, game, firstWordsMs: latencies });
   console.log('--- voice inbox ---\n' + (inbox || '(empty)'));
   if (consoleLines.length) console.log('--- console ---\n' + consoleLines.join('\n'));
-  const ok = /Tú: /.test(text) && /NeverQuestAlone: \S/.test(text) && /Consultando tus datos del juego/.test(text) && (!expect || expect.test(text));
+  const ok = /Tú: /.test(text) && /Voxwarden: \S/.test(text) && /Consultando tus datos del juego/.test(text) && (!expect || expect.test(text));
   console.log(ok ? 'E2E OK' : 'E2E FAILED');
   process.exitCode = ok ? 0 : 1;
 } finally {

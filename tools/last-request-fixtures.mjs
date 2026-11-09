@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The request parity fixtures (open-shell PRD §2, §3; lane 2a). Until the shell and the WoW plugin
-// are split, NeverQuestAlone must send the AI exactly what it sends today. Each case here is game
+// are split, Voxwarden must send the AI exactly what it sends today. Each case here is game
 // state, a message (or a check-in) and settings in, and the exact lastRequest() out: the app API's
 // "Last request" view of the turn, with its time and the data block's random id normalized.
 //
@@ -61,9 +61,9 @@ const STATE = Object.freeze({
 // What the character's memory holds when it has some (written by the logbook from earlier states,
 // plus a note of the player's own outside the markers), and an earlier exchange in the chat.
 const MEMORY = {
-  'character.md': '# Character\n\n## Facts (from the game)\n\n<!-- nqa:facts:start -->\nUpdated 2026-09-21 12:26 from game data (session a1b2c3, seq 2). Written by NeverQuestAlone from game data: edit outside the markers.\n\n- Character: Testy on Testrealm, level 7 Tauren Shaman\n- XP: 40 / 1,400 (2%)\n- Money: 90s 0c\n- Location: Mulgore, Bloodhoof Village (map 1412, 44.2, 76.1)\n- Professions: Mining 8/75\n<!-- nqa:last {"who":"Testy-Testrealm","sid":"a1b2c3d4e5f60718","seq":2,"t":1789993600,"level":7} -->\n<!-- nqa:facts:end -->\n\n## My notes\n\n- Saving up for my first mount.\n',
-  'quests.md': '# Quests\n\n## Active quests (from the game)\n\n<!-- nqa:facts:start -->\nUpdated 2026-09-21 12:26 from game data (seq 2). 1 active quest. Written by NeverQuestAlone from game data: edit outside the markers.\n\n- 748 Poison Water (L5): Prairie Wolf Paw 3/6\n<!-- nqa:facts:end -->\n',
-  'log.md': '# Log\n\nMilestones and sessions, written by NeverQuestAlone from game data.\n- 2026-09-21 11:50 · First visit: Mulgore <!-- nqa:m zone:Testy-Testrealm:Mulgore -->\n- 2026-09-21 12:26 · Reached level 7 <!-- nqa:m level:Testy-Testrealm:7 -->\n',
+  'character.md': '# Character\n\n## Facts (from the game)\n\n<!-- nqa:facts:start -->\nUpdated 2026-09-21 12:26 from game data (session a1b2c3, seq 2). Written by Voxwarden from game data: edit outside the markers.\n\n- Character: Testy on Testrealm, level 7 Tauren Shaman\n- XP: 40 / 1,400 (2%)\n- Money: 90s 0c\n- Location: Mulgore, Bloodhoof Village (map 1412, 44.2, 76.1)\n- Professions: Mining 8/75\n<!-- nqa:last {"who":"Testy-Testrealm","sid":"a1b2c3d4e5f60718","seq":2,"t":1789993600,"level":7} -->\n<!-- nqa:facts:end -->\n\n## My notes\n\n- Saving up for my first mount.\n',
+  'quests.md': '# Quests\n\n## Active quests (from the game)\n\n<!-- nqa:facts:start -->\nUpdated 2026-09-21 12:26 from game data (seq 2). 1 active quest. Written by Voxwarden from game data: edit outside the markers.\n\n- 748 Poison Water (L5): Prairie Wolf Paw 3/6\n<!-- nqa:facts:end -->\n',
+  'log.md': '# Log\n\nMilestones and sessions, written by Voxwarden from game data.\n- 2026-09-21 11:50 · First visit: Mulgore <!-- nqa:m zone:Testy-Testrealm:Mulgore -->\n- 2026-09-21 12:26 · Reached level 7 <!-- nqa:m level:Testy-Testrealm:7 -->\n',
 };
 const EARLIER = [
   { role: 'user', text: 'where do I turn in Poison Water?' },

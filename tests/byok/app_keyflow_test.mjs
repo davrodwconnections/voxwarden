@@ -48,7 +48,7 @@ function rig({ state = {}, confirm = true, focused = true, platform = 'darwin', 
     isFocused: () => focused,
     loginItem: { set: o => { logins.push(o); return { ok: true, supported: true, openAtLogin: o }; }, get: () => ({ supported: true, openAtLogin: false }) },
     notify: n => notified.push(n),
-    info: () => ({ platform }), notices: () => [], companion: () => 'NeverQuestAlone', releasesUrl: () => null, log: () => {},
+    info: () => ({ platform }), notices: () => [], companion: () => 'Voxwarden', releasesUrl: () => null, log: () => {},
   };
   const ipc = createIpc(ctx);
   let t = 10_000;
@@ -284,7 +284,7 @@ test('Other: connectCustom asks first (the dialog names the address; a key is ke
   const r = rig();
   const res = await r.ipc.call('connectCustom', { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5-mini', key: OR });
   assert.equal(res.ok, true, JSON.stringify(res));
-  assert.equal(r.confirms[0].message, 'Connect NeverQuestAlone to openrouter.ai?');
+  assert.equal(r.confirms[0].message, 'Connect Voxwarden to openrouter.ai?');
   assert.match(r.confirms[0].detail, /to https:\/\/openrouter\.ai\/api\/v1\. If it answers, your key is saved in your macOS Keychain/);
   assert.match(r.confirms[0].detail, /under its own terms/);
   assert.ok(!JSON.stringify(r.confirms).includes('CANARY') && !JSON.stringify(res).includes('CANARY'));
@@ -360,11 +360,11 @@ test('every dialog variant is main’s table, filled; none carries a key', async
   assert.equal(c.okLabel, 'Agree and connect');
   assert.equal(c.cancelLabel, 'Cancel');
   assert.equal(c.detail.split('\n\n').length, 3, 'the mask, the body, the terms');
-  assert.equal(c.detail.split('\n\n')[1], mainString('pasteDialog.connect.body.clipboardNoCredit', { co: 'Anthropic', testCost: 'under $0.0001', store: 'your macOS Keychain', name: 'NeverQuestAlone', model: 'Claude Sonnet 5.5' }), 'the model a new AI starts on: Claude\'s default (fix-102)');
+  assert.equal(c.detail.split('\n\n')[1], mainString('pasteDialog.connect.body.clipboardNoCredit', { co: 'Anthropic', testCost: 'under $0.0001', store: 'your macOS Keychain', name: 'Voxwarden', model: 'Claude Sonnet 5.5' }), 'the model a new AI starts on: Claude\'s default (fix-102)');
   assert.equal(c.detail.split('\n\n')[2], mainString('pasteDialog.connect.terms', { co: 'Anthropic' }));
   const sw = rig({ state: { keys: { anthropic: { masked: 'sk-ant-…xxxx', state: 'ok' } }, choice: { provider: 'anthropic', model: 'claude-haiku-4-5', effort: null }, terms: { anthropic: 1, openai: 1 } } });
   await sw.paste(OAI, 'openai');
-  assert.equal(sw.confirms[0].message, 'Switch NeverQuestAlone to ChatGPT with this key?');
+  assert.equal(sw.confirms[0].message, 'Switch Voxwarden to ChatGPT with this key?');
   assert.equal(sw.confirms[0].okLabel, STRINGS.pasteDialog.switch.okLabelTermsRecorded, 'terms recorded: the verb alone');
   assert.match(sw.confirms[0].detail, /Your messages go to OpenAI instead of Anthropic\./);
   const win = rig({ platform: 'win32' });
@@ -388,7 +388,7 @@ test('Continue on Check your defaults (finishDefaults): the login item once; on 
   assert.equal(res.ok, true);
   assert.deepEqual(r.logins, [true], 'written exactly once');
   assert.equal(r.notified.length, 1);
-  assert.deepEqual(r.notified[0], { title: STRINGS.notifications.alertsOn.title, body: mainString('notifications.alertsOn.body', { name: 'NeverQuestAlone' }) });
+  assert.deepEqual(r.notified[0], { title: STRINGS.notifications.alertsOn.title, body: mainString('notifications.alertsOn.body', { name: 'Voxwarden' }) });
   assert.equal(r.app().alertsAsked, true);
   assert.equal(r.app().defaultsSeen, true);
   await r.ipc.call('finishDefaults', { loginItem: false, notifications: true });

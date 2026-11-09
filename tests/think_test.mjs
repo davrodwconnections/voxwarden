@@ -1,4 +1,4 @@
-// How hard NeverQuestAlone thinks in WoW (the owner, 2026-09-25; PROTOCOL §2.4 patch, §4.1):
+// How hard Voxwarden thinks in WoW (the owner, 2026-09-25; PROTOCOL §2.4 patch, §4.1):
 // the bridge sends each turn of a chat with /nqa think's level as its
 // `thinking`, and none for a chat without one (the player's effort; code health
 // BR-28: no bridge default, sessions.thinking, any more); the addon's
@@ -145,7 +145,7 @@ test('think (bridge, code health BR-28): an old config\'s sessions.thinking is r
 function slotLua({ nonce: nn, caps = ['state', 'evt', 'think'], chats = '{}', bthink = null } = {}) {
   const c = caps.length ? `, caps = { ${caps.map(x => `"${x}"`).join(', ')} }` : '';
   const t = bthink ? `, think = "${bthink}"` : '';
-  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.2.0", push = 0, nonce = ${nn ? `"${nn}"` : 'nil'}, acked = {}${c}${t} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = ${chats}, records = {} }`;
+  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.2.0", push = 0, nonce = ${nn ? `"${nn}"` : 'nil'}, acked = {}${c}${t} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = ${chats}, records = {} }`;
 }
 function answered(caps, think = null, bthink = null) {
   const vm = newVM().login();
@@ -161,7 +161,7 @@ test('think (addon): /nqa think high sends a patch for this chat with its agent;
   const { vm, id } = answered(undefined, 'medium');
   const last = () => vm.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text');
   vm.slash('think');
-  assert.match(last(), /^Thinking in .*: medium \(NeverQuestAlone's default\)\. .*; \/nqa think default goes back to NeverQuestAlone's\.$/);
+  assert.match(last(), /^Thinking in .*: medium \(Voxwarden's default\)\. .*; \/nqa think default goes back to Voxwarden's\.$/);
   vm.slash('think high');
   assert.equal(last(), 'Thinking in this chat: high, from your next message.');
   const p = patches(vm);
@@ -185,11 +185,11 @@ test('think (addon): without the bridge\'s think cap nothing is sent; free text 
   const { vm } = answered(['state', 'evt']);
   const last = () => vm.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text');
   vm.slash('think low');
-  assert.equal(last(), 'NeverQuestAlone doesn\'t take thinking levels yet. Nothing was changed.', 'the app by its name');
+  assert.equal(last(), 'Voxwarden doesn\'t take thinking levels yet. Nothing was changed.', 'the app by its name');
   assert.equal(patches(vm).length, 0);
   assert.equal(vm.evaluate('NS.Chats.Active().think'), null);
   vm.slash('think about the route');
-  assert.ok(vm.outboxWires().some(e => e.wire.endsWith('\x1fthink about the route')), 'sent to NeverQuestAlone as typed');
+  assert.ok(vm.outboxWires().some(e => e.wire.endsWith('\x1fthink about the route')), 'sent to Voxwarden as typed');
   vm.slash('think harder');
   assert.ok(vm.outboxWires().some(e => e.wire.endsWith('\x1fthink harder')), 'not a level: a message');
 });
@@ -207,7 +207,7 @@ test('think (bridge): the slot header carries no default level (bridge.think): a
 test('think (addon): a chat the bridge doesn\'t know yet shows the bridge\'s default, not "the default"', () => {
   const { vm } = answered(undefined, null, 'medium');
   vm.slash('think');
-  assert.match(vm.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text'), /^Thinking in .*: medium \(NeverQuestAlone's default\)\. .*; \/nqa think default goes back to NeverQuestAlone's\.$/);
+  assert.match(vm.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text'), /^Thinking in .*: medium \(Voxwarden's default\)\. .*; \/nqa think default goes back to Voxwarden's\.$/);
   const old = answered(['state', 'evt']);
   old.vm.slash('think');
   assert.match(old.vm.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text'), /^Thinking in .*: the default\. /, 'an old bridge: no level known');

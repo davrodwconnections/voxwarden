@@ -121,7 +121,7 @@
 //   the provider's model list; a model gone is replaced by the manifest's named replacement or the
 //   nearest listed model no dearer (resolveModel), status().notice says {kind:'model_switched', from,
 //   to}, and the next turn's chat gets the §10 line once ("<M> isn't available on your <P> account.
-//   Switched to <M2> for now. Change it in the NeverQuestAlone app."). A list that can't be read keeps the model.
+//   Switched to <M2> for now. Change it in the Voxwarden app."). A list that can't be read keeps the model.
 // - memory(char) and forgetMemory(char): the digest and the logbook's files; transcripts.forget and
 //   transcripts.deleteAll also drop the chat's last request.
 //
@@ -153,7 +153,7 @@ import { redact, redactKeys, redactKeysInProse } from './security/redact.mjs';
 import { STATE_WORDS, STATE_TONE, NEEDS_PLAYER, SPEND_UNKNOWN_WORDS } from './status-view.mjs';
 
 export const KIND = 'byok';
-export const PRODUCT = 'NeverQuestAlone';
+export const PRODUCT = 'Voxwarden';
 // What the slot adds to bridge.caps with this backend (the addon's UX-1…UX-8 gates).
 export const SLOT_CAPS = Object.freeze(['provider', 'usage', 'ekind', 'model']);
 export const KEY_REFUSED = "That looks like an API key. It wasn't sent.";
@@ -1730,7 +1730,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
 
   return {
     kind: KIND,
-    get displayName() { try { return current().name; } catch { return 'NeverQuestAlone'; } },
+    get displayName() { try { return current().name; } catch { return 'Voxwarden'; } },
     /** The companion's name: the persona the player gave Bones in the app. */
     get persona() { return settings.persona; },
     start,

@@ -40,7 +40,7 @@ const OUTBOX_DURABLE = { kind: 'file', base: 'outbox.jsonl', durable: true };
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return null; } };
 const ackedIn = text => { const m = /acked = \{([^}]*)\}/.exec(text || ''); return m ? [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]) : []; };
 const keysIn = text => (text || '').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l).key; } catch { return null; } });
-const slotFiles = addons => [1, 2, 3].map(i => path.join(addons, `NQA_S00${i}`, 'Inbox.lua')).concat(path.join(addons, 'NeverQuestAlone', 'Inbox.lua'));
+const slotFiles = addons => [1, 2, 3].map(i => path.join(addons, `NQA_S00${i}`, 'Inbox.lua')).concat(path.join(addons, 'Voxwarden', 'Inbox.lua'));
 const idle = (writer, what = 'the queue empty') => waitFor(() => !writer.busy(), 10000, what);
 
 /** The real worker with hooks (helpers/hooked-writer.mjs); its log lines (job-done …) go to logs. */
@@ -51,7 +51,7 @@ function hooked({ hooks = [], watch = [], spyFsync = false, arm = null, startDel
 function addonsIn(root) {
   const addons = path.join(root, 'AddOns');
   installSlots(addons, { count: 3, iface: '16001' });
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true });
+  fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true });
   return addons;
 }
 

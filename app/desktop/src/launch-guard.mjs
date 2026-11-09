@@ -29,7 +29,7 @@ if (refused.length) {
   try { fs.writeSync(2, `${switchLine(refused[0])}\n`); } catch {}
   if (process.argv.includes('--self-test')) {
     const error = DEBUG_SWITCHES.includes(refused[0]) ? 'debug_switch' : 'launch_switch';
-    try { fs.writeSync(1, `${JSON.stringify({ selfTest: 'neverquestalone', ok: false, error, switch: refused[0] })}\n`); } catch {}
+    try { fs.writeSync(1, `${JSON.stringify({ selfTest: 'voxwarden', ok: false, error, switch: refused[0] })}\n`); } catch {}
   }
   app.exit(1);
 }

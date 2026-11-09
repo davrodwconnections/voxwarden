@@ -1,9 +1,9 @@
-// Every quest in the log reaches NeverQuestAlone on every turn (PROTOCOL §2.6). The
+// Every quest in the log reaches Voxwarden on every turn (PROTOCOL §2.6). The
 // addon reads the whole log, to its last quest, at the game's own cap; it fits
 // the state by trimming per-quest detail, never a quest; and the bridge opens
-// every quest list it gives the model with the count, so NeverQuestAlone never takes a
+// every quest list it gives the model with the count, so Voxwarden never takes a
 // whole list for a cut one. The case followed is the owner's: "Call of Fire", the
-// last quest of a full 40-quest log, under a late "Shaman" header (NeverQuestAlone: "the
+// last quest of a full 40-quest log, under a late "Shaman" header (Voxwarden: "the
 // game data only lists 25 quests, and Call of Fire fell off the bottom").
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -105,7 +105,7 @@ test('the state: questCount 40 and questMax 40 before the list; every quest with
   const text = vm.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text');
   assert.match(text, /\nQuest log: 40 of 40 quests, every one in the state \(cap from C_QuestLog\.GetMaxNumQuestsCanAccept\)\.\n/);
   assert.match(text, /\nIt travels deflated: 1,\d{3} of 3,100 bytes on the strip, for 10,\d{3} bytes of JSON\.\n/);
-  assert.match(text, /NeverQuestAlone caps: state evt z ctx qlog$/); // the app by its name (C-05)
+  assert.match(text, /Voxwarden caps: state evt z ctx qlog$/); // the app by its name (C-05)
 });
 
 test('the context: the Quest log line has all 40 ids after "40 of 40 quests, all listed", ends 1527*, and is never cut: long lines before it are', () => {
@@ -320,7 +320,7 @@ C_QuestLog.GetInfo = function(i) local t = gi(i); if t and t.questID == 1500 the
   blank.slash('state');
   assert.match(blank.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text'), /\nQuest log: 39 quests in the state, not every one \(cap 40, from C_QuestLog\.GetMaxNumQuestsCanAccept\)\. The game listed 1 more without a quest id yet\.\n/);
   blank.run('NS.UI.Toggle(true); NS.UI.RenderContext()');
-  assert.match(blank.list('NS.UI.ui.ctx.lines')[0], / · 40 quests · gear$/, 'the window counts every quest NeverQuestAlone gets');
+  assert.match(blank.list('NS.UI.ui.ctx.lines')[0], / · 40 quests · gear$/, 'the window counts every quest Voxwarden gets');
 });
 
 test('/nqa apicheck reads the quest log row by row: the quests, the hidden ones and those with no id yet, the game\'s own count (shown only here), and the quests read under collapsed headers', () => {

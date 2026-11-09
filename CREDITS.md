@@ -1,3 +1,19 @@
+# Credits and provenance
+
+Voxwarden is maintained by David Rodriguez (`davrodwconnections`). Its additions include the subscription proxy, realtime voice integration and controls, local sourced knowledge, per-character memory, context and latency improvements, and the in-game model picker.
+
+The code descends from [NeverQuestAlone](https://github.com/tommygeoco/neverquestalone) and [wow-ai](https://github.com/chelinho139/wow-ai). The inherited MIT copyright and permission notices are retained in `LICENSE`; authorship of that code is not reassigned to David. Existing acknowledgements for other contributors remain applicable to their work.
+
+Voxwarden's shield/V/voice mark and its generated app, addon and tray images are original replacements. NeverQuestAlone's excluded artwork and screenshots are not included in the current distribution. Legacy protocol prefixes and saved-variable names are compatibility identifiers, not a claim to the upstream brand.
+
+QuestieDB, Wowhead, Auctionator, Syndicator and RXPGuides remain independent projects. Voxwarden reads or caches permitted local data with its provenance; this repository and its addon ZIP do not redistribute their databases or addons. A user's local knowledge database, prices, inventory, history and credentials are never release assets.
+
+World of Warcraft and Blizzard Entertainment are trademarks or registered trademarks of Blizzard Entertainment, Inc. Voxwarden is unofficial and is not affiliated with or endorsed by Blizzard.
+
+## Original upstream acknowledgements
+
+The following historical text is retained for provenance, data sources and license notices. Its references to upstream names and artwork describe the predecessor; that artwork is replaced in Voxwarden.
+
 # Credits
 
 NeverQuestAlone stands on other people’s work. Thank you to everyone below.

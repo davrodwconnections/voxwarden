@@ -2,11 +2,11 @@
 // B3.5 "leaves nothing behind"). The bridge's uninstall (app-api) removes the
 // saved keys and, when asked, the addon; the shell then removes:
 //   - the app's data folder (userData), and the logs folder where the OS keeps
-//     it apart (macOS: ~/Library/Logs/NeverQuestAlone, which holds shell.log
+//     it apart (macOS: ~/Library/Logs/Voxwarden, which holds shell.log
 //     and the bridge's logs); elsewhere logs sit inside userData;
-//   - electron-updater's download cache (<cache>/neverquestalone-updater, the
+//   - electron-updater's download cache (<cache>/voxwarden-updater, the
 //     updaterCacheDirName electron-builder writes into app-update.yml) and, on
-//     macOS, Squirrel.Mac's (~/Library/Caches/com.neverquestalone.app.ShipIt),
+//     macOS, Squirrel.Mac's (~/Library/Caches/com.voxwarden.app.ShipIt),
 //     plus what macOS keeps under the bundle id (HTTP storage, saved window
 //     state, the preferences file);
 //   - the login item (src/login-item.mjs), and on Windows the NSIS uninstaller
@@ -15,11 +15,11 @@
 //     capture helper, which runs under its own bundle id (the packaged app's
 //     bridge/capture/mac/BUNDLE_ID, from app/desktop/build/bridge/capture/mac/
 //     BUNDLE_ID) and so holds the permission itself. Only ids this app ships
-//     (com.neverquestalone.*): never another build's helper, a checkout's
+//     (com.voxwarden.*): never another build's helper, a checkout's
 //     included, whose grant is someone else's to keep (final review L3-4).
 // Every path is checked against its exact expected name before it's deleted,
 // so a wrong or empty path can never take a parent folder with it. The names
-// are the app's identity's (src/identity.mjs; NeverQuestAlone's in the examples
+// are the app's identity's (src/identity.mjs; Voxwarden's in the examples
 // above).
 import fs from 'node:fs';
 import os from 'node:os';
@@ -34,8 +34,8 @@ export const UPDATER_CACHE_DIR = `${IDENTITY.name}-updater`;
 /** The packaged app's bridge/capture/mac/BUNDLE_ID (app/desktop/build/…), when the file isn't in this build. */
 export const DEFAULT_CAPTURE_BUNDLE_ID = IDENTITY.captureHelper?.bundleId ?? null;
 /**
- * The ids this app ships (the app's and its helper's) share the app id's prefix (com.neverquestalone.
- * for com.neverquestalone.app): uninstall resets no other Screen Recording grant, and never the
+ * The ids this app ships (the app's and its helper's) share the app id's prefix (com.voxwarden.
+ * for com.voxwarden.app): uninstall resets no other Screen Recording grant, and never the
  * checkout build's helper (<helper id>.dev, rename spec H31).
  */
 const OURS = APP_ID.slice(0, APP_ID.lastIndexOf('.') + 1);

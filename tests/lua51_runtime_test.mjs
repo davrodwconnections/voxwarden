@@ -99,7 +99,7 @@ const STOP_ROUTE = JSON.stringify({ op: 'set', layer: 'barrens', ordered: true, 
 // The same steps in both runtimes; each result is a string in OUT.
 const SCENARIO = `
 OUT = {}
-STUB.FireEvent("ADDON_LOADED", "NeverQuestAlone")
+STUB.FireEvent("ADDON_LOADED", "Voxwarden")
 STUB.FireEvent("PLAYER_LOGIN")
 STUB.FireEvent("PLAYER_ENTERING_WORLD", false, true)
 STUB.Advance(3.1)
@@ -205,7 +205,7 @@ function program(steps = [SCENARIO, BIG, WRITE_OUT]) {
     GAME,
     DB,
     'NS = {}',
-    ...tocFiles().map(f => `assert(loadstring(${bracket(fs.readFileSync(path.join(ADDON, f), 'utf8'))}, "@NeverQuestAlone/${f}"))("NeverQuestAlone", NS)`),
+    ...tocFiles().map(f => `assert(loadstring(${bracket(fs.readFileSync(path.join(ADDON, f), 'utf8'))}, "@Voxwarden/${f}"))("Voxwarden", NS)`),
     TRAPS,
     ...steps,
   ];
@@ -281,7 +281,7 @@ test('Lua 5.1 (LuaJIT): the state, the worst case (also fitted for a bridge with
 // (paste_test.mjs holds the replies to the app's renderer; the scenario above holds them to fengari).
 test('Lua 5.1 (LuaJIT): a pasted reply that is one 60 KB line of unclosed marks reads at once, its text as it was (code health AD-02)', { skip }, () => {
   const steps = [`
-STUB.FireEvent("ADDON_LOADED", "NeverQuestAlone")
+STUB.FireEvent("ADDON_LOADED", "Voxwarden")
 STUB.FireEvent("PLAYER_LOGIN")
 local worst, same = 0, true
 for _, mark in ipairs({ "**", "__", "~~" }) do

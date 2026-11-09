@@ -12,16 +12,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const IDENTITY_FILE = 'plugins/wow/identity.json';
 
-test('NeverQuestAlone\'s identity holds the names frozen at the first public build, and this repo builds it', () => {
+test('Voxwarden\'s identity holds the names frozen at the first public build, and this repo builds it', () => {
   assert.deepEqual(JSON.parse(read(IDENTITY_FILE)), {
-    appId: 'com.neverquestalone.app',
-    productName: 'NeverQuestAlone',
-    name: 'neverquestalone',
-    keychainService: 'NeverQuestAlone',
-    captureHelper: { bundleId: 'com.neverquestalone.capture', app: 'NeverQuestAlone Capture' },
-    nsisGuid: '41dade80-3a47-5a7a-986a-4e589f1545a2',
-    releases: { owner: 'tommygeoco', repo: 'neverquestalone' },
-    copyright: 'Copyright © 2026 chelinho139 and The NeverQuestAlone authors (MIT)',
+    appId: 'com.voxwarden.app',
+    productName: 'Voxwarden',
+    name: 'voxwarden',
+    keychainService: 'Voxwarden',
+    captureHelper: { bundleId: 'com.voxwarden.capture', app: 'Voxwarden Capture' },
+    nsisGuid: 'd89c0615-dc33-4cdb-bb0f-246fcb852349',
+    releases: { owner: 'davrodwconnections', repo: 'voxwarden' },
+    copyright: 'Copyright © 2026 David Rodriguez. Includes MIT-licensed upstream contributions.',
   });
   assert.equal(JSON.parse(read('package.json')).plugin, 'wow');
 });
@@ -40,7 +40,7 @@ test('every reader takes them from the identity, and none says them itself', asy
     '../bridge/byok/paths.mjs', '../bridge/byok/security/keystore.mjs', '../app/desktop/updater.mjs'].map(f => import(f)));
   assert.deepEqual([login.APP_ID, uninstall.APP_ID, uninstall.PRODUCT_DIR, uninstall.UPDATER_CACHE_DIR, uninstall.DEFAULT_CAPTURE_BUNDLE_ID, paths.PRODUCT_DIR, paths.LINUX_DIR, keystore.SERVICE, loader.KEY_SERVICE, loader.CAPTURE_APP_NAME],
     [id.appId, id.appId, id.productName, `${id.name}-updater`, id.captureHelper.bundleId, id.productName, id.name, id.keychainService, id.keychainService, `${id.captureHelper.app}.app`]);
-  assert.deepEqual(updater.feedConfig(APP_IDENTITY), { provider: 'github', owner: 'tommygeoco', repo: 'neverquestalone', private: false, releaseType: 'release' });
+  assert.deepEqual(updater.feedConfig(APP_IDENTITY), { provider: 'github', owner: 'davrodwconnections', repo: 'voxwarden', private: false, releaseType: 'release' });
   assert.match(read('app/desktop/main.mjs'), /\nconst APP_ID = IDENTITY\.appId;\n/);
   // None says what it takes (the product name in the app's own sentences is lane 3a's {app}).
   const everywhere = [id.appId, id.nsisGuid, id.captureHelper.bundleId, `${id.name}-updater`];
@@ -66,24 +66,24 @@ const FROZEN = [
   // The packaged helper's id for the capture module's code requirement and test.yml's capture-mac job
   // (equal to the identity's: the next test), and a development run's names (Electron's for an unpackaged
   // app; tests/byok/app_os_test.mjs holds them equal to the identity's, in the export too).
-  ['app/desktop/build/bridge/capture/mac/BUNDLE_ID', /^com\.neverquestalone\.capture\s*$/],
+  ['app/desktop/build/bridge/capture/mac/BUNDLE_ID', /^com\.voxwarden\.capture\s*$/],
   // The identifier the helper asks of whoever serves its socket, compiled into it (equal to the
   // identity's app id: the next test; tests/capture_mac_test.js holds it so for any app that ships it).
-  ['bridge/capture/mac/Sources/NQACapture/PeerCheck.swift', /^let nqaAppIdentifier = "com\.neverquestalone\.app"$/m],
-  ['app/desktop/package.json', /^  "name": "neverquestalone",$/m],
-  ['app/desktop/package.json', /^  "productName": "NeverQuestAlone",$/m],
+  ['bridge/capture/mac/Sources/NQACapture/PeerCheck.swift', /^let nqaAppIdentifier = "com\.voxwarden\.app"$/m],
+  ['app/desktop/package.json', /^  "name": "voxwarden",$/m],
+  ['app/desktop/package.json', /^  "productName": "Voxwarden",$/m],
   // Where the releases go (release.yml, which the source export doesn't hold: tools/shell-tree.mjs GOES_ANYWAY).
-  ...(fs.existsSync(path.join(ROOT, '.github', 'workflows', 'release.yml')) ? [['.github/workflows/release.yml', /^\s+RELEASES_REPO: tommygeoco\/neverquestalone$/m]] : []),
+  ...(fs.existsSync(path.join(ROOT, '.github', 'workflows', 'release.yml')) ? [['.github/workflows/release.yml', /^\s+RELEASES_REPO: tommygeoco\/voxwarden$/m]] : []),
   // Where /bones app sends a player for the download: the releases page, the one place with the Mac and
   // Windows downloads once a release publishes (UX-W01, before the first public build, so no install
   // carried the domain it replaces).
-  ['addon/NeverQuestAlone/Paste.lua', /^P\.APP_PAGE = "https:\/\/github\.com\/tommygeoco\/neverquestalone\/releases"$/m],
-  ['bridge/byok/wow.mjs', /ADDON_NAME = 'NeverQuestAlone'/],
+  ['addon/Voxwarden/Paste.lua', /^P\.APP_PAGE = "https:\/\/github\.com\/davrodwconnections\/voxwarden\/releases"$/m],
+  ['bridge/byok/wow.mjs', /ADDON_NAME = 'Voxwarden'/],
   ['bridge/byok/wow.mjs', /DATA_NAME = 'NQA_Data'/],
   ['bridge/transport/slots.mjs', /SLOT_PREFIX = 'NQA_S'/],
-  ['bridge/transport/slots.mjs', /SLOT_CATEGORY = 'NeverQuestAlone Parts'/],
-  ['addon/NeverQuestAlone/NeverQuestAlone.toc', /^## SavedVariables: NQADB, NQAMapDB$/m],
-  ...['OPEN_AND_TYPE', 'ASK_NEXT', 'ASK_TARGET', 'ASK_ITEM', 'OKAY'].map(b => ['addon/NeverQuestAlone/Bindings.xml', new RegExp(`name="NQA_${b}"`)]),
+  ['bridge/transport/slots.mjs', /SLOT_CATEGORY = 'Voxwarden Parts'/],
+  ['addon/Voxwarden/Voxwarden.toc', /^## SavedVariables: NQADB, NQAMapDB$/m],
+  ...['OPEN_AND_TYPE', 'ASK_NEXT', 'ASK_TARGET', 'ASK_ITEM', 'OKAY'].map(b => ['addon/Voxwarden/Bindings.xml', new RegExp(`name="NQA_${b}"`)]),
 ];
 
 test('the names frozen at the first public build are unchanged', () => {

@@ -7,7 +7,7 @@
 //
 //   lockFileFor(stateDir, addonsDir, platform?) → <stateDir>/bridge-<16 hex>.lock
 //       the hash is of the folder's real path (symlinks resolved), case-folded on macOS and Windows
-//   folderLockFile(addonsDir, platform?) → <addonsDir>/NeverQuestAlone/sig/bridge.lock
+//   folderLockFile(addonsDir, platform?) → <addonsDir>/Voxwarden/sig/bridge.lock
 //       the lock every bridge on this computer sees: a lock under $HOME isn't seen by a bridge
 //       started with another HOME (a sandbox) or by another account's (final review L3-1, L4-1)
 //   lockHolder(file, { alive, bootAt, now }) → the live pid a lock file names ({pid} JSON or a bare pid), or null
@@ -16,7 +16,7 @@
 //       beats it names (SY-12: a crashed app's pid, reused by any other process, no longer refuses
 //       every start until a reboot; SY-30: an idle bridge beats every minute, and says so)
 //   takeFolderLock({ addonsDir, by, platform, alive, pid }) → release() | null (no addon folder
-//       there, or a link where NeverQuestAlone/ or sig/ goes: nothing to lock); refused (BRIDGE_RUNNING) while
+//       there, or a link where Voxwarden/ or sig/ goes: nothing to lock); refused (BRIDGE_RUNNING) while
 //       a live bridge holds it, any account's; its file is 0644, so every account can read it.
 //       release.pace(ms) sets the heartbeat
 //   takeBridgeLock({ lockDir, addonsDir, platform, alive, pid }) → release()
@@ -89,10 +89,10 @@ export function lockFileFor(stateDir, addonsDir, platform = process.platform) {
   return p.join(stateDir, `bridge-${h}.lock`);
 }
 
-/** The lock inside the AddOns folder: <addonsDir>/NeverQuestAlone/sig/bridge.lock. */
+/** The lock inside the AddOns folder: <addonsDir>/Voxwarden/sig/bridge.lock. */
 export function folderLockFile(addonsDir, platform = process.platform) {
   const p = platform === 'win32' ? path.win32 : path.posix;
-  return p.join(String(addonsDir), 'NeverQuestAlone', 'sig', 'bridge.lock');
+  return p.join(String(addonsDir), 'Voxwarden', 'sig', 'bridge.lock');
 }
 
 // The folder lock names its computer and account by a salted hash of each (code health BR-17): it sits
@@ -180,15 +180,15 @@ export function lockHolder(file, { alive = pidAlive, self = process.pid, bootAt 
 const realDirAt = (p) => { try { return fs.lstatSync(p).isDirectory(); } catch { return false; } };
 
 /**
- * Take the lock inside the AddOns folder (NeverQuestAlone/sig/bridge.lock, holding {pid, salt, hostHash,
+ * Take the lock inside the AddOns folder (Voxwarden/sig/bridge.lock, holding {pid, salt, hostHash,
  * uidHash, at, by, hb}: BR-17), which every bridge on this computer checks whatever HOME or account it runs under. No
- * addon folder there, or a link (or a file) where NeverQuestAlone/ or sig/ goes: nothing to take (null);
+ * addon folder there, or a link (or a file) where Voxwarden/ or sig/ goes: nothing to take (null);
  * a link is never followed. A lock another account holds can't be read only when its folder
  * says so: that one is refused too (fail closed), naming the file.
  */
 export function takeFolderLock({ addonsDir, by = 'nqa', platform = process.platform, alive = pidAlive, pid = process.pid, bootAt = bootTime(), host = os.hostname(), uid = process.getuid?.() ?? null, now = Date.now, beatMs = HEARTBEAT_MS } = {}) {
   const p = platform === 'win32' ? path.win32 : path.posix;
-  const addon = p.join(String(addonsDir), 'NeverQuestAlone');
+  const addon = p.join(String(addonsDir), 'Voxwarden');
   const sig = p.join(addon, 'sig');
   if (!realDirAt(addon)) return null;
   let st = null;
@@ -228,7 +228,7 @@ export function takeFolderLock({ addonsDir, by = 'nqa', platform = process.platf
       const held = l && l.pid !== pid && sameHost(l, host) && !beforeBoot(l.at, bootAt) && !silent(l, now()) && alive(l.pid);
       if (held) {
         const where = otherAccount(l, uid) ? ', under another account on this computer' : '';
-        throw lockError(`Another copy of NeverQuestAlone is already serving this World of Warcraft folder (pid ${l.pid}${where}). Only one copy can at a time: quit that one first.`);
+        throw lockError(`Another copy of Voxwarden is already serving this World of Warcraft folder (pid ${l.pid}${where}). Only one copy can at a time: quit that one first.`);
       }
       try { fs.rmSync(file, { force: true }); } catch { /* raced */ } // stale, or our own from before a crash
     }
@@ -239,7 +239,7 @@ export function takeFolderLock({ addonsDir, by = 'nqa', platform = process.platf
 /**
  * Take the lock for an AddOns folder (code health BR-27: one lock, one heartbeat): the one in the
  * folder itself (takeFolderLock), which every bridge on this computer checks whatever HOME or account
- * it runs under. Only where there's none to take (no real NeverQuestAlone/sig folder, a link where one
+ * it runs under. Only where there's none to take (no real Voxwarden/sig folder, a link where one
  * goes, a folder this account can't write to): <lockDir>/bridge-<hash>.lock holding {pid, addonsDir},
  * so two bridges of one state folder still never share an AddOns folder. A lock that refuses
  * (BRIDGE_RUNNING) is never followed by the other.
@@ -270,7 +270,7 @@ export function takeBridgeLock({ lockDir, addonsDir, platform = process.platform
     } catch (e) {
       if (e.code !== 'EEXIST') throw e;
       const held = lockHolder(file, { alive, self: pid, bootAt, now: now() });
-      if (held) throw lockError(`Another copy of NeverQuestAlone is already running for this World of Warcraft (pid ${held}). Quit it first.`);
+      if (held) throw lockError(`Another copy of Voxwarden is already running for this World of Warcraft (pid ${held}). Quit it first.`);
       fs.rmSync(file, { force: true }); // stale, or our own from before a crash
     }
   }

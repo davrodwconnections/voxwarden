@@ -1,5 +1,5 @@
-// Copy and Paste (addon/NeverQuestAlone/Paste.lua, docs/ADDON-FIRST.md): the addon with
-// no NeverQuestAlone app. A message goes to the player's own AI by copy and
+// Copy and Paste (addon/Voxwarden/Paste.lua, docs/ADDON-FIRST.md): the addon with
+// no Voxwarden app. A message goes to the player's own AI by copy and
 // paste, and the reply pasted back is read as the app reads one.
 //   - The reply reader matches the app's (bridge/app/render.mjs renderReply,
 //     bridge/app/map-protocol.mjs validateMapCommand) on the same replies.
@@ -89,7 +89,7 @@ test('map commands are held to the app\'s limits and never throw on odd input', 
 // hand, held to the app's only through fixtures. Paste.lua now carries a block made from the bridge's
 // own exports (tests/helpers/paste-lua.mjs), checked here byte for byte.
 test('Paste.lua carries the block made from the app\'s own limits, map limits and distance claims, byte for byte; a layer name or map id past the app\'s limit is refused as the app refuses it (code health AD-13)', () => {
-  const src = fs.readFileSync(new URL('../addon/NeverQuestAlone/Paste.lua', import.meta.url), 'utf8');
+  const src = fs.readFileSync(new URL('../addon/Voxwarden/Paste.lua', import.meta.url), 'utf8');
   const want = pasteLuaSource();
   const start = src.indexOf(FIRST_LINE);
   assert.ok(start > 0, 'the generated block is in Paste.lua');
@@ -275,7 +275,7 @@ test('with no app, the short help offers the way back and the app, not screen re
   assert.match(around, /^Getting around:\n/, 'the Welcome\'s lessons first (G3)');
   assert.ok(list.split('\n').length <= 6, help);
   assert.match(help, /\/nqa paste.*Open Copy and Paste again/);
-  assert.match(help, /\/nqa app.*Show the link to download the NeverQuestAlone app/);
+  assert.match(help, /\/nqa app.*Show the link to download the Voxwarden app/);
   assert.doesNotMatch(help, /Screen Reading|mode reload/);
 });
 
@@ -300,7 +300,7 @@ test('the app\'s first beat links the install: the hello goes up, replies come b
   assert.equal(vm.evaluate('NQADB.linked'), 'true');
   const wires = vm.stripWires();
   assert.ok(wires.some(w => w.split('\x1f')[3] === 'hello'), 'the hello is drawn');
-  assert.match(vm.chatLines().join('\n'), /The NeverQuestAlone app is running, so replies come back by themselves now\./);
+  assert.match(vm.chatLines().join('\n'), /The Voxwarden app is running, so replies come back by themselves now\./);
   // Messages go to the app from now on.
   vm.send('Hi');
   assert.notEqual(vm.json('NS.Chats.Active()').pending[0].paste, true);
@@ -330,8 +330,8 @@ test('/nqa app shows where to get the app, ready to copy (an addon can\'t open a
   vm.slash('app');
   assert.equal(vm.evaluate('NQACopyBox:GetText()'), vm.evaluate('NS.Paste.APP_PAGE'));
   // [UX-W01] The one place with the Mac and Windows downloads once a release publishes, the app's own download page.
-  assert.equal(vm.evaluate('NS.Paste.APP_PAGE'), 'https://github.com/tommygeoco/neverquestalone/releases');
-  assert.match(vm.chatLines().join('\n'), /The link to the NeverQuestAlone app is selected\. Press (?:Cmd|Ctrl)\+C, then paste it into your browser to download the app\. Once it's set up, replies come back by themselves\./);
+  assert.equal(vm.evaluate('NS.Paste.APP_PAGE'), 'https://github.com/davrodwconnections/voxwarden/releases');
+  assert.match(vm.chatLines().join('\n'), /The link to the Voxwarden app is selected\. Press (?:Cmd|Ctrl)\+C, then paste it into your browser to download the app\. Once it's set up, replies come back by themselves\./);
 });
 
 test('a reload inbox links the install only when the app wrote it just now, never from an app that has quit', () => {
@@ -371,7 +371,7 @@ test('an ask in combat opens its window after the fight, and a fight takes the k
   vm.run('STUB.combat = true');
   vm.send('What next?');
   assert.equal(vm.evaluate('NQAPaste and NQAPaste:IsShown()'), null, 'no window mid-fight');
-  assert.ok(vm.list('STUB.errors').includes('Asked NeverQuestAlone: your message opens after the fight.'));
+  assert.ok(vm.list('STUB.errors').includes('Asked Voxwarden: your message opens after the fight.'));
   vm.run('STUB.combat = false; STUB.FireEvent("PLAYER_REGEN_ENABLED")');
   assert.equal(vm.evaluate('NQAPaste:IsShown()'), 'true', 'it opens when the fight ends');
   assert.equal(vm.bool('STUB.focus == NQAPasteOut'), true);
@@ -403,7 +403,7 @@ test('Automatic falls back to Copy and Paste while the app is gone (C-05)', () =
   assert.equal(vm.evaluate('NQAPaste:IsShown()'), 'true', 'the ask goes by Copy and Paste');
   assert.equal(vm.json('NS.Chats.Active()').pending[0].paste, true);
   // [C-133] It says why, not the first-run words.
-  assert.equal(vm.evaluate('NS.Paste.FALLBACK'), "The NeverQuestAlone app hasn't answered for a while, so this message goes by Copy and Paste. Once it's back, replies come by themselves again.");
+  assert.equal(vm.evaluate('NS.Paste.FALLBACK'), "The Voxwarden app hasn't answered for a while, so this message goes by Copy and Paste. Once it's back, replies come by themselves again.");
   assert.ok(vm.list('STUB.texts').includes(vm.evaluate('NS.Paste.FALLBACK')), 'the window says why');
   // A player who picked Copy and Paste gets the usual first line.
   const picked = newVM({}).login().advance(4);
@@ -459,7 +459,7 @@ test('a stray paste isn\'t taken for the reply, a key typed in step 2 isn\'t eit
   assert.ok(vm.list('STUB.texts').includes("That's your message from step 1. Copy your AI's reply and paste it here."));
 });
 
-// [code health AD-01] (KY-10) The auto-read refused a key, but Use Reply stored it as NeverQuestAlone's
+// [code health AD-01] (KY-10) The auto-read refused a key, but Use Reply stored it as Voxwarden's
 // reply in saved data. Now a key in the reply box goes as one typed in the window does.
 test('a key pasted into the reply box is refused, by Use Reply or read by itself: out of the box, the refusal said, nothing in history or saved data (code health AD-01)', () => {
   const vm = fresh();
@@ -506,7 +506,7 @@ test('a Copy and Paste wait loads no reply slots, even with the app linked (C-11
   assert.equal(vm.num('NS.R.slots.reasons.progress or 0'), before, 'no progress loads for a wait no slot can answer');
 });
 
-test('with the public build\'s name helper (ns.P), every line of Copy and Paste that names NeverQuestAlone takes the player\'s name; "NeverQuestAlone" stays', () => {
+test('with the public build\'s name helper (ns.P), every line of Copy and Paste that names Voxwarden takes the player\'s name; "Voxwarden" stays', () => {
   const vm = fresh();
   // The companion renamed, as the app's persona does it (Store.lua's ns.P puts the name in).
   vm.run('NS.Chats.SetCompanionName("Nova")');
@@ -519,8 +519,8 @@ test('with the public build\'s name helper (ns.P), every line of Copy and Paste 
   assert.equal(vm.evaluate('(NS.Paste.UseBox(false))'), 'false', 'the renamed message pasted back is still caught');
   assert.equal(vm.evaluate('NS.Paste.Named(NS.Paste.STARTER)').slice(0, 14), 'Ask anything. ', 'no name to put in');
   const welcome = vm.evaluate('NS.Paste.Named(NS.Paste.WELCOME)');
-  assert.ok(welcome.startsWith("I'm Nova. ") && welcome.includes('The free NeverQuestAlone app skips the copying'), welcome);
-  assert.equal(vm.evaluate('NS.Paste.Named("Get the NeverQuestAlone app; ask NeverQuestAlone.")'), 'Get the NeverQuestAlone app; ask Nova.');
+  assert.ok(welcome.startsWith("I'm Nova. ") && welcome.includes('The free Voxwarden app skips the copying'), welcome);
+  assert.equal(vm.evaluate('NS.Paste.Named("Get the Voxwarden app; ask Voxwarden.")'), 'Get the Voxwarden app; ask Nova.');
   vm.run('NS.Paste.Close(); STUB.combat = true');
   vm.send('And in a fight?');
   assert.ok(vm.list('STUB.errors').includes('Asked Nova: your message opens after the fight.'));

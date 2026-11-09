@@ -1,12 +1,12 @@
 ---
 title: Get started
-description: Build NeverQuestAlone from its source, run its tests and start the app, in about 10 minutes.
+description: Build Voxwarden from its source, run its tests and start the app, in about 10 minutes.
 status: ready
 ---
 
 # Get started
 
-Build NeverQuestAlone from its source, run its tests and start the app. About 10 minutes.
+Build Voxwarden from its source, run its tests and start the app. About 10 minutes.
 
 ## What you need
 
@@ -18,8 +18,8 @@ You don’t need an API key, a signing certificate or World of Warcraft to build
 ## 1 Get the code
 
 ```sh walkthrough
-git clone https://github.com/tommygeoco/neverquestalone.git
-cd neverquestalone
+git clone https://github.com/davrodwconnections/voxwarden.git
+cd voxwarden
 ```
 
 ## 2 Install
@@ -45,9 +45,9 @@ They test the addon, the app and everything between them, with stand-ins for the
 npm start
 ```
 
-It opens at **Connect your AI**, as a NeverQuestAlone you download does, because it’s the same app:
+It opens at **Connect your AI**, as a Voxwarden you download does, because it’s the same app:
 
-- It keeps its key and its data where an installed NeverQuestAlone does, so quit an installed copy first.
+- It keeps its key and its data where an installed Voxwarden does, so quit an installed copy first.
 - When you set up WoW, it installs the addon from your copy of the code.
 - It never updates itself.
 
@@ -55,7 +55,7 @@ It opens at **Connect your AI**, as a NeverQuestAlone you download does, because
 
 The app reads the top of the game’s window with its capture helper, a small program you build on your computer:
 
-- Mac: make a code-signing certificate named “NeverQuestAlone Local Code Signing” in your login keychain once. A self-signed one is enough, and Keychain Access’s Certificate Assistant makes it. If your Mac then says it isn’t trusted, open it in Keychain Access and set **Code Signing** to **Always Trust** under **Trust**. Then run `npm run capture:build`, and allow Screen Recording for “NeverQuestAlone Capture” when your Mac asks.
+- Mac: make a code-signing certificate named “Voxwarden Local Code Signing” in your login keychain once. A self-signed one is enough, and Keychain Access’s Certificate Assistant makes it. If your Mac then says it isn’t trusted, open it in Keychain Access and set **Code Signing** to **Always Trust** under **Trust**. Then run `npm run capture:build`, and allow Screen Recording for “Voxwarden Capture” when your Mac asks.
 - Windows: in Git Bash, with MinGW-w64’s `gcc` on your PATH, run `npm run capture:build`.
 
 Until you do, turn off **Screen reading** on the app’s **Your data** page: your messages wait for a `/reload` in game, and replies still come in.

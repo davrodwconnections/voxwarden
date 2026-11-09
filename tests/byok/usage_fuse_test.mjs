@@ -15,11 +15,11 @@ test('AUTO_FUSE: 10 check-ins within 60 s, 60 within an hour, frozen; the one li
   assert.deepEqual(JSON.parse(JSON.stringify(AUTO_FUSE)), { turns: 10, windowMs: 60_000, hour: { turns: 60, windowMs: 3_600_000 } });
   assert.ok(Object.isFrozen(AUTO_FUSE) && Object.isFrozen(AUTO_FUSE.hour));
   assert.deepEqual(windowsOf(AUTO_FUSE), [{ turns: 10, windowMs: 60_000 }, { turns: 60, windowMs: 3_600_000 }]);
-  assert.equal(autoPausedLine('NeverQuestAlone'), 'NeverQuestAlone paused check-ins: your next message turns them back on.');
+  assert.equal(autoPausedLine('Voxwarden'), 'Voxwarden paused check-ins: your next message turns them back on.');
   assert.equal(autoPausedLine('Mira'), 'Mira paused check-ins: your next message turns them back on.');
   // One line whatever the limits (PUI-01): the hour's window says the same.
   assert.equal(autoPausedLine('Mira', AUTO_FUSE.hour), 'Mira paused check-ins: your next message turns them back on.');
-  assert.match(autoPausedLine(''), /^NeverQuestAlone paused/);
+  assert.match(autoPausedLine(''), /^Voxwarden paused/);
   assert.deepEqual([spanText(60_000), spanText(3_600_000), spanText(300_000), spanText(7_200_000), spanText(90_000)], ['a minute', 'an hour', '5 minutes', '2 hours', '90 seconds']);
 });
 

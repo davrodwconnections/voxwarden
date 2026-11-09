@@ -74,7 +74,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const { openBrain, brainFile } = await import('./db.mjs');
   const { latestState } = await import('./bench.mjs');
   const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? Number(process.argv[i + 1]) : d; };
-  const appData = path.join(process.env.APPDATA || '', 'NeverQuestAlone', 'dev');
+  const appData = path.join(process.env.APPDATA || '', 'Voxwarden', 'dev');
   const db = openBrain(brainFile(appData));
   const state = latestState(appData);
   const t0 = Date.now();

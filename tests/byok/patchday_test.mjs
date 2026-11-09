@@ -39,7 +39,7 @@ function gameWith(version = '1.60.1.70009', { slots = 3 } = {}) {
   assert.equal(r.ok, true, JSON.stringify(r.steps));
   const addons = path.join(flavorDir, 'Interface', 'AddOns');
   return { root, flavorDir, addons, update: v => fs.writeFileSync(path.join(root, 'World of Warcraft', '.build.info'), buildInfo(v)),
-    tocs: () => [path.join(addons, 'NeverQuestAlone', 'NeverQuestAlone.toc'), ...[1, 2, 3].slice(0, slots).map(i => path.join(addons, `NQA_S00${i}`, `NQA_S00${i}.toc`))] };
+    tocs: () => [path.join(addons, 'Voxwarden', 'Voxwarden.toc'), ...[1, 2, 3].slice(0, slots).map(i => path.join(addons, `NQA_S00${i}`, `NQA_S00${i}.toc`))] };
 }
 
 // ---------------------------------------------------------------- wow.mjs
@@ -79,7 +79,7 @@ test('the install writes the game\'s own interface number into every TOC, the ad
   const g = gameWith('1.61.0.71000');
   for (const f of g.tocs()) assert.equal(iface(f), '16100', f);
   const installed = fs.readFileSync(g.tocs()[0], 'utf8');
-  const stamped = stampToc(fs.readFileSync(path.join(ADDON_SOURCE, 'NeverQuestAlone.toc'), 'utf8'));
+  const stamped = stampToc(fs.readFileSync(path.join(ADDON_SOURCE, 'Voxwarden.toc'), 'utf8'));
   assert.equal(installed, stamped.replace(/^## Interface: .*$/m, '## Interface: 16100'), 'only the Interface line differs from the release zip\'s stamp');
   assert.deepEqual(installedInterfaces(g.addons), { addon: '16100', slot: '16100' });
 });
@@ -90,7 +90,7 @@ test('one install path writes each TOC once, the product\'s words and the game\'
   const text = fs.readFileSync(addonToc, 'utf8');
   const field = k => new RegExp(`^## ${k}:[ \\t]*(.*)$`, 'm').exec(text)?.[1];
   // One build (2026-09-29): no X-Backend line; the TOC is the repo's with the game's number.
-  assert.deepEqual([field('Interface'), field('Title'), field('X-Backend'), field('Notes')], ['16100', 'NeverQuestAlone', undefined, PUBLIC_NOTES]);
+  assert.deepEqual([field('Interface'), field('Title'), field('X-Backend'), field('Notes')], ['16100', 'Voxwarden', undefined, PUBLIC_NOTES]);
   // Each slot TOC is slotToc's with the game's number: its title and notes, the parts' Category, its own
   // Group and the addon's icon (E-047), never the older public words.
   slots.forEach((f, i) => assert.equal(fs.readFileSync(f, 'utf8'), slotToc(i + 1, '16100'), f));
@@ -220,9 +220,9 @@ test('the window\'s line: the update said once, "Restart WoW to load it." only w
   assert.deepEqual(view({ running: false, patch: { to: '16100', restart: true } }), { state: 'ok', id: '16100:ok', ok: true, headline: PATCH_WORDS.updated, to: '16100' });
   assert.deepEqual(view({ running: true, patch: { to: '16100', restart: true } }), { state: 'restart', id: '16100:restart', ok: false, headline: PATCH_WORDS.updated, detail: 'Restart WoW to load it.', to: '16100' });
   assert.equal(view({ running: true, patch: { to: '16100', restart: false } }).state, 'ok', 'the addon said hello: it runs');
-  assert.equal(view({ running: true, patch: { to: '16100', restart: false, failed: true } }).detail, 'Quit WoW, and NeverQuestAlone tries again.');
+  assert.equal(view({ running: true, patch: { to: '16100', restart: false, failed: true } }).detail, 'Quit WoW, and Voxwarden tries again.');
   assert.equal(view({ running: false, patch: { to: '16100', restart: false, failed: true } }).detail, 'In Settings, click Show more, then Run setup again.');
-  assert.equal(PATCH_WORDS.updated, 'NeverQuestAlone updated the addon for the new version of World of Warcraft.');
+  assert.equal(PATCH_WORDS.updated, 'Voxwarden updated the addon for the new version of World of Warcraft.');
   const needs = wow => statusView({ backend: { rt: { state: 'ready' } }, wow }).needsPlayer;
   assert.deepEqual([needs({ running: true, patch: { to: '16100', restart: true } }), needs({ running: false, patch: { to: '16100', restart: true } })], [true, false]);
   // STYLE: curly apostrophes in the app, sentences that end with a period, no plumbing words.
@@ -238,14 +238,14 @@ function coreWith(deps = {}) {
   const root = tmpDir('bones-patch-core-');
   const addons = path.join(root, 'AddOns');
   installSlots(addons, { count: 3, iface: '16001' });
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true });
+  fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true });
   const warns = [];
-  const bridge = createBridge({ transport: { slots: 3 }, sessions: { labels: { main: 'NeverQuestAlone' } } }, {
+  const bridge = createBridge({ transport: { slots: 3 }, sessions: { labels: { main: 'Voxwarden' } } }, {
     stateDir: path.join(root, 'state'), addonsDir: addons, log: (k, d) => { if (k === 'version-warn') warns.push(d.warn); },
     slotInterface: () => '16001',
     gatewayFactory: handlers => ({
       kind: 'byok',
-      persona: 'NeverQuestAlone',
+      persona: 'Voxwarden',
       start() { handlers.onState({ state: 'ready', since: Date.now() }); handlers.onReady(); },
       stop() {},
       send: args => ({ runId: args.idem, status: 'started' }),

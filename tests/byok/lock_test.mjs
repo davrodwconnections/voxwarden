@@ -84,15 +84,15 @@ async function cliStart(t, { holdPublicLock, before = null }) {
   });
   holder?.();
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
-  const inbox = path.join(addonsDir, 'NeverQuestAlone', 'Inbox.lua');
+  const inbox = path.join(addonsDir, 'Voxwarden', 'Inbox.lua');
   return { ...r, home, addonsDir, ownLock: lockFileFor(pub.state, addonsDir),
-    published: () => fs.existsSync(inbox) && /Written by the NeverQuestAlone app/.test(fs.readFileSync(inbox, 'utf8')) };
+    published: () => fs.existsSync(inbox) && /Written by the Voxwarden app/.test(fs.readFileSync(inbox, 'utf8')) };
 }
 
 test('the developer command line\'s `start` refuses while the app\'s bridge serves the same AddOns folder (through a linked path)', { skip: NO_CLI }, async (t) => {
   const r = await cliStart(t, { holdPublicLock: true });
   assert.equal(r.code, 3, `${r.out}\n${r.err}`);
-  assert.match(r.err, new RegExp(`Another copy of NeverQuestAlone is already serving this World of Warcraft folder \\(pid ${process.pid}\\)`));
+  assert.match(r.err, new RegExp(`Another copy of Voxwarden is already serving this World of Warcraft folder \\(pid ${process.pid}\\)`));
   assert.equal(fs.existsSync(r.ownLock), false, 'it took no lock of its own');
   assert.equal(r.published(), false, 'and published nothing into AddOns');
 });
@@ -144,7 +144,7 @@ test('the heartbeat (SY-12): a crashed app\'s lock whose pid another live proces
   // (code health BR-27: one lock, one heartbeat).
   const lockDir = tmp('bones-lock-');
   const addonsDir = tmp('bones-addons-');
-  fs.mkdirSync(path.join(addonsDir, 'NeverQuestAlone', 'sig'), { recursive: true });
+  fs.mkdirSync(path.join(addonsDir, 'Voxwarden', 'sig'), { recursive: true });
   const home = lockFileFor(lockDir, addonsDir);
   fs.mkdirSync(lockDir, { recursive: true });
   const homeText = JSON.stringify({ pid: SYSTEM_PID, addonsDir, at: ago(STALE_MS + 1000), hb: 30 });
@@ -191,7 +191,7 @@ test('the idle heartbeat (SY-30): while WoW is closed the lock beats every minut
   // health BR-27): the AddOns folder's, and none in the state folder.
   const lockDir = tmp('bones-lock-');
   const addonsDir = tmp('bones-addons-');
-  fs.mkdirSync(path.join(addonsDir, 'NeverQuestAlone', 'sig'), { recursive: true });
+  fs.mkdirSync(path.join(addonsDir, 'Voxwarden', 'sig'), { recursive: true });
   const file = folderLockFile(addonsDir);
   const release = takeBridgeLock({ lockDir, addonsDir, beatMs: 40 });
   try {
@@ -216,7 +216,7 @@ test('code health BR-27: one lock and one heartbeat: the AddOns folder\'s where 
   const { folderLockFile } = await import('../../bridge/byok/lock.mjs');
   const lockDir = tmp('bones-lock-');
   const addonsDir = tmp('bones-addons-');
-  fs.mkdirSync(path.join(addonsDir, 'NeverQuestAlone'), { recursive: true });
+  fs.mkdirSync(path.join(addonsDir, 'Voxwarden'), { recursive: true });
   const release = takeBridgeLock({ lockDir, addonsDir });
   try {
     assert.equal(release.folder, true);
@@ -235,8 +235,8 @@ test('code health BR-27: one lock and one heartbeat: the AddOns folder\'s where 
   const dirs = [bare];
   if (!NO_SYMLINKS) {
     const linked = tmp('bones-addons-');
-    fs.mkdirSync(path.join(linked, 'NeverQuestAlone'));
-    fs.symlinkSync(tmp('bones-victim-'), path.join(linked, 'NeverQuestAlone', 'sig'));
+    fs.mkdirSync(path.join(linked, 'Voxwarden'));
+    fs.symlinkSync(tmp('bones-victim-'), path.join(linked, 'Voxwarden', 'sig'));
     dirs.push(linked);
   }
   for (const dir of dirs) {
@@ -254,27 +254,27 @@ test('code health BR-27: one lock and one heartbeat: the AddOns folder\'s where 
   }
 });
 
-test('takeFolderLock: nothing without a real NeverQuestAlone folder, never through a link; refused for a live holder; a stale one is taken over', { skip: NO_SYMLINKS }, async () => {
+test('takeFolderLock: nothing without a real Voxwarden folder, never through a link; refused for a live holder; a stale one is taken over', { skip: NO_SYMLINKS }, async () => {
   const { takeFolderLock, folderLockFile } = await import('../../bridge/byok/lock.mjs');
   const addonsDir = tmp('bones-addons-');
   assert.equal(takeFolderLock({ addonsDir }), null, 'no addon folder: nothing to lock');
   const victim = tmp('bones-victim-');
-  fs.symlinkSync(victim, path.join(addonsDir, 'NeverQuestAlone'));
+  fs.symlinkSync(victim, path.join(addonsDir, 'Voxwarden'));
   assert.equal(takeFolderLock({ addonsDir }), null, 'a linked addon folder is not followed');
   assert.deepEqual(fs.readdirSync(victim), []);
-  fs.rmSync(path.join(addonsDir, 'NeverQuestAlone'));
-  fs.mkdirSync(path.join(addonsDir, 'NeverQuestAlone'));
-  fs.symlinkSync(victim, path.join(addonsDir, 'NeverQuestAlone', 'sig'));
+  fs.rmSync(path.join(addonsDir, 'Voxwarden'));
+  fs.mkdirSync(path.join(addonsDir, 'Voxwarden'));
+  fs.symlinkSync(victim, path.join(addonsDir, 'Voxwarden', 'sig'));
   assert.equal(takeFolderLock({ addonsDir }), null, 'nor a linked sig folder');
   assert.deepEqual(fs.readdirSync(victim), []);
-  fs.rmSync(path.join(addonsDir, 'NeverQuestAlone', 'sig'));
+  fs.rmSync(path.join(addonsDir, 'Voxwarden', 'sig'));
   const release = takeFolderLock({ addonsDir });
   const file = folderLockFile(addonsDir);
   const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(rec.pid, process.pid);
   assert.equal(rec.by, 'nqa');
   assert.equal(fs.statSync(file).mode & 0o777, 0o644);
-  assert.throws(() => takeFolderLock({ addonsDir, pid: process.pid + 1, alive: () => true }), e => e.code === 'BRIDGE_RUNNING' && /Another copy of NeverQuestAlone is already serving this World of Warcraft folder/.test(e.message));
+  assert.throws(() => takeFolderLock({ addonsDir, pid: process.pid + 1, alive: () => true }), e => e.code === 'BRIDGE_RUNNING' && /Another copy of Voxwarden is already serving this World of Warcraft folder/.test(e.message));
   release();
   assert.equal(fs.existsSync(file), false);
   fs.writeFileSync(file, JSON.stringify({ pid: DEAD, host: 'x' }));
@@ -288,11 +288,11 @@ test('the developer command line\'s `start` refuses while another bridge holds t
     holdPublicLock: false,
     before: ({ addonsDir }) => {
       // The app's bridge under another HOME (this test process stands in for it).
-      fs.writeFileSync(path.join(addonsDir, 'NeverQuestAlone', 'sig', 'bridge.lock'), JSON.stringify({ pid: process.pid, uid: process.getuid(), host: os.hostname(), at: new Date().toISOString(), by: 'nqa' }));
+      fs.writeFileSync(path.join(addonsDir, 'Voxwarden', 'sig', 'bridge.lock'), JSON.stringify({ pid: process.pid, uid: process.getuid(), host: os.hostname(), at: new Date().toISOString(), by: 'nqa' }));
     },
   });
   assert.equal(r.code, 3, `${r.out}\n${r.err}`);
-  assert.match(r.err, new RegExp(`Another copy of NeverQuestAlone is already serving this World of Warcraft folder \\(pid ${process.pid}\\)`));
+  assert.match(r.err, new RegExp(`Another copy of Voxwarden is already serving this World of Warcraft folder \\(pid ${process.pid}\\)`));
   assert.equal(fs.existsSync(r.ownLock), false, 'it took no lock of its own');
   assert.equal(r.published(), false, 'and published nothing');
 });
@@ -300,7 +300,7 @@ test('the developer command line\'s `start` refuses while another bridge holds t
 test('code health BR-17: the lock in the AddOns folder names no computer or account in the clear (a salted hash of each), and still tells this computer\'s lock from another\'s and another account\'s', async () => {
   const { takeFolderLock, folderLockFile } = await import('../../bridge/byok/lock.mjs');
   const addonsDir = tmp('bones-addons-');
-  fs.mkdirSync(path.join(addonsDir, 'NeverQuestAlone', 'sig'), { recursive: true });
+  fs.mkdirSync(path.join(addonsDir, 'Voxwarden', 'sig'), { recursive: true });
   const file = folderLockFile(addonsDir);
   const host = 'Somebodys-MacBook-Pro.local';
   const release = takeFolderLock({ addonsDir, host, uid: 501 });

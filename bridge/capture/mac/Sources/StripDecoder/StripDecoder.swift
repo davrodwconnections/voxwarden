@@ -1,4 +1,4 @@
-// Decodes the addon's pixel strip (see addon/NeverQuestAlone/Codec.lua):
+// Decodes the addon's pixel strip (see addon/Voxwarden/Codec.lua):
 //   [magic1 magic2] [id hi, lo] [len hi, lo] [payload] [fletcher-16 s1, s2]
 // packed MSB-first into 3-bit cells (bit 2 = R, bit 1 = G, bit 0 = B), each
 // channel fully on or off. Same rules as upstream's capture.ps1 and

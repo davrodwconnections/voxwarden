@@ -87,7 +87,7 @@ async function start() {
   const dir = dataDir();
   const saved = readConfig(dir);
   const flavor = flavorDir(dir);
-  if (!fs.existsSync(path.join(flavor, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'))) {
+  if (!fs.existsSync(path.join(flavor, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'))) {
     fail(2, `No addon in ${flavor}: run node bridge/nqa.mjs install --wow "${flavor}" first (with World of Warcraft quit).`);
   }
   const config = configWithDefaults(saved);

@@ -60,7 +60,7 @@ test('check-ins, the hour (D4): a loop slower than the minute (one every 7 s by 
     assert.equal(posts(mock).length, 60, 'the 61st took no turn');
     const paused = records(b, 'error').filter(r => r.kind === 'auto_paused');
     assert.equal(paused.length, 1);
-    assert.equal(paused[0].text, 'NeverQuestAlone paused check-ins: your next message turns them back on.', 'the in-game line is one line whatever window tripped (PUI-01)');
+    assert.equal(paused[0].text, 'Voxwarden paused check-ins: your next message turns them back on.', 'the in-game line is one line whatever window tripped (PUI-01)');
     assert.deepEqual(b.status().companion.autoPausedBy, { turns: 60, windowMs: 3_600_000 });
     assert.equal(b.buildSlot().bridge.usage.autoPaused, true);
   } finally { await b.stop(); await mock.close(); }
@@ -133,7 +133,7 @@ test('slowed (SY-05): a short rate limit is waited out, then the turn goes', asy
     await waitFor(() => env.chats('final').length === 1, 5000, 'the reply');
     assert.equal(posts(mock).length, before + 1);
     assert.ok(logs.some(l => l.k === 'byok-slowed' && l.sent === true), 'it waited for the reset first');
-    assert.ok(env.events.some(e => e.event === 'agent' && e.payload.data?.name === 'retry' && /^Anthropic asked NeverQuestAlone to slow down\. Trying again in \d+ seconds?\.$/.test(e.payload.data.title)), 'and the chat said so, in the retry\'s words (PUI-01)');
+    assert.ok(env.events.some(e => e.event === 'agent' && e.payload.data?.name === 'retry' && /^Anthropic asked Voxwarden to slow down\. Trying again in \d+ seconds?\.$/.test(e.payload.data.title)), 'and the chat said so, in the retry\'s words (PUI-01)');
   } finally { await env.backend.stop(); await mock.close(); }
 });
 
@@ -153,7 +153,7 @@ test('local_write (SY-12): a disk that\'s full or read-only is said as such, nev
     await env.backend.send(sendParams(CHAT, 'k2', 'second'));
     await waitFor(() => env.chats('error').length === 2, 5000, 'the line');
     e = env.chats('error')[1];
-    assert.deepEqual([e.errorKind, e.errorMessage], ['local_write', "NeverQuestAlone couldn't save on this computer, so nothing was sent. Click Retry. Restart your computer if it keeps happening."]);
+    assert.deepEqual([e.errorKind, e.errorMessage], ['local_write', "Voxwarden couldn't save on this computer, so nothing was sent. Click Retry. Restart your computer if it keeps happening."]);
     assert.equal(posts(mock).length, 0);
   } finally { fs.writeFileSync = write; await env.backend.stop(); await mock.close(); }
 });

@@ -183,7 +183,7 @@ export function createBridge(config, deps) {
   const useContext = (() => { const p = privacy(); return p ? p.gameContext !== false : true; })();
   // The one persona (the backend's: the name the player gave Bones in the app), read when it's ready.
   const defaultAgent = 'main';
-  let agents = [{ id: defaultAgent, name: 'NeverQuestAlone' }];
+  let agents = [{ id: defaultAgent, name: 'Voxwarden' }];
   let gwState = { state: 'connecting', since: now(), reason: null };
   const busy = new Map(); // chatId -> { started, actions, last }
   const queued = new Map(); // chatId -> count of followups waiting
@@ -194,7 +194,7 @@ export function createBridge(config, deps) {
   // The backend's name in player-facing lines (the player's AI: the provider's name), else "Your AI".
   const backendName = () => gateway?.displayName || 'Your AI';
   // The companion's name in player-facing lines: the backend's agent (the persona), else Bones.
-  const companionName = () => agents.find(a => a.id === defaultAgent)?.name || 'NeverQuestAlone';
+  const companionName = () => agents.find(a => a.id === defaultAgent)?.name || 'Voxwarden';
   let pushDebounce = null;
   // The capture watchdog (transport/capture-health.mjs; display DR-04): the one source of the slot's
   // bridge.capture and the app's screen state (SY-20), and what starts a capture helper over. The
@@ -738,12 +738,12 @@ export function createBridge(config, deps) {
     // Every refusal below comes before the chat exists or takes the message's name (code health BR-12,
     // the old audit's KA-03): the addon titles a new chat after its first words, so a refused message
     // (a key) leaves no chat and no label in state.json, the slots or byok-chats.json.
-    // "[NeverQuestAlone" starts only what the bridge itself writes (game events and
+    // "[Voxwarden" starts only what the bridge itself writes (game events and
     // session recaps), so typed text can't pass for one (TB5).
-    if (/^\s*\[NeverQuestAlone/i.test(r.text || '')) {
+    if (/^\s*\[Voxwarden/i.test(r.text || '')) {
       noteAck(r.token, r.key);
       store.saveState();
-      record({ t: 'error', chat: r.chat, kind: 'refused', text: 'Not sent: messages can\'t start with "[NeverQuestAlone". That marks game events.' });
+      record({ t: 'error', chat: r.chat, kind: 'refused', text: 'Not sent: messages can\'t start with "[Voxwarden". That marks game events.' });
       log('msg-refused', { key: r.key, chat: r.chat, reason: 'reserved prefix' });
       return;
     }
@@ -969,7 +969,7 @@ export function createBridge(config, deps) {
       // answers: 'none': it answers the /bones model, not a message, so the addon pops no pending
       // send for it (a message still running in the chat gets its own answer).
       record({ t: 'error', chat: c.id, kind: 'model_not_found', action: 'none', answers: 'none',
-        text: systemLine(`${model} isn't one of the ${backendName()} models you can pick. Nothing was changed. See them in the NeverQuestAlone app.`) });
+        text: systemLine(`${model} isn't one of the ${backendName()} models you can pick. Nothing was changed. See them in the Voxwarden app.`) });
       return;
     }
     log('model', { chat: c.id, model: model ?? 'default' });
@@ -1781,7 +1781,7 @@ export function createBridge(config, deps) {
 
   // ---------------------------------------------------------------- reload path
   // The file: deps.savedVariablesFile (a path, or a function giving one), else the newest
-  // NeverQuestAlone.lua under deps.wtfDir, looked up at each poll (two accounts, a stale folder, or none
+  // Voxwarden.lua under deps.wtfDir, looked up at each poll (two accounts, a stale folder, or none
   // until the first login: SY-04, plan Batch 2).
   let svMtime = 0;
   let svFile = null;

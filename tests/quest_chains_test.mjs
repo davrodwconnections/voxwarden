@@ -1,7 +1,7 @@
-// Quest chains (addon/NeverQuestAlone/Chains.lua, tools/quest-chains): the rules that turn the
+// Quest chains (addon/Voxwarden/Chains.lua, tools/quest-chains): the rules that turn the
 // emulator's quest data into "Leads to The Deadmines · step 1 of 7", on small hand-made chains
 // (one rule a test) and on the shipped data; the line on the game's quest pages, in the fengari VM
-// running the real addon; and the facts NeverQuestAlone gets (the state, Copy and Paste's game data,
+// running the real addon; and the facts Voxwarden gets (the state, Copy and Paste's game data,
 // the bridge's data block and its fit).
 import test from 'node:test';
 import assert from 'node:assert/strict';

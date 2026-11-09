@@ -122,7 +122,7 @@ test('with PowerShell 7\'s PSModulePath in the environment, a Valid signed file 
 
 test('the unsigned capture helper is refused (NotSigned)', { skip: !WIN ? 'Windows only (Get-AuthenticodeSignature)' : (fs.existsSync(HELPER) || process.env.NQA_REQUIRE_HELPER === '1') ? false : `no helper at ${HELPER} (bridge/capture/windows/build.sh)` }, async () => {
   const copy = inJurgen(HELPER, 'helper');
-  const pinned = SIGNED[0]?.publisher ?? 'CN=NeverQuestAlone CI, O=NeverQuestAlone contributors';
+  const pinned = SIGNED[0]?.publisher ?? 'CN=Voxwarden CI, O=Voxwarden contributors';
   const logs = [];
   const verdict = await strictSignatureVerifier({ log: l => logs.push(l) })([pinned], copy);
   assert.match(verdict ?? '', /couldn't verify the installer: status 2/, 'SignatureStatus.NotSigned');

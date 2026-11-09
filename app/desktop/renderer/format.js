@@ -202,7 +202,7 @@
     return 'the Secret Service';
   }
   /** Where a key is saved, as the player finds it (the key store's service name, bridge/byok/security/keystore.mjs). */
-  var KEY_SERVICE = 'NeverQuestAlone';
+  var KEY_SERVICE = 'Voxwarden';
   /** What the keychain does and doesn't protect, per OS (§8.2). */
   function keyPromises(platform) {
     var out = ['Your key never enters the game.', 'We never see your key. Check Connections.'];

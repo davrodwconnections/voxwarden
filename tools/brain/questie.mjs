@@ -478,7 +478,7 @@ export function importQuestie({ addonDir = DEFAULT_ADDON_DIR, db, now = Date.now
 function main(args) {
   if (args.shift() !== 'import') throw new Error('Usage: node tools/brain/questie.mjs import [--addon-dir <dir>] [--brain <file>]');
   let addonDir = DEFAULT_ADDON_DIR;
-  let file = brainFile(path.join(process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'), 'NeverQuestAlone', 'dev'));
+  let file = brainFile(path.join(process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'), 'Voxwarden', 'dev'));
   while (args.length) {
     const flag = args.shift(), value = args.shift();
     if (!value || !['--addon-dir', '--brain'].includes(flag)) throw new Error(`Unknown or incomplete option ${flag}`);

@@ -1,4 +1,4 @@
-// Round-trip test: the addon's real Codec.lua (addon/NeverQuestAlone, run in a Lua VM) -> PNG ->
+// Round-trip test: the addon's real Codec.lua (addon/Voxwarden, run in a Lua VM) -> PNG ->
 // the Linux capture helper's decoder (bridge/capture_x11.py --test-image). Simulates game
 // rendering with heavy noise and gamma. Skips without python3: the Mac and Windows decoders
 // have their own round trips (tests/capture_mac_test.js, tests/byok/capture_windows_decoder_test.mjs).

@@ -252,7 +252,7 @@ export const checkJs = (screens) => `(() => {
   for (const el of document.querySelectorAll('#page p, #page h1, #page h2, #page span, #banners p, #topbar span, #sheet-host p')) {
     if (!vis(el) || el.closest('[data-count="data"]')) continue;
     const t = el.textContent.trim();
-    if (/^I(’m|'m)?\\s/.test(t) || /I(’m|'m) NeverQuestAlone/.test(t)) firstPerson.push(t.slice(0, 40));
+    if (/^I(’m|'m)?\\s/.test(t) || /I(’m|'m) Voxwarden/.test(t)) firstPerson.push(t.slice(0, 40));
   }
   // A class name that leaked into the text (CL-design-01: "set-tall" under every privacy switch).
   const classNames = new Set();

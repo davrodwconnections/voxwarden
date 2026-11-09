@@ -2,7 +2,7 @@
 //
 // electron-builder signs all the code nested in the app with one set of entitlements
 // (mac.entitlementsInherit: allow-jit, which Electron's own helpers need for V8), and 26.16.1 has no
-// option for one nested app. The capture helper (NeverQuestAlone Capture.app in Resources, the Swift
+// option for one nested app. The capture helper (Voxwarden Capture.app in Resources, the Swift
 // program that reads the strip) runs no JIT, so it gets no entitlements: the hardened runtime alone.
 // So electron-builder.yml's mac.signIgnore leaves the helper out of electron-builder's own signing,
 // and this hook, which electron-builder calls in its place with the same options, signs the helper
@@ -22,7 +22,7 @@ const fs = require('node:fs');
 const path = require('node:path').posix;
 
 /** The capture helper in an app's Resources (scripts/fuses.cjs CAPTURE_HELPERS; a test checks they agree). */
-const HELPER_APP = 'NeverQuestAlone Capture.app';
+const HELPER_APP = 'Voxwarden Capture.app';
 const HELPER_EXE = path.join('Contents', 'MacOS', 'NQACapture');
 
 const helperPath = app => path.join(app, 'Contents', 'Resources', HELPER_APP);
@@ -47,7 +47,7 @@ async function signWith(opts, { run = codesign, signRest = builderSign, exists =
   if (typeof opts.ignore !== 'function' || !opts.ignore(helper) || !opts.ignore(path.join(helper, HELPER_EXE))) {
     throw new Error("electron-builder.yml's mac.signIgnore must leave the capture helper to scripts/sign-mac.cjs, or electron-builder signs it again with the app's allow-jit (SR-06)");
   }
-  log(`  • NeverQuestAlone signing: ${HELPER_APP} with no entitlements (the hardened runtime only; SR-06)`);
+  log(`  • Voxwarden signing: ${HELPER_APP} with no entitlements (the hardened runtime only; SR-06)`);
   await run(helperSignArgs(opts, helper));
   await run(['--verify', '--strict', helper]);
   await signRest(opts);

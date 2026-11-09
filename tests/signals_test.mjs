@@ -40,7 +40,7 @@ function addons() {
   installSlots(dir, { count: 2, iface: '16001' });
   return dir;
 }
-const bellFile = (dir, b) => path.join(dir, 'NeverQuestAlone', 'sig', 'ctl', `bell_${b}.wav`);
+const bellFile = (dir, b) => path.join(dir, 'Voxwarden', 'sig', 'ctl', `bell_${b}.wav`);
 const armed = (dir, b) => fs.existsSync(bellFile(dir, b));
 
 test('doorbells: setup makes every bell; a ring deletes one bell for its pulse, then recreates it', () => {
@@ -147,7 +147,7 @@ test('doorbells: act pulses queue with gaps a 4 Hz reader can see; stop puts eve
 
 test('doorbells: cleanup removes the v2.0 signal files and keeps the bells', () => {
   const dir = addons();
-  const root = path.join(dir, 'NeverQuestAlone', 'sig');
+  const root = path.join(dir, 'Voxwarden', 'sig');
   for (const [fam, name] of [['ack', 'a3f1_1'], ['push', '7'], ['act', 'a3f1_1_1'], ['presence', '59679030'], ['ctl', 'live_a3f1'], ['ctl', 'probe_a3f1']]) {
     fs.mkdirSync(path.join(root, fam), { recursive: true });
     fs.writeFileSync(path.join(root, fam, `${name}.wav`), '');
@@ -167,7 +167,7 @@ test('doorbells: cleanup never follows a link planted where sig/ or one of its f
   const victim = fs.mkdtempSync(path.join(os.tmpdir(), 'nqa-victim-'));
   for (const f of ['song.wav', 'take2.wav', 'live_x.wav', 'notes.txt']) fs.writeFileSync(path.join(victim, f), 'mine');
   const dir = addons();
-  const root = path.join(dir, 'NeverQuestAlone', 'sig');
+  const root = path.join(dir, 'Voxwarden', 'sig');
   fs.mkdirSync(path.join(root, 'ack'), { recursive: true });
   fs.writeFileSync(path.join(root, 'ack', 'a3f1_1.wav'), '');
   fs.symlinkSync(victim, path.join(root, 'push'));
@@ -179,10 +179,10 @@ test('doorbells: cleanup never follows a link planted where sig/ or one of its f
   assert.deepEqual(fs.readdirSync(victim).sort(), ['live_x.wav', 'notes.txt', 'song.wav', 'take2.wav']);
   // sig/ itself a link: nothing at all.
   const dir2 = addons();
-  fs.rmSync(path.join(dir2, 'NeverQuestAlone', 'sig'), { recursive: true });
+  fs.rmSync(path.join(dir2, 'Voxwarden', 'sig'), { recursive: true });
   fs.mkdirSync(path.join(victim, 'push'));
   fs.writeFileSync(path.join(victim, 'push', '7.wav'), 'mine');
-  fs.symlinkSync(victim, path.join(dir2, 'NeverQuestAlone', 'sig'));
+  fs.symlinkSync(victim, path.join(dir2, 'Voxwarden', 'sig'));
   assert.equal(createSignals(dir2).cleanupLegacy(), 0);
   assert.deepEqual(fs.readdirSync(path.join(victim, 'push')), ['7.wav']);
 });
@@ -201,7 +201,7 @@ test('doorbells: nothing is written or removed through a link planted at sig/ctl
   for (const f of ['bell_push_a.wav', 'bell_alive_a.wav', 'bell_act.wav', 'present.wav', 'notes.txt']) fs.writeFileSync(path.join(victim, f), 'mine');
   const before = snapshot(victim);
   const dir = addons();
-  const ctl = path.join(dir, 'NeverQuestAlone', 'sig', 'ctl');
+  const ctl = path.join(dir, 'Voxwarden', 'sig', 'ctl');
   fs.rmSync(ctl, { recursive: true });
   fs.symlinkSync(victim, ctl);
   const clock = fakeTimers();
@@ -220,7 +220,7 @@ test('doorbells: nothing is written or removed through a link planted at sig/ctl
   // A link to an outside file where the folder goes: the same.
   const outside = path.join(victim, 'notes.txt');
   const dir2 = addons();
-  const ctl2 = path.join(dir2, 'NeverQuestAlone', 'sig', 'ctl');
+  const ctl2 = path.join(dir2, 'Voxwarden', 'sig', 'ctl');
   fs.rmSync(ctl2, { recursive: true });
   fs.symlinkSync(outside, ctl2);
   const sig2 = createSignals(dir2, { timers: clock });
@@ -244,7 +244,7 @@ test('doorbells: a link planted at a bell\'s path is removed and the bell made; 
   const victim = path.join(outsideDir, 'zshrc');
   fs.writeFileSync(victim, 'mine\n');
   const dir = addons();
-  const ctl = path.join(dir, 'NeverQuestAlone', 'sig', 'ctl');
+  const ctl = path.join(dir, 'Voxwarden', 'sig', 'ctl');
   const plant = (name, target = victim) => { const f = path.join(ctl, name); fs.rmSync(f, { recursive: true, force: true }); fs.symlinkSync(target, f); return f; };
   // A link to an existing file (the plain existence check followed it and kept the link), and a
   // dangling one.

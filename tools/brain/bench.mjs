@@ -69,7 +69,7 @@ async function main() {
   const mode = arg('mode', 'app');
   const model = arg('model', 'claude-code:sonnet');
   const base = arg('base', 'http://127.0.0.1:8787/v1');
-  const appData = arg('app-data', path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'NeverQuestAlone', 'dev'));
+  const appData = arg('app-data', path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'Voxwarden', 'dev'));
   const chat = arg('chat', 'c0ffee0');
   const historyN = Number(arg('history', '6'));
   const only = arg('only') ? new Set(arg('only').split(',').map(Number)) : null;

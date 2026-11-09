@@ -1,5 +1,5 @@
 {
-  "about": "Shared NeverQuestAlone protocol v2 vectors (docs/PROTOCOL.md §6). Bridge JS tests and addon Lua tests both read this file.",
+  "about": "Shared Voxwarden protocol v2 vectors (docs/PROTOCOL.md §6). Bridge JS tests and addon Lua tests both read this file.",
   "separators": {
     "RS": "\\u001e",
     "US": "\\u001f",
@@ -323,7 +323,7 @@
     "agents": [
       {
         "id": "main",
-        "name": "NeverQuestAlone"
+        "name": "Voxwarden"
       }
     ],
     "chats": [

@@ -46,7 +46,7 @@ import { setupView } from './setup-view.mjs';
 import { createScreenPermission, ASKED_MS } from './screen-permission.mjs';
 import { REPO, LEGACY_CUSTOM } from '../config.mjs';
 
-export const PRODUCT = 'NeverQuestAlone';
+export const PRODUCT = 'Voxwarden';
 export const RETENTION_DAYS = 30;
 export const PUSH_DEBOUNCE_MS = 150;
 export const WOW_CHECK_MS = 5000;
@@ -146,8 +146,8 @@ export function adminCommand(perm, { platform = process.platform, addonsDir = nu
 const RT_KINDS = new Set(['auth_invalid', 'oauth_expired', 'no_key', 'rate_limited', 'rate_limited_daily', 'out_of_credit', 'overloaded', 'timeout', 'local_unreachable', 'cap_spend']);
 /**
  * The backend's last failure as the window shows it (desktop UI critic D-01): a kind no rt state
- * covers whose in-game line sends the player to the app ("See the details in the NeverQuestAlone
- * app.", "Pick another AI in the NeverQuestAlone app.", …): region_blocked, identifier_blocked, spend_limit,
+ * covers whose in-game line sends the player to the app ("See the details in the Voxwarden
+ * app.", "Pick another AI in the Voxwarden app.", …): region_blocked, identifier_blocked, spend_limit,
  * egress_blocked, bad_request, unknown; and empty_reply, whose fix is also Thinking or the model here
  * (WINDOW_FIX). → {kind, at, headline, detail, action, notice?, retest?}
  * (desktopLine), or null. notice: a one-off bad_request/unknown (D-33); retest: fixed at the
@@ -231,7 +231,7 @@ const article = name => (/^(?:[aeiou]|x[A-Z])/i.test(String(name ?? '')) ? 'an' 
 /**
  * A §10 line as the desktop window shows it (D-01): the in-game headline and its action id
  * (providers/errors.mjs userLine, final: no retries left), with a second line that names the fix
- * in the window ("Replace your key…") instead of the in-game "…in the NeverQuestAlone app". The in-game
+ * in the window ("Replace your key…") instead of the in-game "…in the Voxwarden app". The in-game
  * lines are unchanged. names: provider, model, fallbackModel, companion, product, platform, now,
  * capMicros (the player's own daily cap), thinking (false: the model has no thinking levels).
  * → {headline, detail, action (the userLine action id, WINDOW_FIX's where the window has its own, or null), line}.
@@ -345,7 +345,7 @@ export function createAppApi(opts = {}) {
   const isCustom = m => m?.custom === true;
   /** Other's service by its host ("openrouter.ai", "localhost:11434"): the name the window gives it. */
   const customName = () => { const c = checkCustomUrl(B().custom?.baseUrl); return c.ok ? new URL(c.baseUrl).host : null; };
-  const companion = () => B().persona?.name || 'NeverQuestAlone';
+  const companion = () => B().persona?.name || 'Voxwarden';
   // Keys out (the patterns, then every key the log knows as an exact match); for the diagnostics
   // bundle also the home folder (SL-7), which the window's own views may show.
   const scrub = (t) => {
@@ -1384,7 +1384,7 @@ export function createAppApi(opts = {}) {
         const found = await api.findWow();
         target = found.found ? found.path : (config.wow.flavorDir && isDir(config.wow.flavorDir) ? config.wow.flavorDir : null);
       }
-      if (!target) return { ok: false, error: 'wow_not_found', detail: 'NeverQuestAlone couldn’t find World of Warcraft: Forever.' };
+      if (!target) return { ok: false, error: 'wow_not_found', detail: 'Voxwarden couldn’t find World of Warcraft: Forever.' };
       const r = (wow.install ?? installAddon)({ flavorDir: target, platform, run: wow.run, tighten: o.tighten === true, addonSource: wow.addonSource, slots: slotsOf(config), configFile });
       wowSeen = { at: 0, running: false };
       if (!r.ok) { changed(); return clean({ ok: false, error: r.error, ...(r.detail ? { detail: r.detail } : {}), ...(r.steps ? { steps: r.steps } : {}) }); }
@@ -1573,7 +1573,7 @@ export function createAppApi(opts = {}) {
         log('app-uninstall-addon', { folders: n });
       }
       // The game's own copy of the chats (code health AP-11): every WoW account's
-      // SavedVariables/NeverQuestAlone.lua and its .bak, by the Windows uninstaller's rule
+      // SavedVariables/Voxwarden.lua and its .bak, by the Windows uninstaller's rule
       // (app/desktop/build/installer.nsh un.bonesCleanFlavor), so Uninstall leaves none in WoW on
       // either OS. WoW isn't running (checked above), so it can't write them back at logout.
       if (removeAddon && config.wow.flavorDir) {

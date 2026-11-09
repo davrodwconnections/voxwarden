@@ -1,10 +1,16 @@
 {
-  "appId": "com.neverquestalone.app",
-  "productName": "NeverQuestAlone",
-  "name": "neverquestalone",
-  "keychainService": "NeverQuestAlone",
-  "captureHelper": { "bundleId": "com.neverquestalone.capture", "app": "NeverQuestAlone Capture" },
-  "nsisGuid": "41dade80-3a47-5a7a-986a-4e589f1545a2",
-  "releases": { "owner": "tommygeoco", "repo": "neverquestalone" },
-  "copyright": "Copyright © 2026 chelinho139 and The NeverQuestAlone authors (MIT)"
+  "appId": "com.voxwarden.app",
+  "productName": "Voxwarden",
+  "name": "voxwarden",
+  "keychainService": "Voxwarden",
+  "captureHelper": {
+    "bundleId": "com.voxwarden.capture",
+    "app": "Voxwarden Capture"
+  },
+  "nsisGuid": "d89c0615-dc33-4cdb-bb0f-246fcb852349",
+  "releases": {
+    "owner": "davrodwconnections",
+    "repo": "voxwarden"
+  },
+  "copyright": "Copyright © 2026 David Rodriguez. Includes MIT-licensed upstream contributions."
 }

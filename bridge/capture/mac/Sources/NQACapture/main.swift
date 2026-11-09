@@ -1,8 +1,8 @@
 import AppKit
 import Foundation
 
-// NeverQuestAlone Capture (PRD §9.10). The bridge launches it through LaunchServices:
-//   open -g -a "NeverQuestAlone Capture.app" --args --socket <path> [flags]
+// Voxwarden Capture (PRD §9.10). The bridge launches it through LaunchServices:
+//   open -g -a "Voxwarden Capture.app" --args --socket <path> [flags]
 // so the app is its own "responsible" process and the Screen Recording grant
 // belongs to it, never to node or the terminal. It streams JSON lines
 // ({info}, {warn}, {error[, kind]}, {id, text}, {stats}, {game}, {window},
@@ -15,7 +15,7 @@ let opts = Options.parse(CommandLine.arguments)
 let out = Emitter()
 
 #if NQA_PUBLIC_ID
-// NeverQuestAlone's build takes nothing that aims it (code health BR-01, the old audit LS-01): a typed
+// Voxwarden's build takes nothing that aims it (code health BR-01, the old audit LS-01): a typed
 // line on stdout and exit 7 before anything else, so whoever launches it can't point its Screen
 // Recording grant at another window, region or file (Options.aiming). The build decides, never argv.
 if !opts.refused.isEmpty {
@@ -30,8 +30,8 @@ if let requirement = opts.checkPeer {
     // connection only on exit 0. Who connected is named by the socket's peer audit token and held to
     // the app's requirement (PeerCheck.swift); one stderr line and exit 6 otherwise. Nothing is read
     // from or written to fd 3, and nothing else runs: no capture, no permission, no lock.
-    if let why = peerRefusal(fd: 3, requirement: requirement, who: "the program that connected", wanted: "NeverQuestAlone's capture helper") {
-        FileHandle.standardError.write("NeverQuestAlone Capture: refused: \(why)\n".data(using: .utf8)!)
+    if let why = peerRefusal(fd: 3, requirement: requirement, who: "the program that connected", wanted: "Voxwarden's capture helper") {
+        FileHandle.standardError.write("Voxwarden Capture: refused: \(why)\n".data(using: .utf8)!)
         exit(6)
     }
     exit(0)
@@ -101,7 +101,7 @@ func refuseUnlessLaunchedAsApp() {
     let bundleOK = Bundle.main.bundleIdentifier == captureBundleId // BundleID.swift, from BUNDLE_ID
     let launchedByLaunchServices = getppid() == 1
     if !(bundleOK && launchedByLaunchServices) {
-        FileHandle.standardError.write("NeverQuestAlone Capture: capture only runs as \"NeverQuestAlone Capture.app\" launched with `open -a` (bundle ok: \(bundleOK), parent pid \(getppid())). Use --test-image to decode a file.\n".data(using: .utf8)!)
+        FileHandle.standardError.write("Voxwarden Capture: capture only runs as \"Voxwarden Capture.app\" launched with `open -a` (bundle ok: \(bundleOK), parent pid \(getppid())). Use --test-image to decode a file.\n".data(using: .utf8)!)
         exit(5)
     }
 }
@@ -134,20 +134,20 @@ if opts.requestPermission {
 // Without the bridge's socket there is nobody to read the output: a launch by
 // Finder, Spotlight, login resume or macOS "Quit & Reopen" must not capture.
 guard let sock = opts.socketPath else {
-    FileHandle.standardError.write("NeverQuestAlone Capture: started without --socket (not by the bridge); exiting.\n".data(using: .utf8)!)
+    FileHandle.standardError.write("Voxwarden Capture: started without --socket (not by the bridge); exiting.\n".data(using: .utf8)!)
     exit(0)
 }
 if !out.connect(socketPath: sock) {
-    FileHandle.standardError.write("NeverQuestAlone Capture: nobody is listening on \(sock)\n".data(using: .utf8)!)
+    FileHandle.standardError.write("Voxwarden Capture: nobody is listening on \(sock)\n".data(using: .utf8)!)
     exit(2)
 }
 
 #if NQA_PUBLIC_ID
-// Only the NeverQuestAlone app may hear what this app captures (code health BR-01): who serves the
+// Only the Voxwarden app may hear what this app captures (code health BR-01): who serves the
 // socket is checked before the lock, the capture or any permission call, and nothing is sent to it
 // first (PeerCheck.swift). One stderr line and exit 6 otherwise.
 if let why = peerRefusal(fd: out.fd) {
-    FileHandle.standardError.write("NeverQuestAlone Capture: refused: \(why)\n".data(using: .utf8)!)
+    FileHandle.standardError.write("Voxwarden Capture: refused: \(why)\n".data(using: .utf8)!)
     exit(6)
 }
 #endif

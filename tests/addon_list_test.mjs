@@ -1,7 +1,7 @@
 // The AddOns list (the owner, 2026-09-27: "we will need to reduce all of this to one
 // addon checkbox why is this 400 sub check boxes?"). The 200 slots the addon reads
 // replies from (NQA_S001…S200, docs/PROTOCOL.md §1, §4) can't go away: each
-// reply needs an addon the game hasn't loaded yet. So each slot leaves NeverQuestAlone's
+// reply needs an addon the game hasn't loaded yet. So each slot leaves Voxwarden's
 // group for a category of their own (bridge/transport/slots.mjs). Setup folds
 // that category at install, before the game's first start (C-119), and the addon
 // folds it once where setup didn't (Settings.lua, P.FoldParts): the list shows the
@@ -20,46 +20,46 @@ import { newLuaVM } from './helpers/luavm.mjs';
 const require = createRequire(import.meta.url);
 const { newVM, reloadVM, lstr } = require('./helpers/nqa-vm.js');
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ADDON_TOC = tocMeta(fs.readFileSync(path.join(ROOT, 'addon', 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8'));
+const ADDON_TOC = tocMeta(fs.readFileSync(path.join(ROOT, 'addon', 'Voxwarden', 'Voxwarden.toc'), 'utf8'));
 
-// The list's addons, in the client's order (by folder name): the owner's three Leatrix addons, NeverQuestAlone, then the slots.
+// The list's addons, in the client's order (by folder name): the owner's three Leatrix addons, Voxwarden, then the slots.
 const OTHERS = ['Leatrix_Maps', 'Leatrix_Plus', 'Leatrix_Sounds'].map(name => ({ name, title: name.replace('_', ' '), group: name }));
-const listed = slots => [...OTHERS, { name: 'NeverQuestAlone', title: ADDON_TOC.Title, group: 'NeverQuestAlone', icon: ADDON_TOC.IconTexture }, ...slots];
+const listed = slots => [...OTHERS, { name: 'Voxwarden', title: ADDON_TOC.Title, group: 'Voxwarden', icon: ADDON_TOC.IconTexture }, ...slots];
 const slots = (count = SLOT_COUNT) => Array.from({ length: count }, (_, k) => {
   const m = tocMeta(slotToc(k + 1, '16001'));
   return { name: slotName(k + 1), title: m.Title, group: m.Group, category: m.Category, icon: m.IconTexture };
 });
-// 0.5.2's TOCs: no Group or Category, so the client grouped them under NeverQuestAlone (named alike, and needing it).
-const OLD_TOC = n => ['## Interface: 16001', `## Title: NeverQuestAlone slot ${n}`, '## Notes: Reply slot for NeverQuestAlone. Load-on-demand; leave it enabled.',
-  '## LoadOnDemand: 1', '## Dependencies: NeverQuestAlone', '', 'Inbox.lua', ''].join('\n');
-const oldSlots = () => Array.from({ length: SLOT_COUNT }, (_, k) => ({ name: slotName(k + 1), title: tocMeta(OLD_TOC(String(k + 1).padStart(3, '0'))).Title, group: 'NeverQuestAlone' }));
+// 0.5.2's TOCs: no Group or Category, so the client grouped them under Voxwarden (named alike, and needing it).
+const OLD_TOC = n => ['## Interface: 16001', `## Title: Voxwarden slot ${n}`, '## Notes: Reply slot for Voxwarden. Load-on-demand; leave it enabled.',
+  '## LoadOnDemand: 1', '## Dependencies: Voxwarden', '', 'Inbox.lua', ''].join('\n');
+const oldSlots = () => Array.from({ length: SLOT_COUNT }, (_, k) => ({ name: slotName(k + 1), title: tocMeta(OLD_TOC(String(k + 1).padStart(3, '0'))).Title, group: 'Voxwarden' }));
 
-test('a slot\'s TOC: a category of their own, its own group (out of NeverQuestAlone\'s), the addon\'s icon, NeverQuestAlone\'s words; still load-on-demand and needing NeverQuestAlone', () => {
+test('a slot\'s TOC: a category of their own, its own group (out of Voxwarden\'s), the addon\'s icon, Voxwarden\'s words; still load-on-demand and needing Voxwarden', () => {
   const text = slotToc(7, '16001');
   const toc = tocMeta(text);
   assert.deepEqual(Object.keys(toc), ['Interface', 'Title', 'Notes', 'Category', 'Group', 'IconTexture', 'LoadOnDemand', 'Dependencies']);
   assert.equal(toc.Interface, '16001');
-  assert.equal(toc.Title, 'NeverQuestAlone Part 007');
-  assert.equal(toc.Notes, 'A part of NeverQuestAlone that brings replies into the game. Leave it checked.');
-  assert.equal(toc.Category, 'NeverQuestAlone Parts');
+  assert.equal(toc.Title, 'Voxwarden Part 007');
+  assert.equal(toc.Notes, 'A part of Voxwarden that brings replies into the game. Leave it checked.');
+  assert.equal(toc.Category, 'Voxwarden Parts');
   assert.equal(toc.Category, SLOT_CATEGORY);
-  assert.equal(toc.Group, 'NQA_S007', 'its own name: left to the client, it joins NeverQuestAlone\'s group');
+  assert.equal(toc.Group, 'NQA_S007', 'its own name: left to the client, it joins Voxwarden\'s group');
   for (const i of [1, 99, 200]) assert.equal(tocMeta(slotToc(i, '16001')).Group, slotName(i));
   assert.equal(toc.LoadOnDemand, '1');
-  assert.equal(toc.Dependencies, 'NeverQuestAlone');
+  assert.equal(toc.Dependencies, 'Voxwarden');
   assert.equal(toc.IconTexture, SLOT_ICON);
   assert.equal(SLOT_ICON, ADDON_TOC.IconTexture, 'the addon\'s own icon, never the red question mark the list gives an addon that names none');
-  assert.ok(fs.existsSync(path.join(ROOT, 'addon', 'NeverQuestAlone', 'Media', 'NeverQuestAlone.tga')), 'the icon ships with the addon');
+  assert.ok(fs.existsSync(path.join(ROOT, 'addon', 'Voxwarden', 'Media', 'Voxwarden.tga')), 'the icon ships with the addon');
   assert.match(text, /^## Interface: 16001\n/, 'the interface line first');
   assert.match(text, /\n\nInbox\.lua\n$/);
   // The words a player reads (docs/STYLE.md; the lint doesn't read these TOCs): the product's new name, no plumbing, short.
   for (const w of [toc.Title, toc.Notes, SLOT_CATEGORY]) {
-    assert.match(w, /NeverQuestAlone/, w);
+    assert.match(w, /Voxwarden/, w);
     assert.doesNotMatch(w, /\bslots?\b|load-on-demand|\b(en|dis)abled?\b/i, w);
   }
   assert.match(toc.Notes, /Leave it checked\.$/, 'says to keep it on, in the glossary\'s word');
   assert.notEqual(SLOT_CATEGORY, ADDON_TOC.Title, 'never the addon row\'s own name');
-  assert.notEqual(SLOT_CATEGORY, 'NeverQuestAlone', 'nor the product\'s alone, the addon row\'s name after the rename');
+  assert.notEqual(SLOT_CATEGORY, 'Voxwarden', 'nor the product\'s alone, the addon row\'s name after the rename');
   assert.ok(SLOT_CATEGORY.length <= 24, 'short: the category row\'s title is 220 wide at 12 pt, with no icon');
 });
 
@@ -80,27 +80,27 @@ test('setup rewrites a slot\'s TOC from 0.5.2, keeps what the bridge wrote in it
   }
 });
 
-test('the AddOns list, as AddonList.lua builds it: 0.5.2 put 200 check boxes under NeverQuestAlone; 0.5.3 shows the slots\' one folded row and NeverQuestAlone\'s own', () => {
+test('the AddOns list, as AddonList.lua builds it: 0.5.2 put 200 check boxes under Voxwarden; 0.5.3 shows the slots\' one folded row and Voxwarden\'s own', () => {
   const before = addonListRows(listed(oldSlots()));
   assert.equal(before.filter(r => r.checkbox).length, OTHERS.length + 1 + SLOT_COUNT, 'the owner\'s screenshot: every slot a check box');
-  assert.equal(before.filter(r => r.depth === 1).length, SLOT_COUNT, 'all under NeverQuestAlone');
+  assert.equal(before.filter(r => r.depth === 1).length, SLOT_COUNT, 'all under Voxwarden');
 
   const folded = addonListRows(listed(slots()), { [SLOT_CATEGORY]: true });
   assert.deepEqual(folded.map(r => [r.text, r.depth, r.checkbox]),
     [[SLOT_CATEGORY, 0, false], ['Leatrix Maps', 0, true], ['Leatrix Plus', 0, true], ['Leatrix Sounds', 0, true], [ADDON_TOC.Title, 0, true]],
-    'ours: the category\'s folded row (no check box) and NeverQuestAlone\'s own row, its check box the one we show');
-  assert.equal(folded.filter(r => /NeverQuestAlone Part |NQA_S/.test(r.text)).length, 0, 'folded, it hides every slot');
-  // One name for the product in the list (C-120): the category and the addon's own row both say NeverQuestAlone.
-  assert.equal(ADDON_TOC.Title, 'NeverQuestAlone');
+    'ours: the category\'s folded row (no check box) and Voxwarden\'s own row, its check box the one we show');
+  assert.equal(folded.filter(r => /Voxwarden Part |NQA_S/.test(r.text)).length, 0, 'folded, it hides every slot');
+  // One name for the product in the list (C-120): the category and the addon's own row both say Voxwarden.
+  assert.equal(ADDON_TOC.Title, 'Voxwarden');
   assert.ok(SLOT_CATEGORY.startsWith(`${ADDON_TOC.Title} `), 'the parts\' row names the addon\'s');
 
-  // Unfolded (before the addon first folds it, or a player who opens it): every slot under the category, none under NeverQuestAlone.
+  // Unfolded (before the addon first folds it, or a player who opens it): every slot under the category, none under Voxwarden.
   const open = addonListRows(listed(slots()));
   assert.equal(open.length, 1 + OTHERS.length + 1 + SLOT_COUNT);
-  assert.deepEqual(open.slice(0, 3).map(r => [r.text, r.depth]), [[SLOT_CATEGORY, 0], ['NeverQuestAlone Part 001', 1], ['NeverQuestAlone Part 002', 1]]);
+  assert.deepEqual(open.slice(0, 3).map(r => [r.text, r.depth]), [[SLOT_CATEGORY, 0], ['Voxwarden Part 001', 1], ['Voxwarden Part 002', 1]]);
   assert.equal(open.filter(r => r.depth === 1).length, SLOT_COUNT, 'each slot one level in, under the category: its Enable All and Disable All reach all 200');
   assert.equal(open.filter(r => r.depth > 1).length, 0);
-  assert.deepEqual(open.at(-1), { text: ADDON_TOC.Title, depth: 0, checkbox: true, category: false, icon: ADDON_TOC.IconTexture, status: '' }, 'NeverQuestAlone\'s row has nothing under it');
+  assert.deepEqual(open.at(-1), { text: ADDON_TOC.Title, depth: 0, checkbox: true, category: false, icon: ADDON_TOC.IconTexture, status: '' }, 'Voxwarden\'s row has nothing under it');
   assert.ok(open.filter(r => r.depth === 1).every(r => r.icon === SLOT_ICON), 'no red question marks');
 
   // A slot missing (deleted by hand), the first one included: the others stay in the category.
@@ -108,7 +108,7 @@ test('the AddOns list, as AddonList.lua builds it: 0.5.2 put 200 check boxes und
     const some = slots().filter(p => p.name !== slotName(gone));
     assert.deepEqual(addonListRows(listed(some), { [SLOT_CATEGORY]: true }).map(r => r.text), folded.map(r => r.text), `without ${slotName(gone)}`);
   }
-  // Half rewritten (a setup that stopped part way): the old ones still sit under NeverQuestAlone, the new ones in the category.
+  // Half rewritten (a setup that stopped part way): the old ones still sit under Voxwarden, the new ones in the category.
   const mixed = [...slots(100), ...oldSlots().slice(100)];
   const rows = addonListRows(listed(mixed), { [SLOT_CATEGORY]: true });
   assert.equal(rows.filter(r => r.depth === 1).length, 100);
@@ -242,7 +242,7 @@ test('C-119: setup folds the parts\' row before the first start: a fresh WTF get
     assert.equal(fs.existsSync(path.join(t.flavorDir, 'WTF')), false, 'a game never started');
     assert.equal(t.file, path.join(t.flavorDir, 'WTF', 'SavedVariables', 'Blizzard_AddOnList.lua'), 'Blizzard_AddOnList\'s SavedVariablesMachine: one file for the whole computer');
     assert.equal(foldPartsOnce({ flavorDir: t.flavorDir, configFile: t.configFile, running: () => false }), 'folded');
-    assert.equal(fs.readFileSync(t.file, 'utf8'), `\n${FOLD_VAR} = {\n\t["NeverQuestAlone Parts"] = true,\n}\n`);
+    assert.equal(fs.readFileSync(t.file, 'utf8'), `\n${FOLD_VAR} = {\n\t["Voxwarden Parts"] = true,\n}\n`);
     assert.deepEqual(readFold(t.file), { [SLOT_CATEGORY]: true });
     const cfg = JSON.parse(fs.readFileSync(t.configFile, 'utf8'));
     assert.equal(cfg.partsFolded, SLOT_CATEGORY, 'once per install, by the category\'s name');
@@ -258,7 +258,7 @@ test('C-119: an existing file keeps its keys and every other byte; the table or 
     fs.mkdirSync(path.dirname(t.file), { recursive: true });
     fs.writeFileSync(t.file, WOW_FILE);
     assert.equal(foldSlotCategory(t.flavorDir), 'folded');
-    assert.equal(fs.readFileSync(t.file, 'utf8'), WOW_FILE.replace(`${FOLD_VAR} = {\n`, `${FOLD_VAR} = {\n\t["NeverQuestAlone Parts"] = true,\n`), 'one line added, nothing else touched');
+    assert.equal(fs.readFileSync(t.file, 'utf8'), WOW_FILE.replace(`${FOLD_VAR} = {\n`, `${FOLD_VAR} = {\n\t["Voxwarden Parts"] = true,\n`), 'one line added, nothing else touched');
     assert.deepEqual(readFold(t.file), { Bags: true, 'Leatrix "Plus" [2]': true, [SLOT_CATEGORY]: true });
     // The key there already (the game's own, or a player who folded it): nothing written.
     const before = fs.statSync(t.file).mtimeMs;
@@ -289,7 +289,7 @@ test('C-119: an existing file keeps its keys and every other byte; the table or 
     assert.equal(foldSlotCategory(t.flavorDir), 'folded');
     const out = fs.readFileSync(t.file);
     assert.ok(out.includes(Buffer.from([0x43, 0x61, 0x66, 0xe9, 0x22])), 'the byte kept');
-    assert.equal(out.length, odd.length + '\t["NeverQuestAlone Parts"] = true,\n'.length);
+    assert.equal(out.length, odd.length + '\t["Voxwarden Parts"] = true,\n'.length);
   } finally { t.done(); }
 });
 

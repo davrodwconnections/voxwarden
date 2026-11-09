@@ -1,13 +1,13 @@
 # Quest chains
 
-`addon/NeverQuestAlone/Chains.lua` knows where a quest leads. When a quest is a step of a chain that leads to a dungeon, a raid or a rare (or better) reward, the game's quest page shows one line under its title, on the page a quest giver offers it on and in the quest log's details:
+`addon/Voxwarden/Chains.lua` knows where a quest leads. When a quest is a step of a chain that leads to a dungeon, a raid or a rare (or better) reward, the game's quest page shows one line under its title, on the page a quest giver offers it on and in the quest log's details:
 
 ```game
 Leads to The Deadmines · step 1 of 7
 Leads to [Whirlwind Axe] or 2 more · step 1 of 6
 ```
 
-NeverQuestAlone gets the same facts with the game data: for each quest in the log that has them, and for up to 3 chains the character can start near their level.
+Voxwarden gets the same facts with the game data: for each quest in the log that has them, and for up to 3 chains the character can start near their level.
 
 Nobody edits the chains by hand. They're generated from the server emulator's quest data, worked out for each of the 72 races and classes. `tests/quest_chains_test.mjs` fails if Chains.lua's block differs from what `generate.mjs` writes.
 

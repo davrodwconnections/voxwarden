@@ -1,5 +1,5 @@
 'use strict';
-// NeverQuestAlone UI v2 (the UI review of 2026-09-25, in the owner's notes):
+// Voxwarden UI v2 (the UI review of 2026-09-25, in the owner's notes):
 // the window's quick fixes (landing on a reply, notices, event cards, rows,
 // the box's commands and recall, text size, toasts), one-click replies and
 // game links, the context bar, the HUD, quick asks, the game's own waypoint,
@@ -23,7 +23,7 @@ function ring(vm, bell = null) {
   return vm;
 }
 function slotLua({ push = 0, nonce = null, acked = [], records = [], chats = '{}', extra = '', bridgeExtra = '' } = {}) {
-  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.3.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = { ${acked.map(k => `"${k}"`).join(', ')} }${bridgeExtra} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = ${chats}, records = { ${records.join(', ')} }${extra} }`;
+  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.3.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = { ${acked.map(k => `"${k}"`).join(', ')} }${bridgeExtra} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = ${chats}, records = { ${records.join(', ')} }${extra} }`;
 }
 function confirmHello(vm) {
   vm.advance(3.1);
@@ -150,7 +150,7 @@ test('notices: a command\'s answer shows once at the end of the chat, is never s
   assert.match(notice(vm), /\/nqa new \[name\]/);
   assert.equal(vm.history().length, before, 'not in the conversation');
   assert.equal(vm.evaluate('NS.UI.ui.notice.shown'), 'true');
-  assert.equal(vm.evaluate('NS.UI.ui.notice.who.text'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('NS.UI.ui.notice.who.text'), 'Voxwarden');
   assert.doesNotMatch(vm.saved(), /nqa new \[name\]/, 'not in the saved data');
   vm.slash('slots');
   assert.match(notice(vm), /parts are free this session/, 'the next one replaces it');
@@ -188,7 +188,7 @@ test('rows: two lines (the newest line and its age), delete only under the mouse
   apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${first}", mid = "m1", agent = "main", text = "Hello!", summary = "Hello back.", more = 0 }`] }));
   vm.run('NS.UI.RenderList()');
   assert.equal(vm.evaluate('NQADB.chats[1].id'), first, 'a reply moves its chat to the top');
-  assert.equal(vm.evaluate('NS.UI.ui.rows[1].preview.text'), 'NeverQuestAlone: Hello back.');
+  assert.equal(vm.evaluate('NS.UI.ui.rows[1].preview.text'), 'Voxwarden: Hello back.');
   assert.equal(vm.evaluate('NS.UI.ui.rows[1].age.text'), 'now');
   assert.equal(vm.evaluate('NS.UI.ui.rows[2].preview.text'), '', 'a new chat has nothing to preview');
   assert.equal(vm.evaluate('NS.UI.ui.rows[1].del.shown'), 'false');
@@ -229,7 +229,7 @@ test('the list (the owner, 2026-09-27: "better alignment. not so crammed"; "left
   assert.deepEqual(vm.json('{ NS.UI.ui.rows[1].label.points.LEFT.x, NS.UI.ui.rows[1].label.points.LEFT.y, NS.UI.ui.rows[1].pin.shown, NS.UI.ui.rows[1].pin.points.RIGHT.x, NS.UI.ui.rows[1].pin.points.RIGHT.y }'),
     [6, -26, true, -6, -26]);
   // Then the chat with a reply: its two lines centred as a block, 10 over and under them, 4 between.
-  assert.equal(vm.evaluate('NS.UI.ui.rows[2].preview.text'), 'NeverQuestAlone: Hello back.');
+  assert.equal(vm.evaluate('NS.UI.ui.rows[2].preview.text'), 'Voxwarden: Hello back.');
   assert.deepEqual(vm.json('{ NS.UI.ui.rows[2].label.points.LEFT.x, NS.UI.ui.rows[2].label.points.LEFT.y, NS.UI.ui.rows[2].preview.points.LEFT.x, NS.UI.ui.rows[2].preview.points.LEFT.y, NS.UI.ui.rows[2].age.points.RIGHT.y }'),
     [6, -17, 6, -35, -35], 'names, and the lines under them, start at the same place in every row');
   assert.equal(vm.evaluate('NS.UI.ui.rows[2].pin.shown'), 'false');
@@ -291,7 +291,7 @@ test('the box: a leading / runs a command (and says so when it isn\'t one), Up a
   assert.equal(vm.evaluate('NS.Chats.Active().name'), 'Plans');
   type(vm, '/dance with me');
   assert.match(notice(vm), /^Not a command: \/dance\./);
-  assert.equal(vm.outboxWires().length, 0, 'nothing went to NeverQuestAlone');
+  assert.equal(vm.outboxWires().length, 0, 'nothing went to Voxwarden');
   type(vm, '/nqa where is the forge');
   assert.ok(sentText(vm, 'where is the forge'), '/nqa <words> sends the words');
   type(vm, 'second thing');
@@ -416,7 +416,7 @@ test('rows: the preview shows what was said, pipes and all, and never draws a co
   type(vm, 'is |cffff0000this|r red?');
   assert.equal(preview(), 'You: is ||cffff0000this||r red?');
   apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id}", mid = "m1", agent = "main", text = "x", summary = "Type ||cffff0000 like this||r, not |cffff0000this|r.", more = 0 }`] }));
-  assert.equal(preview(), 'NeverQuestAlone: Type ||cffff0000 like this||r, not this.', 'his escaped pipes show as pipes; the bridge\'s colours go');
+  assert.equal(preview(), 'Voxwarden: Type ||cffff0000 like this||r, not this.', 'his escaped pipes show as pipes; the bridge\'s colours go');
   vm.run('NS.Chats.AddHistory(NS.Chats.Active(), { role = "user", event = "zone_first", text = "First visit: |Hx|hThe Barrens|h", key = "k9" })');
   assert.equal(preview(), 'First visit: ||Hx||hThe Barrens||h');
   vm.run('NS.Chats.AddHistory(NS.Chats.Active(), { role = "user", text = "Is this good? [Band of Ash]\\n\\n--- Linked from the game ---\\n[Band of Ash] item 111", key = "k10" })');
@@ -492,7 +492,7 @@ test('window: narrow by default with the chat list folded (the corner\'s + opens
   vm.slash('new Other');
   apply(vm, slotLua({ records: [replyRec(1, id, 'Over here.')] }));
   vm.run('NS.Refresh("status")');
-  assert.equal(vm.evaluate('NS.UI.ui.title.text'), 'NeverQuestAlone  |cff1aff1a1 new|r', 'the game\'s green, one for every surface');
+  assert.equal(vm.evaluate('NS.UI.ui.title.text'), 'Voxwarden  |cff1aff1a1 new|r', 'the game\'s green, one for every surface');
   // A panel of the game's opens at the top left: the window steps right of it, and back.
   vm.run('STUB.sheet = CreateFrame("Frame", "CharacterFrame"); function STUB.sheet:GetRight() return 350 end; ShowUIPanel(STUB.sheet)');
   vm.advance(0);
@@ -640,7 +640,7 @@ test('window: one still at the old default (560 by 540; 786 wide with the chat l
   assert.equal(fresh.num('NQAFrame:GetWidth()'), 400, 'no narrower than its minimum');
 });
 
-test('bubbles: NeverQuestAlone\'s TL;DR on top in a strip, not repeated at the end; a plain click does nothing (right-click or Copy copies); links open as in chat', () => {
+test('bubbles: Voxwarden\'s TL;DR on top in a strip, not repeated at the end; a plain click does nothing (right-click or Copy copies); links open as in chat', () => {
   const vm = confirmHello(newVM({ extra: 'STUB.refs = {}; function SetItemRef(link, text, button) table.insert(STUB.refs, link) end\nC_Item.GetItemInfo = function(id) if id == 4804 then return "Prairie Wolf Paw", "|cff9d9d9d|Hitem:4804::::::::|h[Prairie Wolf Paw]|h|r", 1 end end' }).login());
   vm.slash('');
   const id = activeId(vm);
@@ -724,7 +724,7 @@ test('/nqa <text>: with the window open, to the chat on screen; closed, to Quick
 
 // ---------------------------------------------------------------- one-click replies and game links
 
-test('chips: NeverQuestAlone\'s suggested replies under his newest reply; a click sends the words; they go once you answer', () => {
+test('chips: Voxwarden\'s suggested replies under his newest reply; a click sends the words; they go once you answer', () => {
   const vm = confirmHello(newVM().login());
   vm.slash('');
   const id = activeId(vm);
@@ -759,7 +759,7 @@ function GameTooltip:SetHyperlink(h) table.insert(STUB.hyper, h) end
   const id = activeId(vm);
   apply(vm, slotLua({ records: [replyRec(1, id, 'Do [Swoop Hunting] |Hquest:1|h.', ', refs = { q = { 766, "x", -3 }, i = { 4804, 9999 }, s = { 8017 } }')] }));
   const pills = vm.json('(function() local o = {} for _, p in ipairs(NS.UI.ui.bubbles[1].pills) do if p.shown then o[#o + 1] = p.label.text end end return o end)()');
-  assert.deepEqual(pills, ['[Swoop Hunting]', '[Prairie Wolf Paw]', '[Item 9999]', '[Rockbiter Weapon]'], 'names from the client, ids only from NeverQuestAlone');
+  assert.deepEqual(pills, ['[Swoop Hunting]', '[Prairie Wolf Paw]', '[Item 9999]', '[Rockbiter Weapon]'], 'names from the client, ids only from Voxwarden');
   assert.equal(vm.evaluate('NS.UI.ui.bubbles[1].body.text'), 'Do [Swoop Hunting] ||Hquest:1||h.', 'his text stays inert');
   vm.run('local p = NS.UI.ui.bubbles[1].pills[1]; p.scripts.OnEnter(p)');
   assert.deepEqual(vm.list('STUB.hyper'), ['quest:766']);
@@ -779,7 +779,7 @@ test('game data: a tick above the box says it rides along (what it holds is in i
   vm.run('NS.UI.RenderContext()');
   assert.equal(vm.evaluate('NS.UI.ui.ctx.text.text'), 'Game Data', 'short: no "Sending with" line');
   assert.equal(vm.evaluate('NS.UI.ui.ctx.toggle.template'), 'UICheckButtonTemplate', 'the game\'s own tick box');
-  assert.equal(vm.evaluate('NS.UI.ui.ctx.detail'), 'Sent with your messages, so NeverQuestAlone knows what you know.', 'no "he" (C-14)');
+  assert.equal(vm.evaluate('NS.UI.ui.ctx.detail'), 'Sent with your messages, so Voxwarden knows what you know.', 'no "he" (C-14)');
   assert.match(vm.list('NS.UI.ui.ctx.lines')[0], /^Duskwood, Darkshire · level 23 · gear$/, 'what it holds, as the tooltip\'s content line (C-79)');
   vm.run('STUB.tip = {}; function GameTooltip:AddLine(t) table.insert(STUB.tip, t) end; local t = NS.UI.ui.ctx.toggle; t.scripts.OnEnter(t)');
   assert.ok(vm.json('STUB.tip').some(l => /Duskwood, Darkshire/.test(l)));
@@ -813,7 +813,7 @@ test('game data: a tick above the box says it rides along (what it holds is in i
   vm.run('NS.UI.RenderContext()');
   assert.match(vm.evaluate('NS.UI.ui.ctx.text.text'), /Game Data: Off/);
   assert.equal(vm.bool('NS.UI.ui.ctx.toggle.disabled'), true, 'greyed out');
-  assert.equal(vm.evaluate('NS.UI.ui.ctx.detail'), 'Off in every chat: NeverQuestAlone sees only your words.');
+  assert.equal(vm.evaluate('NS.UI.ui.ctx.detail'), 'Off in every chat: Voxwarden sees only your words.');
   assert.match(vm.evaluate('NS.UI.ui.ctx.note'), /^Game Data with Messages, in Settings, turns it back on\.$/, 'how to turn it on, a click (Settings), as the note');
 });
 
@@ -850,12 +850,12 @@ test('a question stays "working" from the ack to the reply, even when the ack\'s
   assert.equal(vm.bool('NS.Chats.IsBusy(NS.Chats.Active())'), false);
 });
 
-test('HUD: the game\'s portrait frame with NeverQuestAlone in its corner, as a bag has its own; beside him the state, the connection first; idle it is quiet (grey, no dot) at your opacity, with your last session for the first 10 minutes; Ask is always a click away', () => {
+test('HUD: the game\'s portrait frame with Voxwarden in its corner, as a bag has its own; beside him the state, the connection first; idle it is quiet (grey, no dot) at your opacity, with your last session for the first 10 minutes; Ask is always a click away', () => {
   const last = '{"v":1,"kind":"session","sid":"aaaaaaaaaaaaaaaa","char":{"name":"Testchar","realm":"Test Realm","class":"HUNTER","race":"Night Elf"},"start":{"t":1790383008,"level":9,"xp":1505,"xpMax":6500,"money":583},"end":{"t":1790384890,"level":9,"xp":3457,"xpMax":6500,"money":583},"xpGained":1952,"moneyDelta":0,"questsTurnedIn":1,"zones":["Mulgore"],"ended":"unknown"}';
   const vm = confirmHello(newVM({ db: `NQADB = { hudIntro = true, firstReply = true, qolAsked = true, companion = { lastSession = ${lstr(last)} } }` }).login());
   assert.equal(vm.evaluate('NQAHUD.shown'), 'true', 'on by default');
   assert.equal(vm.evaluate('NQAHUD.mouse'), 'false', 'click-through: only its controls take the mouse');
-  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), 'Interface\\AddOns\\NeverQuestAlone\\Media\\NeverQuestAlone-portrait-64', 'NeverQuestAlone in the frame\'s own portrait slot');
+  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), 'Interface\\AddOns\\Voxwarden\\Media\\Voxwarden-portrait-64', 'Voxwarden in the frame\'s own portrait slot');
   assert.equal(vm.num('NS.HUD.h.portraitBtn.level'), 510, 'over the border (500), as the game\'s own corner buttons are');
   assert.equal(vm.num('NS.HUD.h.minBtn.level'), 510, 'the minimize button too: it was under the border in 0.3.1');
   // The corner (the owner: a minimize icon, and an X close beside it): the game's own hide and close buttons.
@@ -866,7 +866,7 @@ test('HUD: the game\'s portrait frame with NeverQuestAlone in its corner, as a b
     ['RIGHT', true, '128-redbutton-minus', '128-redbutton-exit'], 'minimize flush left of the X: the game\'s red set, a -, not an arrow');
   assert.equal(vm.evaluate('NQAHUD.layoutType'), 'HeldBagLayout', 'the backpack\'s small corner, as every bag has it');
   assert.deepEqual(vm.json('{ NS.HUD.h.portraitBtn.width, NS.HUD.h.portraitBtn.anchor.point, NS.HUD.h.portraitBtn.x, NS.HUD.h.portraitBtn.y }'), [40, 'CENTER', 14, -17], 'over the 36-unit portrait at -4, +1');
-  assert.equal(vm.evaluate('NS.HUD.h.title.text'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('NS.HUD.h.title.text'), 'Voxwarden');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Ready');
   assert.equal(vm.evaluate('NS.HUD.h.status.style'), 'P', 'one size for the status, busy or not');
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [0.6, 0.6, 0.6], 'idle: grey');
@@ -884,7 +884,7 @@ test('HUD: the game\'s portrait frame with NeverQuestAlone in its corner, as a b
   // The connection, when it needs saying (the light's states).
   const light = (state, extra = '') => vm.run(`NS.Transport.Light = function() return "${state}", "the light's tip" end; ${extra} NS.HUD.Render()`);
   light('red', 'NS.Transport.BridgeAge = function() return 300 end;');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), "Can't reach the NeverQuestAlone app");
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), "Can't reach the Voxwarden app");
   assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'No word for 5 minutes. Is it running?');
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [1, 0.13, 0.13], 'red: errors only');
   assert.equal(vm.evaluate('NS.HUD.h.dot.shown'), 'true');
@@ -911,26 +911,26 @@ test('HUD: the game\'s portrait frame with NeverQuestAlone in its corner, as a b
 });
 
 
-test('NeverQuestAlone\'s faces are the Ember mascot: round slots take the round portrait, its 64 px twin under 52 pixels (picked again on a UI scale or display change), square slots the square icon', () => {
-  const MEDIA = 'Interface\\AddOns\\NeverQuestAlone\\Media\\';
+test('Voxwarden\'s faces are the Ember mascot: round slots take the round portrait, its 64 px twin under 52 pixels (picked again on a UI scale or display change), square slots the square icon', () => {
+  const MEDIA = 'Interface\\AddOns\\Voxwarden\\Media\\';
   const vm = confirmHello(newVM({ db: WELCOMED, extra: 'AddonCompartmentFrame = { RegisterAddon = function(self, d) STUB.compartment = d end }' }).login());
   // The stub's screen is 1080 pixels tall at UI scale 1: the HUD's 36-unit portrait is drawn 50.6 px, the window's 62 at 87.
-  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), `${MEDIA}NeverQuestAlone-portrait-64`, 'the HUD under 52 px: the 64');
+  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), `${MEDIA}Voxwarden-portrait-64`, 'the HUD under 52 px: the 64');
   vm.slash('');
-  assert.equal(vm.evaluate('NQAFrame.portraitTexture'), `${MEDIA}NeverQuestAlone-portrait`, 'the window from 52 px: the 128');
+  assert.equal(vm.evaluate('NQAFrame.portraitTexture'), `${MEDIA}Voxwarden-portrait`, 'the window from 52 px: the 128');
   assert.deepEqual([vm.evaluate('NS.UI.RoundFace(nil, 37)'), vm.evaluate('NS.UI.RoundFace(nil, 36.97)')],
-    [`${MEDIA}NeverQuestAlone-portrait`, `${MEDIA}NeverQuestAlone-portrait-64`], 'the switch sits at 52 px (37 units are 52.03 px here, 36.97 are 51.99)');
+    [`${MEDIA}Voxwarden-portrait`, `${MEDIA}Voxwarden-portrait-64`], 'the switch sits at 52 px (37 units are 52.03 px here, 36.97 are 51.99)');
   // A retina display (1800 tall): both take the 128 once the game says the display changed.
   vm.run('GetPhysicalScreenSize = function() return 2880, 1800 end; STUB.FireEvent("DISPLAY_SIZE_CHANGED")');
-  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), `${MEDIA}NeverQuestAlone-portrait`, 'the HUD on retina: the 128');
-  assert.equal(vm.evaluate('NQAFrame.portraitTexture'), `${MEDIA}NeverQuestAlone-portrait`);
+  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), `${MEDIA}Voxwarden-portrait`, 'the HUD on retina: the 128');
+  assert.equal(vm.evaluate('NQAFrame.portraitTexture'), `${MEDIA}Voxwarden-portrait`);
   // And back on a small 1x display at a small UI scale: the 64 for both.
   vm.run('GetPhysicalScreenSize = function() return 1366, 768 end; STUB.FireEvent("UI_SCALE_CHANGED")');
-  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), `${MEDIA}NeverQuestAlone-portrait-64`);
-  assert.equal(vm.evaluate('NQAFrame.portraitTexture'), `${MEDIA}NeverQuestAlone-portrait`, '62 units at 768 is 62 px: still the 128');
+  assert.equal(vm.evaluate('NQAHUD.portraitTexture'), `${MEDIA}Voxwarden-portrait-64`);
+  assert.equal(vm.evaluate('NQAFrame.portraitTexture'), `${MEDIA}Voxwarden-portrait`, '62 units at 768 is 62 px: still the 128');
   // Square slots: the addon compartment and the reply banner take the square icon, never the round portrait.
-  assert.equal(vm.evaluate('STUB.compartment.icon'), `${MEDIA}NeverQuestAlone`);
-  assert.equal(vm.evaluate('NS.UI.FACE.square'), `${MEDIA}NeverQuestAlone`);
+  assert.equal(vm.evaluate('STUB.compartment.icon'), `${MEDIA}Voxwarden`);
+  assert.equal(vm.evaluate('NS.UI.FACE.square'), `${MEDIA}Voxwarden`);
 });
 test('HUD: before the first reply the setup block stands in main\'s Welcome\'s place; work and news come before it; the first reply ends it for good, and the Quality of Life step waits for a later session', () => {
   const vm = confirmHello(newVM().login());
@@ -942,7 +942,7 @@ test('HUD: before the first reply the setup block stands in main\'s Welcome\'s p
   const id = activeId(vm);
   vm.run('for k in pairs(NS.R.out) do NS.Transport.Acked(k, "slot") end');
   apply(vm, slotLua({ records: [replyRec(1, id, 'Hi.')] }));
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says', 'news first');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says', 'news first');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'Hi.');
   vm.run('local b = NS.HUD.h.okBtn; b.scripts.OnClick(b)');
   assert.equal(vm.evaluate('NS.HUD.View().mode'), 'idle', 'the first reply ended the setup block, and the step waits for a later session');
@@ -953,15 +953,15 @@ test('HUD: before the first reply the setup block stands in main\'s Welcome\'s p
   assert.equal(later.evaluate('NS.HUD.h.label.shown'), 'false');
 });
 
-test('HUD: news: "NeverQuestAlone says", what he says (its one primary line), and only Okay and Open chat, as buttons (the owner, 2026-09-26: no second bubble, buttons not icons); nothing dims or folds by itself; Okay puts it away read and sends nothing; Open chat opens that chat', () => {
+test('HUD: news: "Voxwarden says", what he says (its one primary line), and only Okay and Open chat, as buttons (the owner, 2026-09-26: no second bubble, buttons not icons); nothing dims or folds by itself; Okay puts it away read and sends nothing; Open chat opens that chat', () => {
   const vm = confirmHello(newVM({ db: WELCOMED }).login());
   const id = activeId(vm);
   apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id}", mid = "m1", agent = "main", text = "Long.\\n\\nTL;DR: Go north.", summary = "Go north.", more = 0, chips = { "Route me there", "Thanks" } }`] }));
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says');
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [1, 0.82, 0], 'a speaker\'s name in gold, over his words in white');
   assert.deepEqual(vm.json('NS.HUD.h.body.textColor'), [1, 1, 1]);
   assert.deepEqual(vm.json('NS.HUD.h.dot.fill.vcolor'), [1, 0.82, 0, 1], 'news: a gold dot on the portrait');
-  assert.equal(vm.evaluate('NS.HUD.h.title.text'), 'NeverQuestAlone  |cff1aff1a1 new|r');
+  assert.equal(vm.evaluate('NS.HUD.h.title.text'), 'Voxwarden  |cff1aff1a1 new|r');
   assert.equal(vm.evaluate('NS.HUD.h.label.shown'), 'false', 'no "TL;DR" title over what he says');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'Go north.');
   assert.equal(vm.evaluate('NS.HUD.h.body.style'), 'P');
@@ -983,7 +983,7 @@ test('HUD: news: "NeverQuestAlone says", what he says (its one primary line), an
   const before = vm.outboxWires().length;
   vm.run('local b = NS.HUD.h.okBtn; b.scripts.OnClick(b)');
   assert.equal(vm.num(`NS.Chats.Find("${id}").unread`), 0);
-  assert.equal(vm.evaluate('NS.HUD.h.title.text'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('NS.HUD.h.title.text'), 'Voxwarden');
   assert.equal(vm.evaluate('NS.HUD.h.body.shown'), 'false');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Ready');
   assert.equal(vm.evaluate('NS.HUD.h.askBtn.shown'), 'true', 'Ask is back');
@@ -991,7 +991,7 @@ test('HUD: news: "NeverQuestAlone says", what he says (its one primary line), an
   // The key does the same (Bindings.xml, NQA_OKAY).
   apply(vm, slotLua({ records: [`{ seq = 2, t = "reply", chat = "${id}", mid = "m2", agent = "main", text = "Also.", summary = "Also.", more = 0 }`] }));
   assert.equal(vm.evaluate('NS.HUD.h.body.shown'), 'true');
-  vm.run('NeverQuestAlone.Okay()');
+  vm.run('Voxwarden.Okay()');
   assert.equal(vm.evaluate('NS.HUD.h.body.shown'), 'false');
   // Open chat: the window, on the reply's own chat (its tooltip names it).
   const other = vm.evaluate('NS.Chats.New("Other").id');
@@ -1032,7 +1032,7 @@ test('HUD: Okay on a reply that drew a route follows it, though you were on anot
   assert.equal(vm.evaluate('NS.MapShared.navView.layer'), 'loop', 'the HUD shows it');
   assert.equal(vm.evaluate('NS.HUD.h.body.shown'), 'false', 'and the reply is put away');
   // A pin: a detour. Reaching it goes back to the route where you left it, and
-  // the route isn't finished, so NeverQuestAlone isn't told it is.
+  // the route isn't finished, so Voxwarden isn't told it is.
   vm.run('NQAMapDB.nav.index = 2');
   apply(vm, slotLua({ records: [replyRec(2, id, 'Kreenig is here.', ', drew = { "kreenig" }')], extra: DRAWN(3, LOOP + PIN) }));
   assert.equal(vm.evaluate('NS.HUD.h.okBtn.tip.text'), 'Marks the reply read and points the arrow at the pin it put: Kreenig Snarlsnout.');
@@ -1043,7 +1043,7 @@ test('HUD: Okay on a reply that drew a route follows it, though you were on anot
   assert.deepEqual(nav(), ['loop', 2], 'back where you left it');
   assert.equal(vm.num('DONE'), 0, 'no "route done" for a detour');
   assert.deepEqual([vm.evaluate('NS.HUD.h.status.text'), vm.evaluate('NS.HUD.h.sub.text')], ['Reached Kreenig Snarlsnout', 'Back to Red Cloud loop.']);
-  assert.equal(vm.evaluate('STUB.prints[#STUB.prints]'), '|cff7ec8ff[NeverQuestAlone]|r Reached Kreenig Snarlsnout (approx). Back to Red Cloud loop.');
+  assert.equal(vm.evaluate('STUB.prints[#STUB.prints]'), '|cff7ec8ff[Voxwarden]|r Reached Kreenig Snarlsnout (approx). Back to Red Cloud loop.');
   // A reply that drew nothing, or only marks with no order: Okay leaves your route.
   apply(vm, slotLua({ records: [replyRec(3, id, 'Nice.')] }));
   assert.equal(vm.evaluate('NS.HUD.h.okBtn.tip.text'), 'Marks the reply read and puts it away; nothing is sent.');
@@ -1070,7 +1070,7 @@ test('HUD: Okay on a reply that drew a route follows it, though you were on anot
   // The Okay key only puts it away: its name says okay, and the button says Follow when it follows (C-102).
   apply(vm, slotLua({ records: [replyRec(8, id, 'The loop again.', ', drew = { "loop" }')] }));
   assert.equal(vm.evaluate('NS.HUD.h.okBtn.text'), 'Follow Route');
-  vm.run('NeverQuestAlone.Okay()');
+  vm.run('Voxwarden.Okay()');
   assert.deepEqual([vm.evaluate('NS.HUD.h.body.shown'), vm.num(`NS.Chats.Find("${id}").unread`)], ['false', 0], 'read and put away');
   assert.deepEqual(nav(), ['mulgore', 1], 'the route you follow stays');
   // Asking something instead of Okay: the reply's route stays where it was.
@@ -1093,7 +1093,7 @@ test('HUD: Okay on a reply that drew a route follows it, though you were on anot
   // The Okay key with the HUD showing no news (the compass): the banner's reply read and put away, nothing followed (C-103).
   apply(vm, slotLua({ records: [replyRec(13, id, 'Mulgore once more.', ', drew = { "mulgore" }')] }));
   assert.deepEqual([vm.evaluate('NQAToast1.shown'), vm.num(`NS.Chats.Find("${id}").unread`)], ['true', 1]);
-  vm.run('NeverQuestAlone.Okay()');
+  vm.run('Voxwarden.Okay()');
   assert.deepEqual([vm.evaluate('NQAToast1.shown'), vm.num('#NS.UI.ui.toastOrder'), vm.num(`NS.Chats.Find("${id}").unread`)], ['false', 0, 0]);
   assert.deepEqual(nav(), ['loop', 1], 'the key follows nothing');
   // Open Chat reads it instead: the route stays.
@@ -1125,7 +1125,7 @@ test('HUD: "Sending…" has its one line from the start (how long it has waited)
   assert.equal(vm.evaluate('NS.HUD.h.sub.maxLines'), '1');
   assert.equal(vm.evaluate('NS.HUD.h.stopBtn.text'), 'Reload', 'the same button, its one action');
   assert.equal(vm.num('NS.HUD.h.stopBtn.y'), y, 'where Stop was');
-  assert.equal(vm.evaluate('NS.UI.StatusText()'), '|cffffd100NeverQuestAlone hasn\'t read your message yet.|r', 'the window says it too');
+  assert.equal(vm.evaluate('NS.UI.StatusText()'), '|cffffd100Voxwarden hasn\'t read your message yet.|r', 'the window says it too');
   // Stop before it was picked up (and before it's stuck): one line under "Stopping…" too, the time alone, so Stop stays put.
   const early = confirmHello(newVM({ db: 'NQADB = { hudIntro = true, qolAsked = true }' }).login());
   early.send('where is the forge');
@@ -1180,7 +1180,7 @@ test('HUD: working: what you asked in plain words, or what the game sent, led by
   assert.equal(vm.evaluate('NS.HUD.h.stopBtn.shown'), 'true');
   const stopY = vm.num('NS.HUD.h.stopBtn.y');
   vm.run('local b = NS.HUD.h.stopBtn; b.scripts.OnClick(b)');
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'NeverQuestAlone was asked to stop.', 'picked up: the header\'s second line says so');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Voxwarden was asked to stop.', 'picked up: the header\'s second line says so');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Stopping…');
   assert.deepEqual([vm.evaluate('NS.HUD.h.stopBtn.shown'), vm.evaluate('NS.HUD.h.stopBtn.text'), vm.evaluate('NS.HUD.h.stopBtn.disabled')], ['true', 'Stopping…', 'true'],
     'the same button, greyed: no second Stop to click, and nothing slides under the pointer (C-72)');
@@ -1211,14 +1211,14 @@ test('HUD: the portrait opens your chats (the window with its list) and lights u
   assert.deepEqual([vm.evaluate('NQAHUD.shown'), vm.evaluate('NQAHUDBar.shown')], ['false', 'true'], 'in combat: one line');
   assert.equal(vm.evaluate('NQAHUDBar.status.text'), 'Hi.', 'what he says, cut to the line');
   assert.equal(vm.evaluate('NQAHUDBar.okBtn.shown'), 'true', 'Okay, right there');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says', 'the panel\'s texts stay current under it');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says', 'the panel\'s texts stay current under it');
   vm.run('STUB.combat = false; STUB.FireEvent("PLAYER_REGEN_ENABLED")');
   assert.deepEqual([vm.evaluate('NQAHUD.shown'), vm.evaluate('NQAHUDBar.shown')], ['true', 'false']);
   const p = 'local p = NS.HUD.h.portraitBtn;';
   // Hover: the game's round highlight, and a tooltip saying what a click does.
   assert.ok(vm.json(`(function() local o = {} for _, t in ipairs(NS.HUD.h.portraitBtn.textures) do if t.layer == "HIGHLIGHT" then o[#o + 1] = t.texture or t.atlas end end return o end)()`).length > 0, 'it lights under the pointer');
   vm.run(`STUB.tip = {}; function GameTooltip:AddLine(t) table.insert(STUB.tip, t) end; ${p} p.scripts.OnEnter(p)`);
-  assert.equal(vm.evaluate('GameTooltip.text'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('GameTooltip.text'), 'Voxwarden');
   assert.ok(vm.json('STUB.tip').includes('<Click to open your chats>'), 'in green, as a bag\'s says what a click does');
   vm.run(`${p} p.scripts.OnClick(p, "LeftButton")`);
   assert.equal(vm.evaluate('NQAFrame.shown'), 'true', 'the portrait opens the window');
@@ -1256,7 +1256,7 @@ test('HUD: the portrait opens your chats (the window with its list) and lights u
   assert.ok(vm.chatLines().some(l => l.includes('The HUD is closed; replies still show as they come, and a route you follow keeps its bar.')));
   vm.slash('hud');
   assert.ok(vm.chatLines().some(l => l.includes('The HUD is closed: only a route you follow shows, as its bar')), '/nqa hud says what is true');
-  // Turned off instead (Settings, /nqa hud off), the small bar stands in, so NeverQuestAlone is never gone.
+  // Turned off instead (Settings, /nqa hud off), the small bar stands in, so Voxwarden is never gone.
   vm.slash('hud off');
   assert.deepEqual([vm.evaluate('NQAHUD.shown'), vm.evaluate('NQAMini.shown')], ['false', 'true']);
   vm.slash('hud on');
@@ -1349,7 +1349,7 @@ test('HUD: minimized it is small (the owner: "still a huge hud"): the game\'s sm
   assert.equal(vm.evaluate('NQAHUDBar.mouse'), 'false', 'click-through, as the panel');
   assert.deepEqual(vm.json('{ NQAHUDBar.grip.points.TOPLEFT ~= nil, NQAHUDBar.grip.points.BOTTOMRIGHT ~= nil, NQAHUDBar.grip.points.BOTTOMRIGHT.x }'), [true, true, 0], 'the whole bar');
   vm.run('STUB.tip = {}; function GameTooltip:AddLine(t) table.insert(STUB.tip, t) end; local g = NQAHUDBar.grip; g.scripts.OnEnter(g)');
-  assert.equal(vm.evaluate('GameTooltip.text'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('GameTooltip.text'), 'Voxwarden');
   assert.ok(vm.json('STUB.tip').includes('<Click to open your chats>'), 'his tooltip: what a click does');
   vm.run('local g = NQAHUDBar.grip; g.scripts.OnDragStart(g); g.scripts.OnDragStop(g)');
   assert.equal(vm.evaluate('NQADB.settings.hudPoint'), 'CENTER');
@@ -1439,7 +1439,7 @@ test('HUD: minimized it is small (the owner: "still a huge hud"): the game\'s sm
 
 test('HUD: Show More is always in the bar\'s menu (the owner, 2026-09-27: "it should always be something the user can select and view even if something is pending"): folded to the bar by combat or the open window, it shows the whole panel now, and nothing folds it again while you look; Show Less or the panel\'s - puts the bar back; once the fight is over and the window closed, combat and the window fold it as before', () => {
   const vm = confirmHello(newVM({ db: WELCOMED }).login());
-  vm.send('where is the forge'); // NeverQuestAlone is on it: something pending
+  vm.send('where is the forge'); // Voxwarden is on it: something pending
   vm.run('NS.UI.Toggle(false); NS.HUD.Render()');
   const shown = () => [vm.evaluate('NQAHUD.shown'), vm.evaluate('NQAHUDBar.shown')];
   const PANEL = ['true', 'false'], BAR = ['false', 'true'];
@@ -1540,7 +1540,7 @@ test('HUD: the bar with a route: no n/n count (the route\'s bar under the row sh
     ['true', null, 'true', 'The Hunt Continues', '60 yd']);
   // The distance where the count was: the row's end, 10 in; the quest name up to it.
   assert.deepEqual(vm.json('{ NQAHUDBar.dist.points.RIGHT.x, NQAHUDBar.status.points.RIGHT.relPoint, NQAHUDBar.status.anchor.rel == NQAHUDBar.dist }'), [-10, 'LEFT', true]);
-  // A re-plan: "Asking: a new route" for its 3 s, then the row says "Re-planning…" while NeverQuestAlone isn't busy, until the new route.
+  // A re-plan: "Asking: a new route" for its 3 s, then the row says "Re-planning…" while Voxwarden isn't busy, until the new route.
   vm.run('NS.HUD.Replan(); NS.HUD.Render()');
   assert.match(vm.evaluate('NQAHUDBar.status.text'), /^Asking: a new route/);
   vm.advance(3.1);
@@ -1565,7 +1565,7 @@ test('HUD: at login the bridge\'s last word is from before the game started: unt
   assert.equal(vm.evaluate('NS.Transport.Light()'), 'wait');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Connecting…');
   assert.match(vm.evaluate('NS.HUD.h.sub.text'), /^Last time: /);
-  assert.equal(vm.evaluate('select(2, NS.Transport.Light())'), 'Waiting to hear from the NeverQuestAlone app…', 'one ellipsis character (STYLE)');
+  assert.equal(vm.evaluate('select(2, NS.Transport.Light())'), 'Waiting to hear from the Voxwarden app…', 'one ellipsis character (STYLE)');
   const y = vm.num('NS.HUD.h.mainY');
   confirmHello(vm);
   vm.run('NS.HUD.Render()');
@@ -1581,8 +1581,8 @@ test('HUD: at login the bridge\'s last word is from before the game started: unt
   dead.advance(61);
   dead.run('NS.HUD.Render()');
   assert.equal(dead.evaluate('NS.Transport.Light()'), 'red');
-  assert.equal(dead.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the NeverQuestAlone app');
-  assert.match(dead.evaluate('select(2, NS.Transport.Light())'), /^No word from the NeverQuestAlone app for 1 hour \d minutes?\. Is it running\?/, 'its real silence');
+  assert.equal(dead.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the Voxwarden app');
+  assert.match(dead.evaluate('select(2, NS.Transport.Light())'), /^No word from the Voxwarden app for 1 hour \d minutes?\. Is it running\?/, 'its real silence');
   // A fresh inbox (the bridge just published): green at once, as before.
   const fresh = newVM({ db: WELCOMED, inbox: inbox(5) }).login();
   fresh.run('NS.HUD.Render()');
@@ -1602,7 +1602,7 @@ test('HUD: a reply held by Quiet in Combat (C-104): the panel and the bar say "R
   apply(vm, slotLua({ records: [replyRec(1, id, 'In Ironforge: the Great Forge.')] }));
   vm.run('NS.HUD.Render()');
   assert.equal(vm.num('#NS.R.dndQueue'), 1, 'held: Quiet in Combat is on');
-  assert.deepEqual([vm.evaluate('NS.HUD.h.status.text'), vm.evaluate('NS.HUD.h.sub.text')], ['Reply after the fight', 'NeverQuestAlone answered; it shows when the fight ends.']);
+  assert.deepEqual([vm.evaluate('NS.HUD.h.status.text'), vm.evaluate('NS.HUD.h.sub.text')], ['Reply after the fight', 'Voxwarden answered; it shows when the fight ends.']);
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [1, 1, 1], 'white: news waits, quietly');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), '|cffffd100You asked:|r where is the forge', 'what you asked stays');
   assert.deepEqual([vm.evaluate('NS.HUD.h.stopBtn.shown'), vm.evaluate('NS.HUD.h.routeAskBtn.shown')], ['false', 'false'], 'no Stop (it\'s done), no "No route yet"');
@@ -1715,9 +1715,9 @@ NS.TipLines(t, { title = "End Route", key = "E", text = "Stops following this ro
   assert.equal(title('local b = NS.HUD.h.minBtn; b.scripts.OnEnter(b)'), 'Minimize');
   assert.equal(title('local b = NS.HUD.h.closeBtn; b.scripts.OnEnter(b)'), 'Close HUD');
   assert.equal(title('local b = NS.HUD.h.askBtn; b.scripts.OnEnter(b)'), 'Ask');
-  assert.equal(title('local b = NS.HUD.h.grip; b.scripts.OnEnter(b)'), 'NeverQuestAlone HUD');
+  assert.equal(title('local b = NS.HUD.h.grip; b.scripts.OnEnter(b)'), 'Voxwarden HUD');
   assert.deepEqual(vm.list('STUB.tip').filter(l => /^</.test(l)), ['<Drag to move the HUD>', '<Right-click for the menu>']);
-  assert.equal(title('local b = NS.HUD.h.portraitBtn; b.scripts.OnEnter(b)'), 'NeverQuestAlone');
+  assert.equal(title('local b = NS.HUD.h.portraitBtn; b.scripts.OnEnter(b)'), 'Voxwarden');
   assert.ok(vm.list('STUB.tip').includes('<Click to open your chats>'));
   vm.slash('');
   assert.equal(title('local b = NS.UI.ui.listBtn; b.scripts.OnEnter(b)'), 'Show Chats');
@@ -1792,7 +1792,7 @@ test('HUD: the header row grows to two lines rather than cutting a line; a long 
   vm.run('NS.Transport.Light = function() return "red", "tip" end; NS.Transport.BridgeAge = function() return 300 end; NS.Chats.Stop(); NS.R.stopAt = {}; for _, c in ipairs(NQADB.chats) do c.pending = {} end; NS.HUD.Render()');
   vm.advance(60);
   vm.run('NS.HUD.Tick(0.1)');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), "Can't reach the NeverQuestAlone app");
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), "Can't reach the Voxwarden app");
   assert.equal(vm.num('NQAHUD.alpha'), 1);
 });
 
@@ -1952,7 +1952,7 @@ test('HUD: the route you follow: its name, 1/3 and two icons, Re-plan and End; t
   // /nqa map nav, with nothing named, follows the route you last followed.
   vm.slash('map nav');
   assert.equal(vm.evaluate('NQAMapDB.nav.layer'), 'mulgore');
-  assert.equal(vm.outboxWires().filter(e => /Map nav/.test(e.wire)).length, 0, 'not sent to NeverQuestAlone');
+  assert.equal(vm.outboxWires().filter(e => /Map nav/.test(e.wire)).length, 0, 'not sent to Voxwarden');
 });
 
 test('HUD: the arrow turns green when you get there and hides with no bearing; which way reads from where you face; a stop\'s words say "approx" once, after the distance; done objectives are checked and grey, a ready quest is green, and an objective its note already says is not said again', () => {
@@ -2163,7 +2163,7 @@ test('HUD: dead and released, the arrow points to your corpse ("Your corpse", ho
   assert.equal(vm.evaluate('NQAHUDBar.status.text'), 'Ready');
 });
 
-test('HUD: Re-plan asks NeverQuestAlone for a fresh route from where you are after 3 s (meanwhile its icon is Undo and a second click takes it back), naming the route\'s layer; its heading says "Re-planning…" until his answer; combat takes a waiting one back', () => {
+test('HUD: Re-plan asks Voxwarden for a fresh route from where you are after 3 s (meanwhile its icon is Undo and a second click takes it back), naming the route\'s layer; its heading says "Re-planning…" until his answer; combat takes a waiting one back', () => {
   const vm = confirmHello(newVM({ db: WELCOMED, extra: MAP_STUB }).login());
   apply(vm, slotLua({ extra: ROUTE }));
   vm.run('NQAMap.UpdateNavigator()');
@@ -2226,8 +2226,8 @@ test('HUD: no route (the owner, 2026-09-27: "its ass"; a button "in the zero con
   vm.advance(3.1);
   assert.equal(asks(), 1, 'the route ask, to your Quick questions chat');
   vm.run('NS.HUD.Render()');
-  assert.deepEqual(shown(), [false, false, false], 'NeverQuestAlone at work: what you asked shows instead');
-  // NeverQuestAlone's route: the route shows, and no empty state.
+  assert.deepEqual(shown(), [false, false, false], 'Voxwarden at work: what you asked shows instead');
+  // Voxwarden's route: the route shows, and no empty state.
   const q = vm.evaluate('NS.QuickChat().id');
   const key = vm.outboxWires().filter(e => /Plan me a route/.test(e.wire)).pop().key;
   apply(vm, slotLua({ acked: [key], records: [replyRec(1, q, 'Here is your route.', ', drew = { "mulgore" }')], extra: ROUTE }));
@@ -2243,7 +2243,7 @@ test('HUD: no route (the owner, 2026-09-27: "its ass"; a button "in the zero con
   assert.deepEqual([vm.evaluate('NQAHUD.shown'), vm.evaluate('NQAHUDBar.shown')], ['false', 'true'], 'the panel, and its button with it, away');
 });
 
-test('HUD: a ding says "NeverQuestAlone is on it" only when the companion will send it; a route followed to its end gets a gold moment; quips stay local', () => {
+test('HUD: a ding says "Voxwarden is on it" only when the companion will send it; a route followed to its end gets a gold moment; quips stay local', () => {
   const vm = confirmHello(newVM({ db: WELCOMED }).login());
   vm.run('STUB.FireEvent("PLAYER_LEVEL_UP", 24)');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Ding! Level 24');
@@ -2261,7 +2261,7 @@ test('HUD: a ding says "NeverQuestAlone is on it" only when the companion will s
   vm.advance(11);
   apply(vm, slotLua({ bridgeExtra: ', caps = { "state", "evt", "think", "usage" }, usage = { autoOn = true }' }));
   vm.run('STUB.FireEvent("PLAYER_LEVEL_UP", 27)');
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'NeverQuestAlone is on it.');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Voxwarden is on it.');
   vm.advance(11);
   vm.run('NS.HUD.RouteDone("Mulgore quests", 7)');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Route finished');
@@ -2290,7 +2290,7 @@ test('HUD: the Ask box stays open with your words when news lands, aimed where i
   assert.equal(vm.evaluate('NS.Chats.Find(NS.HUD.h.replyBox.chatId).name'), 'Quick questions');
   vm.run('NS.HUD.h.replyBox:SetText("half a thought")');
   apply(vm, slotLua({ records: [replyRec(1, other, 'Other news.')] }));
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says');
   assert.equal(vm.evaluate('NS.HUD.h.replyBox.shown'), 'true', 'not taken away mid-sentence');
   assert.equal(vm.evaluate('NS.HUD.h.replyBox:GetText()'), 'half a thought');
   assert.equal(vm.evaluate('NS.HUD.h.replyBox.chatId'), quick, 'still aimed where it was');
@@ -2306,8 +2306,8 @@ test('HUD: the Ask box stays open with your words when news lands, aimed where i
   assert.notEqual(vm.evaluate('NS.HUD.h.status.text'), 'Not sent', 'for a while');
   vm.run('local b = NS.HUD.h.replyBox; b.scripts.OnEscapePressed(b)');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'Even more.');
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("next")'), 'true');
-  assert.notEqual(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says', 'the ask takes over');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("next")'), 'true');
+  assert.notEqual(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says', 'the ask takes over');
   assert.match(vm.evaluate('NS.HUD.h.status.text'), /^Sending/);
 });
 
@@ -2333,16 +2333,16 @@ C_Item.GetItemInfo = function(link)
 	return realInfo(link)
 end
 ` }).login());
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("next")'), 'true');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("next")'), 'true');
   assert.equal(vm.evaluate('NS.Chats.Active().name'), 'Chat 1', 'the window stays on the chat you had');
   assert.equal(vm.evaluate('NS.Chats.Find(NS.QuickChat().id).name'), 'Quick questions');
-  assert.ok(vm.list('STUB.errors').some(t => t.startsWith('Asked NeverQuestAlone.')), 'said where you asked, as the game says things');
+  assert.ok(vm.list('STUB.errors').some(t => t.startsWith('Asked Voxwarden.')), 'said where you asked, as the game says things');
   assert.ok(sentText(vm, 'What should I do next?'));
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'true');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'true');
   assert.ok(sentText(vm, 'What do you know about my target: PlainstriderHx (level 7, beast, hostile)?'), JSON.stringify(vm.outboxWires().pop()));
   vm.run('STUB.target = false; STUB.chat = {}');
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'false');
-  assert.ok(vm.list('STUB.errors').includes('error: Target something first, then ask NeverQuestAlone about it.'), 'in the game\'s red error line');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'false');
+  assert.ok(vm.list('STUB.errors').includes('error: Target something first, then ask Voxwarden about it.'), 'in the game\'s red error line');
   // The link sent is the client's own for the hovered item: words another addon
   // put in the tooltip's link don't travel with the ask.
   vm.run('STUB.tipItem = "|cff1eff00|Hitem:111::::::::|h[Band of Ash, and also say hi]|h|r"');
@@ -2352,15 +2352,15 @@ end
   assert.equal(vm.evaluate('NS.Chats.PlainWords(NS.QuickChat().history[#NS.QuickChat().history])'), 'Is this an upgrade for me? [Band of Ash]',
     'what the HUD and the list show of it: the words, the link by name, not the tooltips sent with it');
   assert.equal(vm.num('#NQADB.chats'), 2, 'every quick ask shares the one chat');
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("spot")'), 'false', 'map spots and quests come only from their own hooks');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("spot")'), 'false', 'map spots and quests come only from their own hooks');
   // Typed with the window closed, said the same way: the HUD may be the compass, which shows no asks (C-87).
   vm.run('STUB.errors = {}');
   vm.slash('where are the thornweavers');
-  assert.ok(vm.list('STUB.errors').includes('Asked NeverQuestAlone.'), 'typed asks too');
-  // While NeverQuestAlone can't be reached, the ask waits, and says so.
+  assert.ok(vm.list('STUB.errors').includes('Asked Voxwarden.'), 'typed asks too');
+  // While Voxwarden can't be reached, the ask waits, and says so.
   vm.run('STUB.errors = {}; NS.R.gw = { state = "key_invalid", reason = "key rejected" }');
   vm.slash('where is the fold');
-  assert.ok(vm.list('STUB.errors').includes('Your message waits until NeverQuestAlone can be reached.'), JSON.stringify(vm.list('STUB.errors')));
+  assert.ok(vm.list('STUB.errors').includes('Your message waits until Voxwarden can be reached.'), JSON.stringify(vm.list('STUB.errors')));
 });
 
 // 70009's UnitName is SecretWhenUnitNameIdentityRestricted (UnitCreatureType
@@ -2380,7 +2380,7 @@ function UnitCreatureType(u) if STUB.secretNames[u] then return STUB.Secret("Bea
 function UnitReaction(a, b) return Kept(a, 2) end
 function UnitIsPlayer(u) return Kept(u, false) end
 ` }).login());
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'true');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'true');
   assert.ok(sentText(vm, 'What do you know about my target: Plainstrider (level 7, elite, beast, hostile)?'), lastWire(vm));
   vm.run('STUB.class = "rareelite"');
   vm.slash('ask target');
@@ -2390,19 +2390,19 @@ function UnitIsPlayer(u) return Kept(u, false) end
   vm.run('STUB.secretNames.target = true; STUB.errors = {}');
   assert.deepEqual([vm.evaluate('issecretvalue(UnitName("target"))'), vm.evaluate('type(UnitName("target"))')], ['true', 'string']);
   assert.throws(() => vm.run('local n = UnitName("target"); local _ = n:gsub("|", "")'), /secret value/, 'as the pre-fix TargetLine did');
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'true', 'the ask still goes');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'true', 'the ask still goes');
   assert.ok(sentText(vm, 'What do you know about my target (level 7, elite, hostile)? The game hides its name from addons right now.'), lastWire(vm));
-  assert.ok(vm.list('STUB.errors').includes('Asked NeverQuestAlone.'));
+  assert.ok(vm.list('STUB.errors').includes('Asked Voxwarden.'));
   // Every read a secret: nothing to ask about, so nothing is sent (a reply that can't help still costs one).
   vm.run('STUB.secretAll = true; STUB.errors = {}');
   const sent = vm.outboxWires().length;
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'false');
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'false');
   assert.equal(vm.outboxWires().length, sent);
   assert.deepEqual(vm.list('STUB.errors'), ['error: The game hides your target from addons right now. Ask again after the fight.']);
   // No target is still no ask.
   vm.run('STUB.target = false; STUB.errors = {}');
-  assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'false');
-  assert.deepEqual(vm.list('STUB.errors'), ['error: Target something first, then ask NeverQuestAlone about it.']);
+  assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'false');
+  assert.deepEqual(vm.list('STUB.errors'), ['error: Target something first, then ask Voxwarden about it.']);
 });
 
 test('secret values: every other unit read (your own name, the game data, the check-ins, the HUD\'s last session, /nqa apicheck) is checked first, so a secret never reaches a compare, a join or a saved key', () => {
@@ -2495,13 +2495,13 @@ test('waypoint: the next stop is the game\'s own waypoint, super-tracked; only o
   assert.equal(vm.num('#STUB.waypoints'), before + 1, 'on again, where it can be');
 });
 
-test('/nqa roll picks one of your quests on this map and pins it; Ctrl+right-click on the map asks NeverQuestAlone about that spot', () => {
+test('/nqa roll picks one of your quests on this map and pins it; Ctrl+right-click on the map asks Voxwarden about that spot', () => {
   const vm = confirmHello(newVM({ extra: MAP_STUB + 'function IsControlKeyDown() return STUB.ctrl == true end' }).login());
   vm.slash('roll');
   assert.ok(vm.list('STUB.prints').some(p => p.includes('None of your quests has a point on this map.')));
   vm.run('STUB.onMap = { { questID = 766, x = 0.47, y = 0.62 } }');
   vm.slash('roll');
-  assert.ok(vm.list('STUB.prints').some(p => p.includes('NeverQuestAlone rolled: Swoop Hunting. Waypoint set.')));
+  assert.ok(vm.list('STUB.prints').some(p => p.includes('Voxwarden rolled: Swoop Hunting. Waypoint set.')));
   assert.deepEqual(vm.json('STUB.waypoints[#STUB.waypoints].position'), { x: 0.47, y: 0.62 });
   // The map click: only Ctrl+right-click, and it's handled (no zoom-out).
   vm.run('STUB.FireEvent("ADDON_LOADED", "Blizzard_WorldMap")');
@@ -2514,7 +2514,7 @@ test('/nqa roll picks one of your quests on this map and pins it; Ctrl+right-cli
 
 // ---------------------------------------------------------------- tooltips
 
-test('tooltip verdicts: NeverQuestAlone\'s weights score every item against what you wear; upgrade, not, empty, two hands, off', () => {
+test('tooltip verdicts: Voxwarden\'s weights score every item against what you wear; upgrade, not, empty, two hands, off', () => {
   const vm = confirmHello(newVM({ extra: `
 STUB.stats = {
 	["item:1"] = { ITEM_MOD_STRENGTH_SHORT = 10, ITEM_MOD_STAMINA_SHORT = 10 },
@@ -2538,12 +2538,12 @@ function GameTooltip:GetItem() return "x", STUB.hover end
   assert.deepEqual(hover('|Hitem:1|h[New Vest]|h'), [], 'no weights yet: nothing');
   apply(vm, slotLua({ records: [replyRec(1, id, 'Set your weights.', ', weights = { str = 1, sta = 0.5, bogus = 9 }')] }));
   assert.deepEqual(vm.json('NQADB.weights["Testchar-Test Realm"]'), { str: 1, sta: 0.5 });
-  assert.deepEqual(hover('|Hitem:1|h[New Vest]|h'), ['NeverQuestAlone: an upgrade for your build, +100% over Old Vest']);
-  assert.deepEqual(hover('|Hitem:2|h[Old Vest]|h'), ['NeverQuestAlone: you\'re wearing this']);
-  assert.deepEqual(hover('|Hitem:9|h[Boots]|h'), ['NeverQuestAlone: fills an empty slot']);
-  assert.deepEqual(hover('|Hitem:3|h[Great Axe]|h'), ['NeverQuestAlone: an upgrade for your build, +100% over Old Sword'], 'a two-hander against both hands');
+  assert.deepEqual(hover('|Hitem:1|h[New Vest]|h'), ['Voxwarden: an upgrade for your build, +100% over Old Vest']);
+  assert.deepEqual(hover('|Hitem:2|h[Old Vest]|h'), ['Voxwarden: you\'re wearing this']);
+  assert.deepEqual(hover('|Hitem:9|h[Boots]|h'), ['Voxwarden: fills an empty slot']);
+  assert.deepEqual(hover('|Hitem:3|h[Great Axe]|h'), ['Voxwarden: an upgrade for your build, +100% over Old Sword'], 'a two-hander against both hands');
   vm.run('STUB.stats["item:3"] = { ITEM_MOD_STRENGTH_SHORT = 1 }');
-  assert.deepEqual(hover('|Hitem:3|h[Great Axe]|h'), ['NeverQuestAlone: not an upgrade, 90% under Old Sword']);
+  assert.deepEqual(hover('|Hitem:3|h[Great Axe]|h'), ['Voxwarden: not an upgrade, 90% under Old Sword']);
   vm.slash('tooltips off');
   assert.deepEqual(hover('|Hitem:1|h[New Vest]|h'), []);
   // They survive a reload, and junk in the saved data is dropped.
@@ -2573,15 +2573,15 @@ function GameTooltip:GetItem() return "x", STUB.hover end
 ` }).login());
   apply(vm, slotLua({ records: [replyRec(1, activeId(vm), 'Weights.', ', weights = { str = 1, sta = 1 }')] }));
   const hover = link => { vm.run(`STUB.lines = {}; STUB.hover = ${lstr(link)}; NS.Tooltips.OnItemTooltip(GameTooltip)`); return vm.list('STUB.lines'); };
-  assert.deepEqual(hover('|Hitem:20::::::::|h[Silver Ring]|h'), ['NeverQuestAlone: fills an empty slot'], 'the second ring slot is free');
+  assert.deepEqual(hover('|Hitem:20::::::::|h[Silver Ring]|h'), ['Voxwarden: fills an empty slot'], 'the second ring slot is free');
   vm.run('STUB.worn[12] = "|Hitem:22::::::::|h[Iron Band]|h"');
-  assert.deepEqual(hover('|Hitem:20::::::::|h[Silver Ring]|h'), ['NeverQuestAlone: an upgrade for your build, +150% over Copper Band'], 'against the weaker of the two');
+  assert.deepEqual(hover('|Hitem:20::::::::|h[Silver Ring]|h'), ['Voxwarden: an upgrade for your build, +150% over Copper Band'], 'against the weaker of the two');
   vm.run('STUB.worn[16] = "|Hitem:31::::::::|h[Great Axe]|h"');
-  assert.deepEqual(hover('|Hitem:30::::::::|h[Buckler]|h'), ['NeverQuestAlone: only with a one-hander (you wield a two-hander)']);
-  assert.deepEqual(hover('|Hitem:31::::::::|h[Great Axe]|h'), ['NeverQuestAlone: you\'re wearing this']);
+  assert.deepEqual(hover('|Hitem:30::::::::|h[Buckler]|h'), ['Voxwarden: only with a one-hander (you wield a two-hander)']);
+  assert.deepEqual(hover('|Hitem:31::::::::|h[Great Axe]|h'), ['Voxwarden: you\'re wearing this']);
   vm.run('STUB.worn[15] = "|Hitem:40:0:0:0:0:0:1182|h[Cloak of the Eagle]|h"');
-  assert.deepEqual(hover('|Hitem:40:0:0:0:0:0:1182|h[Cloak of the Eagle]|h'), ['NeverQuestAlone: you\'re wearing this']);
-  assert.deepEqual(hover('|Hitem:40:0:0:0:0:0:1190|h[Cloak of the Bear]|h'), ['NeverQuestAlone: about the same as Cloak of the Eagle'], 'the same id with another suffix is another item');
+  assert.deepEqual(hover('|Hitem:40:0:0:0:0:0:1182|h[Cloak of the Eagle]|h'), ['Voxwarden: you\'re wearing this']);
+  assert.deepEqual(hover('|Hitem:40:0:0:0:0:0:1190|h[Cloak of the Bear]|h'), ['Voxwarden: about the same as Cloak of the Eagle'], 'the same id with another suffix is another item');
 });
 
 test('refs: an item the client hasn\'t loaded shows by number, then by name once the game has it (one redraw per burst, your place kept)', () => {
@@ -2622,12 +2622,12 @@ function GameTooltip:GetItem() return "x", STUB.hover end
   apply(vm, slotLua({ records: [replyRec(1, activeId(vm), 'Weights.', ', weights = { str = 1 }')] }));
   const RED = '{ r = 1, g = 0.125, b = 0.125 }';
   const hover = (link, lines = '{}') => { vm.run(`STUB.lines = {}; STUB.hover = ${lstr(link)}; NS.Tooltips.OnItemTooltip(GameTooltip, { lines = ${lines} })`); return vm.list('STUB.lines'); };
-  assert.deepEqual(hover('|Hitem:50::::::::|h[Plate Vest]|h', `{ { leftText = "Chest", rightText = "Plate", rightColor = ${RED} } }`), ['NeverQuestAlone: you can\'t use this'], 'red armour type');
-  assert.deepEqual(hover('|Hitem:50::::::::|h[Vest]|h', `{ { leftText = "Durability 0 / 45", leftColor = ${RED} } }`), ['NeverQuestAlone: a big upgrade over Rags'], 'broken is not unusable; next to nothing worn: "a big upgrade"');
-  assert.deepEqual(hover('|Hitem:52::::::::|h[Fine Vest]|h', `{ { leftText = "Requires Level 30", leftColor = ${RED} } }`), ['NeverQuestAlone: a big upgrade at level 30 over Rags']);
+  assert.deepEqual(hover('|Hitem:50::::::::|h[Plate Vest]|h', `{ { leftText = "Chest", rightText = "Plate", rightColor = ${RED} } }`), ['Voxwarden: you can\'t use this'], 'red armour type');
+  assert.deepEqual(hover('|Hitem:50::::::::|h[Vest]|h', `{ { leftText = "Durability 0 / 45", leftColor = ${RED} } }`), ['Voxwarden: a big upgrade over Rags'], 'broken is not unusable; next to nothing worn: "a big upgrade"');
+  assert.deepEqual(hover('|Hitem:52::::::::|h[Fine Vest]|h', `{ { leftText = "Requires Level 30", leftColor = ${RED} } }`), ['Voxwarden: a big upgrade at level 30 over Rags']);
   vm.run('STUB.stats["item:51"] = { ITEM_MOD_STRENGTH_SHORT = 25 }');
-  assert.deepEqual(hover('|Hitem:52::::::::|h[Fine Vest]|h', `{ { leftText = "Requires Level 30", leftColor = ${RED} } }`), ['NeverQuestAlone: an upgrade at level 30, +20% over Rags']);
-  assert.deepEqual(hover('|Hitem:50::::::::|h[Vest]|h'), ['NeverQuestAlone: not an upgrade, 20% under Rags']);
+  assert.deepEqual(hover('|Hitem:52::::::::|h[Fine Vest]|h', `{ { leftText = "Requires Level 30", leftColor = ${RED} } }`), ['Voxwarden: an upgrade at level 30, +20% over Rags']);
+  assert.deepEqual(hover('|Hitem:50::::::::|h[Vest]|h'), ['Voxwarden: not an upgrade, 20% under Rags']);
   // Nothing your weights count on either (a shirt, white gear under caster weights): no verdict, not a contradiction.
   vm.run('STUB.stats["item:50"] = {}; STUB.stats["item:51"] = {}');
   assert.deepEqual(hover('|Hitem:50::::::::|h[Vest]|h'), []);
@@ -2639,7 +2639,7 @@ function GameTooltip:GetItem() return "x", STUB.hover end
 // uses it: each control and its tooltip, each slider's options, the settings told to read their
 // value again (NotifyUpdate), a row's indent, gray-out tests and watched settings. Every way the
 // API has to make a dropdown counts itself in STUB.dropdowns, and every parent link in
-// STUB.parentLinks: NeverQuestAlone makes none (E-047, QL-36).
+// STUB.parentLinks: Voxwarden makes none (E-047, QL-36).
 const SETTINGS_API = `
 STUB.controls, STUB.settings, STUB.inits, STUB.layoutInits, STUB.sliders, STUB.tips, STUB.notified, STUB.dropdowns = {}, {}, {}, {}, {}, {}, {}, {}
 STUB.parentLinks, STUB.rows = {}, {}
@@ -2698,7 +2698,7 @@ function CreateSettingsButtonInitializer(name, text, click, tip, tags) return { 
 MinimalSliderWithSteppersMixin = { Label = { Left = 1, Right = 2 } }
 `;
 
-test('settings: the game\'s standard list (searchable, with Defaults), words not raw values, Bind keys; our own window without that API; the addon compartment; Ask NeverQuestAlone in the quest log', () => {
+test('settings: the game\'s standard list (searchable, with Defaults), words not raw values, Bind keys; our own window without that API; the addon compartment; Ask Voxwarden in the quest log', () => {
   const vm = confirmHello(newVM({ extra: MAP_STUB + `
 AddonCompartmentFrame = { RegisterAddon = function(self, d) STUB.compartment = d end }
 STUB.menus = {}
@@ -2716,8 +2716,8 @@ Menu = { ModifyMenu = function(tag, fn) STUB.menus[tag] = fn end }
   vm.run('local b = NS.Settings.page.cycles[2]; b.scripts.OnClick(b)');
   assert.equal(vm.evaluate('NQADB.settings.textSize'), 'large');
   assert.equal(vm.evaluate('NS.Settings.page.cycles[2].text'), 'Large');
-  // The compartment: click opens NeverQuestAlone, right-click the settings.
-  assert.equal(vm.evaluate('STUB.compartment.text'), 'NeverQuestAlone');
+  // The compartment: click opens Voxwarden, right-click the settings.
+  assert.equal(vm.evaluate('STUB.compartment.text'), 'Voxwarden');
   vm.run('NQASettings:Hide(); STUB.compartment.func(nil, { buttonName = "LeftButton" })');
   assert.equal(vm.evaluate('NQAFrame.shown'), 'true');
   vm.run('STUB.compartment.func(nil, { buttonName = "RightButton" })');
@@ -2726,15 +2726,15 @@ Menu = { ModifyMenu = function(tag, fn) STUB.menus[tag] = fn end }
   vm.run(`STUB.items = {}
     local root = { CreateDivider = function() end, CreateButton = function(self, text, fn) STUB.items[#STUB.items + 1] = text; STUB.itemFn = fn end }
     STUB.menus.MENU_QUEST_MAP_LOG_TITLE({ questID = 766 }, root)`);
-  assert.deepEqual(vm.list('STUB.items'), ['Ask NeverQuestAlone About This Quest']);
+  assert.deepEqual(vm.list('STUB.items'), ['Ask Voxwarden About This Quest']);
   vm.run('STUB.itemFn()');
   assert.ok(sentText(vm, 'Help me with this quest: Swoop Hunting (quest 766). What\'s left, and where?'));
   // With the game's Settings API: a vertical list of proxy settings, headers and buttons.
   const withApi = confirmHello(newVM({ extra: SETTINGS_API }).login());
-  assert.equal(withApi.evaluate('STUB.category.name'), 'NeverQuestAlone');
+  assert.equal(withApi.evaluate('STUB.category.name'), 'Voxwarden');
   assert.equal(withApi.evaluate('STUB.registered == STUB.category'), 'true');
   const controls = withApi.list('STUB.controls');
-  assert.ok(controls.includes('checkbox: NeverQuestAlone HUD'));
+  assert.ok(controls.includes('checkbox: Voxwarden HUD'));
   // E-047: no dropdown in the game's Settings, from any of the game's ways to make one. Opening
   // one there (Quest Rewards', 0.5.2) crashed the game: Blizzard_Menu asserted in AcquireMenu
   // (Menu.lua:2212, lua-5.1 ldebug.c:747), the dropdown's owner a Blizzard_SettingControls button.
@@ -2765,7 +2765,7 @@ Menu = { ModifyMenu = function(tag, fn) STUB.menus[tag] = fn end }
   assert.deepEqual(controls.slice(at, at + 2), ['checkbox: Connection: Automatic', 'checkbox: Connection: Copy and Paste']);
   for (const c of controls.slice(at, at + 2)) assert.ok((c.length - 'checkbox: '.length) * 12 * 0.52 <= 195, c);
   for (const row of ['Connection: Automatic', 'Connection: Copy and Paste']) {
-    assert.equal(withApi.evaluate(`STUB.tips[${lstr(row)}]`), 'Sets how replies come: Automatic uses the NeverQuestAlone app while it runs, and Copy and Paste when it doesn\'t; Copy and Paste never uses the app.', row);
+    assert.equal(withApi.evaluate(`STUB.tips[${lstr(row)}]`), 'Sets how replies come: Automatic uses the Voxwarden app while it runs, and Copy and Paste when it doesn\'t; Copy and Paste never uses the app.', row);
   }
   assert.deepEqual([withApi.evaluate('STUB.settings.NQA_REPLIES_AUTO.get()'), withApi.evaluate('STUB.settings.NQA_REPLIES_PASTE.get()')], ['true', 'false'], 'Automatic, the default');
   assert.deepEqual([withApi.evaluate('STUB.settings.NQA_REPLIES_AUTO.def'), withApi.evaluate('STUB.settings.NQA_REPLIES_PASTE.def')], ['true', 'false'], 'Defaults picks Automatic');
@@ -2804,7 +2804,7 @@ Menu = { ModifyMenu = function(tag, fn) STUB.menus[tag] = fn end }
   withApi.run('NQADB.settings.hudAlpha = nil');
   assert.equal(withApi.num('STUB.settings.NQA_HUDALPHA.get()'), 100, 'never nil: the list\'s slider would stop with an error');
   assert.deepEqual(withApi.list('(function() local o = {} for _, i in ipairs(STUB.inits) do if i.header then o[#o + 1] = i.header end end return o end)()'),
-    ['The HUD', 'Map', 'Quests', 'Replies', 'Tooltips', 'What NeverQuestAlone Knows', 'Personality', 'Quality of Life', 'Usage', 'Keys and Places']);
+    ['The HUD', 'Map', 'Quests', 'Replies', 'Tooltips', 'What Voxwarden Knows', 'Personality', 'Quality of Life', 'Usage', 'Keys and Places']);
   // E-026: headers and buttons go in through Settings.RegisterInitializer (the secure way in), and no
   // button adds search tags: CreateSettingsButtonInitializer writes those from its caller, so they
   // would carry our taint into every Options search (the Discord Sign In row was blocked).
@@ -2828,13 +2828,13 @@ Menu = { ModifyMenu = function(tag, fn) STUB.menus[tag] = fn end }
   assert.equal(withApi.num('STUB.opened'), 42);
   assert.equal(withApi.evaluate('NQASettings'), null, 'no window of our own');
   withApi.run('for _, i in ipairs(STUB.inits) do if i.button == "Bind Keys" then i.click() end end');
-  assert.deepEqual([withApi.num('STUB.opened'), withApi.evaluate('STUB.openedAt')], [7, 'NeverQuestAlone'], 'Keybindings, at the keys\' own section (the C-127 test: it is there)');
+  assert.deepEqual([withApi.num('STUB.opened'), withApi.evaluate('STUB.openedAt')], [7, 'Voxwarden'], 'Keybindings, at the keys\' own section (the C-127 test: it is there)');
 });
 
 test('C-124: every way in names the addon as the AddOns list does (the TOC\'s Title): Options, Keybindings, the minimap\'s addon menu, the window\'s notices, our own window, and the lines that point there', () => {
-  const toc = require('node:fs').readFileSync(require('node:path').join(ADDON, 'NeverQuestAlone.toc'), 'utf8');
+  const toc = require('node:fs').readFileSync(require('node:path').join(ADDON, 'Voxwarden.toc'), 'utf8');
   const name = toc.match(/^## Title: (.*)$/m)[1];
-  assert.equal(name, 'NeverQuestAlone');
+  assert.equal(name, 'Voxwarden');
   const COMPARTMENT = '\nAddonCompartmentFrame = { RegisterAddon = function(self, d) STUB.compartment = d end }';
   // With the game's Settings API (Forever): the category under Options > AddOns, the keys' section in
   // Keybindings (that Bind Keys lands on it, with the five keys in it: the C-127 test), the addon menu's
@@ -2845,7 +2845,7 @@ test('C-124: every way in names the addon as the AddOns list does (the TOC\'s Ti
   assert.equal(vm.evaluate('STUB.compartment.text'), name, 'the minimap\'s addon menu');
   vm.run('STUB.compartment.funcOnEnter({})');
   assert.equal(vm.evaluate('GameTooltip.text'), name, 'its tooltip\'s title');
-  assert.equal(vm.evaluate('NS.UI.WayBack()'), `NeverQuestAlone is hidden. Click ${name} in the minimap's addon menu, or type /nqa, to bring it back.`);
+  assert.equal(vm.evaluate('NS.UI.WayBack()'), `Voxwarden is hidden. Click ${name} in the minimap's addon menu, or type /nqa, to bring it back.`);
   vm.slash('');
   vm.slash('help');
   assert.equal(vm.evaluate('NS.UI.ui.notice.who.text'), name, 'a command\'s answer in the window');
@@ -2855,7 +2855,7 @@ test('C-124: every way in names the addon as the AddOns list does (the TOC\'s Ti
   assert.equal(own.evaluate('NQASettings.shown'), 'true');
   assert.equal(own.evaluate('NS.Settings.page.title.text'), name, 'our own window\'s title');
   own.run('NS.Settings.OpenKeybindings()');
-  assert.equal(own.chatLines().pop().replace(/\|c[0-9a-f]{8}|\|r/g, ''), `[NeverQuestAlone] Bind keys in the game menu: Options > Keybindings > ${name}.`);
+  assert.equal(own.chatLines().pop().replace(/\|c[0-9a-f]{8}|\|r/g, ''), `[Voxwarden] Bind keys in the game menu: Options > Keybindings > ${name}.`);
 });
 
 test('C-127: the keys have a Keybindings section of their own, named as the AddOns list names the addon, and Bind Keys opens the page at it', async () => {
@@ -2864,7 +2864,7 @@ test('C-127: the keys have a Keybindings section of their own, named as the AddO
   // element named what it passes, a section's own name.
   const { bindingsXml, keybindingSections, scrollTarget, GAME_STRINGS } = await import('./helpers/keybindings.mjs');
   const fs = require('node:fs'), path = require('node:path');
-  const name = fs.readFileSync(path.join(ADDON, 'NeverQuestAlone.toc'), 'utf8').match(/^## Title: (.*)$/m)[1];
+  const name = fs.readFileSync(path.join(ADDON, 'Voxwarden.toc'), 'utf8').match(/^## Title: (.*)$/m)[1];
   const bindings = bindingsXml(fs.readFileSync(path.join(ADDON, 'Bindings.xml'), 'utf8'));
   // The binding names stay, so keys bound before keep working; each is in the addon's own category, as
   // Blizzard_PingUI's keys are in theirs, and none has a header.
@@ -2878,7 +2878,7 @@ test('C-127: the keys have a Keybindings section of their own, named as the AddO
   assert.equal(G('BINDING_HEADER_NQA'), name, 'the category\'s name on the page is the TOC\'s Title');
   const sections = keybindingSections(bindings, G, { game: true });
   const ours = sections.filter(s => s.entries.some(e => /^NQA_/.test(e.action || '')));
-  assert.deepEqual(ours.map(s => s.name), [name], 'all five keys in one section, named NeverQuestAlone');
+  assert.deepEqual(ours.map(s => s.name), [name], 'all five keys in one section, named Voxwarden');
   assert.deepEqual(ours[0].entries, bindings.map(b => ({ action: b.name })), 'the five keys and nothing else: no blank row');
   // Bind Keys opens the game's Keybindings at that section.
   vm.run('for _, i in ipairs(STUB.inits) do if i.button == "Bind Keys" then i.click() end end');
@@ -2892,7 +2892,7 @@ test('C-127: the keys have a Keybindings section of their own, named as the AddO
     assert.ok(words.length * 12 * 0.52 <= 170, `${b.name}: "${words}" is ${Math.round(words.length * 12 * 0.52)} units`);
   }
   // Round 3's page (d3ac2a7), in the same model: category="ADDONS" and a header on the first key put the five
-  // in the game's AddOns section after a blank row, and nothing on the page was named NeverQuestAlone, so
+  // in the game's AddOns section after a blank row, and nothing on the page was named Voxwarden, so
   // Bind Keys opened the page at its top.
   const before = keybindingSections(bindings.map((b, i) => ({ ...b, category: 'ADDONS', header: i === 0 ? 'NQA' : undefined })), G, { game: true });
   assert.deepEqual(before.find(s => s.name === 'AddOns').entries, [{ spacer: true }, ...bindings.map(b => ({ action: b.name }))]);
@@ -2971,7 +2971,7 @@ test('in a fight, Settings, Keybindings and the window\'s quest and item links o
   vm.slash('settings');
   vm.slash('qol');
   vm.run('NS.Settings.OpenKeybindings()');
-  assert.deepEqual(opens(), ['settings 42', 'settings 42 at Quality of Life', 'settings 7 at NeverQuestAlone'], 'out of a fight, at once');
+  assert.deepEqual(opens(), ['settings 42', 'settings 42 at Quality of Life', 'settings 7 at Voxwarden'], 'out of a fight, at once');
   assert.deepEqual(said(), []);
   fresh();
   fight(true);
@@ -2990,7 +2990,7 @@ test('in a fight, Settings, Keybindings and the window\'s quest and item links o
   vm.run('NS.Settings.OpenKeybindings()');
   assert.deepEqual(said(), ['Settings opens after the fight.', 'The Keybindings page opens after the fight.']);
   fight(false);
-  assert.deepEqual(opens(), ['settings 7 at NeverQuestAlone'], 'nothing piles up for the fight\'s end');
+  assert.deepEqual(opens(), ['settings 7 at Voxwarden'], 'nothing piles up for the fight\'s end');
   fresh();
   fight(true);
   vm.slash('qol');
@@ -3075,9 +3075,9 @@ test('how long replies take: the median of the last 20, in the working bubble an
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Thinking…');
   assert.match(vm.evaluate('NS.HUD.h.sub.text'), /^\d+ s · usually 5 s$/);
   assert.equal(vm.num('NS.HUD.h.sub.maxLines'), 1, 'cut, never wrapped: the clock moves nothing below it');
-  // NeverQuestAlone's voice for what he's doing: writing, else thinking (no tools, so nothing else to name).
+  // Voxwarden's voice for what he's doing: writing, else thinking (no tools, so nothing else to name).
   vm.run('local real = NS.Chats.Progress; NS.Chats.Progress = function(c) local p = real(c); p.title = "Writing the reply"; return p end; NS.HUD.Render(); NS.Chats.Progress = real');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Writing…', 'NeverQuestAlone\'s voice for what he\'s doing');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Writing…', 'Voxwarden\'s voice for what he\'s doing');
   vm.run('local real = NS.Chats.Progress; NS.Chats.Progress = function(c) local p = real(c); p.title = "browser"; return p end; NS.HUD.Render(); NS.Chats.Progress = real');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Thinking…', 'any other title');
   vm.run('NQADB.settings.hudMin = true; NS.HUD.Render()');
@@ -3145,18 +3145,18 @@ test('E-1 (C-30): a pending re-plan over an unread reply: the bar\'s Okay sends 
   assert.equal(vm.outboxWires().length, sent + 1, 'once: the wait\'s own send doesn\'t follow');
 });
 
-test('E-1 (C-29): "Can\'t reach the NeverQuestAlone app" over an unread reply on the bar: no Okay (it would read a reply you haven\'t seen); Show More, and the reply\'s Okay is under its words', () => {
+test('E-1 (C-29): "Can\'t reach the Voxwarden app" over an unread reply on the bar: no Okay (it would read a reply you haven\'t seen); Show More, and the reply\'s Okay is under its words', () => {
   const vm = barWithReply();
   const id = activeId(vm);
   vm.advance(200);
   vm.run('NS.HUD.Render()');
-  assert.deepEqual(barRow(vm).slice(0, 2), ['Can\'t reach the NeverQuestAlone app', 'false']);
+  assert.deepEqual(barRow(vm).slice(0, 2), ['Can\'t reach the Voxwarden app', 'false']);
   vm.run('NS.HUD.BarOkay()');
   assert.equal(unreadOf(vm, id), 1, 'still unread');
   vm.run('local g = NQAHUDBar.grip; g.scripts.OnClick(g, "RightButton")');
   vm.run('for _, b in ipairs(NQAPopupMenu.items) do if b.shown and b.label.text == "Show More" then b.scripts.OnClick(b) end end');
   assert.equal(vm.evaluate('NQAHUD.shown'), 'true');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the NeverQuestAlone app');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the Voxwarden app');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'In Ironforge: the Great Forge.');
   assert.equal(vm.evaluate('NS.HUD.h.okBtn.shown'), 'true');
   vm.run('local b = NS.HUD.h.okBtn; b.scripts.OnClick(b, "LeftButton")');
@@ -3186,24 +3186,24 @@ test('E-1 (C-110): a connection state over unread news has the bar\'s row, so th
   assert.deepEqual([vm.evaluate('NQAHUDBar.status.text'), vm.evaluate('NQAHUDBar.dist.shown')], ['Hi.', 'false'], 'the news\'s row: his words and Okay');
   vm.advance(200);
   vm.run('NS.HUD.Render(); NS.HUD.TickRoute()');
-  assert.deepEqual([vm.evaluate('NQAHUDBar.status.text'), vm.evaluate('NQAHUDBar.okBtn.shown'), vm.evaluate('NQAHUDBar.dist.shown')], ['Can\'t reach the NeverQuestAlone app', 'false', 'true'], 'the connection\'s row keeps the distance');
+  assert.deepEqual([vm.evaluate('NQAHUDBar.status.text'), vm.evaluate('NQAHUDBar.okBtn.shown'), vm.evaluate('NQAHUDBar.dist.shown')], ['Can\'t reach the Voxwarden app', 'false', 'true'], 'the connection\'s row keeps the distance');
 });
 
 test('E-2: the window\'s X says where the reply will show: the HUD while it shows news; else (its compass form, closed, off) the banner at the top of the screen', () => {
   const vm = confirmHello(newVM({ db: WELCOMED, extra: TIP_STUB }).login());
   vm.slash('');
   const get = () => { vm.run('STUB.tip = {}; local c = NS.UI.ui.closeBtn; c.scripts.OnEnter(c)'); return vm.json('STUB.tip').at(-1); };
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the HUD shows the reply when it lands.');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the HUD shows the reply when it lands.');
   vm.slash('hud compass');
   vm.slash('');
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the reply shows at the top of the screen when it lands.', 'the compass: the banner');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the reply shows at the top of the screen when it lands.', 'the compass: the banner');
   vm.slash('hud full');
   vm.run('NS.HUD.Close()');
   vm.slash('');
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the reply shows at the top of the screen when it lands.', 'closed: the banner, never "the small bar"');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the reply shows at the top of the screen when it lands.', 'closed: the banner, never "the small bar"');
   vm.slash('hud off');
   vm.slash('');
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the reply shows at the top of the screen when it lands.', 'off: the small bar badges it, the banner shows it');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the reply shows at the top of the screen when it lands.', 'off: the small bar badges it, the banner shows it');
 });
 
 test('E-3: a /nqa stop\'s answer ("Nothing was running.", kind stop; "Couldn\'t stop: …", kind gateway after a stop) pops no pending send: the running message stays busy and its own reply answers it', () => {
@@ -3242,14 +3242,14 @@ test('E-4: the /nqa hud and /nqa text answers name their choices in words, with 
   assert.ok(text.endsWith('Chat Text Size: Medium. Settings has it too.'), text);
   // As the chat frame shows it: no |r or |c escape is left in the words (a lone | would open one).
   for (const line of [hud, text]) {
-    assert.doesNotMatch(line.replace(/\|\|/g, '').replace(/^\|cff7ec8ff\[NeverQuestAlone\]\|r /, ''), /\|[rc]/, 'no escape left in the words');
+    assert.doesNotMatch(line.replace(/\|\|/g, '').replace(/^\|cff7ec8ff\[Voxwarden\]\|r /, ''), /\|[rc]/, 'no escape left in the words');
   }
 });
 
 test('the status lines point to a click, never a hover (string clarity): while the header has more to say (not ready, the AI unreachable, the app silent, a send that didn\'t go), the lines are a button whose click opens the window with the light\'s words', () => {
   const vm = confirmHello(newVM({ db: WELCOMED, extra: TIP_STUB }).login());
   vm.run('NS.UI.Toggle(false)');
-  const TIP = 'The NeverQuestAlone app is running but can\'t reach your AI: connecting.';
+  const TIP = 'The Voxwarden app is running but can\'t reach your AI: connecting.';
   const light = (state, extra = '') => vm.run(`NS.Transport.Light = function() return "${state}", ${lstr(TIP)} end; ${extra} NS.HUD.Render()`);
   light('grey');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Not ready');
@@ -3271,7 +3271,7 @@ test('the status lines point to a click, never a hover (string clarity): while t
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Ready');
   assert.equal(vm.evaluate('NS.HUD.h.statusBtn.shown'), 'false');
   // No status line anywhere points to a tooltip.
-  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'addon', 'NeverQuestAlone', 'HUD.lua'), 'utf8');
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'addon', 'Voxwarden', 'HUD.lua'), 'utf8');
   assert.doesNotMatch(src, /tooltip says (how|why)/);
   // A message sent meanwhile: "Sending…" borrows the connection's line, and its click with it (UXC-UI-21).
   light('grey');
@@ -3284,10 +3284,10 @@ test('the status lines point to a click, never a hover (string clarity): while t
   assert.equal(notice(vm), TIP);
 });
 
-test('the addon\'s own chat lines lead with the companion\'s name, as its replies do: [NeverQuestAlone] for the owner\'s agent, whatever the bridge names it', () => {
+test('the addon\'s own chat lines lead with the companion\'s name, as its replies do: [Voxwarden] for the owner\'s agent, whatever the bridge names it', () => {
   const vm = confirmHello(newVM({ db: WELCOMED }).login());
   vm.run('NS.Notify.Local("Minimap pins hidden.")');
-  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[NeverQuestAlone]|r Minimap pins hidden.');
+  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[Voxwarden]|r Minimap pins hidden.');
   vm.run('NQADB.agentNames.main = "Skully"; NS.Notify.Local("Hello.")');
   assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[Skully]|r Hello.');
   vm.run('NQADB.agentNames.main = "A|cffff0000red"; NS.Notify.Local("Hi.")');

@@ -1,0 +1,26 @@
+## Interface: 16001
+## Title: Voxwarden
+## Notes: • Ask anything, right in the game|n• Quest help, routes and gear advice|n• Your route drawn on the map|n• Quality-of-life helpers you turn on|n• Any AI, with or without the free Voxwarden app
+## Author: David Rodriguez
+## Version: 1.4.19
+## IconTexture: Interface\AddOns\Voxwarden\Media\Voxwarden
+## SavedVariables: NQADB, NQAMapDB
+
+Codec.lua
+Inbox.lua
+Store.lua
+Transport.lua
+Chats.lua
+Notify.lua
+UI.lua
+Commands.lua
+Map.lua
+MinimapPins.lua
+Companion.lua
+QoL.lua
+Paste.lua
+HUD.lua
+Tooltips.lua
+Chains.lua
+Settings.lua
+VoiceBar.lua

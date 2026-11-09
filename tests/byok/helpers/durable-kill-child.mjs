@@ -24,7 +24,7 @@ import { encodeRecord } from '../../../bridge/transport/records.mjs';
 const [root, order, point] = process.argv.slice(2);
 const addons = path.join(root, 'AddOns');
 installSlots(addons, { count: 3, iface: '16001' });
-fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true });
+fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true });
 const rule = { match: { kind: 'file', base: 'outbox.jsonl', durable: true }, at: point, then: 'kill', marker: path.join(root, 'killed.json'),
   ...(point === 'after' ? { delayAfterMs: 300 } : { delayMs: 300 }) };
 const real = createSlotWorker({ url: pathToFileURL(path.join(import.meta.dirname, 'hooked-writer.mjs')), data: { serve: false, hooks: [rule] } });

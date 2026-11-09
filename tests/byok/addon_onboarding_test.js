@@ -31,10 +31,10 @@ test('G1: a fresh public install\'s HUD shows the setup block in main\'s Welcome
   const vm = hud(appVM());
   assert.equal(vm.evaluate('NS.HUD.h.view.mode'), 'setup');
   assert.equal(vm.evaluate('NS.HUD.h.label.text'), 'Welcome');
-  assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'I\'m NeverQuestAlone. I\'ll answer anything you ask, right here.');
+  assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'I\'m Voxwarden. I\'ll answer anything you ask, right here.');
   // The first seconds: nothing to act on yet, so nothing to do.
   // STYLE §1's order and words (UX-W01, CF-UX-04): the app, your AI, then the game read.
-  assert.deepEqual(rows(vm), [`${TODO} Looking for the NeverQuestAlone app…`, `${TODO} Checking your AI…`, `${TODO} Checking the app can see WoW…`]);
+  assert.deepEqual(rows(vm), [`${TODO} Looking for the Voxwarden app…`, `${TODO} Checking your AI…`, `${TODO} Checking the app can see WoW…`]);
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Connecting…', 'a connection line comes first in the header');
   assert.ok(shown(vm, 'sayHiBtn') && shown(vm, 'setupOk'));
   assert.equal(vm.evaluate('NS.HUD.h.sayHiBtn.disabled'), 'true', 'Say Hi waits for the rows');
@@ -46,9 +46,9 @@ test('G1: a fresh public install\'s HUD shows the setup block in main\'s Welcome
   // The app answers with a key that works: the three done, Say Hi on, the body says what to do.
   firstSlot(vm);
   hud(vm);
-  assert.deepEqual(rows(vm), [`${READY} The NeverQuestAlone app is running.`, `${READY} Connected to Haiku 4.5.`, `${READY} The app can see WoW.`]);
+  assert.deepEqual(rows(vm), [`${READY} The Voxwarden app is running.`, `${READY} Connected to Haiku 4.5.`, `${READY} The app can see WoW.`]);
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Setting up · 3 of 3 done');
-  assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'I\'m NeverQuestAlone. Click Say Hi, then ask me anything.', 'the button beside it (CF-UX-05)');
+  assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'I\'m Voxwarden. Click Say Hi, then ask me anything.', 'the button beside it (CF-UX-05)');
   assert.equal(vm.evaluate('NS.HUD.h.sayHiBtn.disabled'), 'false');
   assert.ok(!shown(vm, 'setupWhy'));
   // Every row fits its 40 characters.
@@ -133,7 +133,7 @@ test('G1: the rows name what to do for each state, in 40 characters or fewer; th
     const vm = confirmHello(newVM({ extra: PUBLIC + (mac ? '' : '\nfunction IsMacClient() return false end'), db: 'NQADB = { settings = { mode = "reload" } }' }).login());
     for (const [state, words] of [['no_signal', mac ? 'The app can\'t see WoW: see why there.' : 'Keep the top of WoW\'s window on screen.'],
       ['minimized', 'Checking the app can see WoW…'], ['unknown', 'Checking the app can see WoW…'],
-      ['blocked', 'Close what blocks screen reading.'], ['damaged', 'Reinstall the NeverQuestAlone app.'],
+      ['blocked', 'Close what blocks screen reading.'], ['damaged', 'Reinstall the Voxwarden app.'],
       ['unsupported', 'Type /nqa mode reload for this screen.'], ['no_permission', mac ? 'Allow Screen Recording on your Mac.' : 'Keep the top of WoW\'s window on screen.'],
       ['off', 'Screen reading is off.']]) {
       apply(vm, cap(state));
@@ -282,16 +282,16 @@ test('G2, G3: /nqa hi before the first reply is Say hi\'s; /nqa help opens with 
   assert.ok(!after.outboxWires().at(-1).wire.includes('intro='));
 });
 
-test('G1: without word from the app for 2 minutes, row 1 says what to do: "Open the NeverQuestAlone app."; saved data from 0.5.3 with no slot yet shows the setup block from load', () => {
+test('G1: without word from the app for 2 minutes, row 1 says what to do: "Open the Voxwarden app."; saved data from 0.5.3 with no slot yet shows the setup block from load', () => {
   const vm = hud(appVM());
-  assert.equal(rows(vm)[0], `${TODO} Looking for the NeverQuestAlone app…`);
+  assert.equal(rows(vm)[0], `${TODO} Looking for the Voxwarden app…`);
   vm.advance(130);
   hud(vm);
-  assert.equal(rows(vm)[0], `${TODO} Open the NeverQuestAlone app.`);
+  assert.equal(rows(vm)[0], `${TODO} Open the Voxwarden app.`);
   // Saved data from 0.5.3 (its saved backend, no reply yet), whatever installed it: the setup block from load.
   const older = hud(newVM({ db: 'NQADB = { backend = "byok" }' }).login());
   assert.equal(older.evaluate('NS.HUD.h.view.mode'), 'setup');
-  assert.deepEqual(rows(older), [`${TODO} Looking for the NeverQuestAlone app…`, `${TODO} Checking your AI…`, `${TODO} Checking the app can see WoW…`]);
+  assert.deepEqual(rows(older), [`${TODO} Looking for the Voxwarden app…`, `${TODO} Checking your AI…`, `${TODO} Checking the app can see WoW…`]);
 });
 
 test('G1 (gap 12): after the first reply, the app losing sight of the game is a warn line (the bridge\'s capture state), with its Okay, until it can see again; under "Sending…" it says why; the setup block never shows it', () => {
@@ -335,15 +335,15 @@ test('G1 (gap 12): after the first reply, the app losing sight of the game is a 
   vm.advance(9);
   hud(vm);
   assert.equal(vm.evaluate('NS.HUD.h.view.mode'), 'warn');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone can\'t see the game');
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'See why in the NeverQuestAlone app.', 'a Mac\'s words: its corner can\'t be covered');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden can\'t see the game');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'See why in the Voxwarden app.', 'a Mac\'s words: its corner can\'t be covered');
   // A message waiting on the strip: "Sending…", and why it doesn't go, in the line's one line (nothing moves).
   vm.send('where next?');
   hud(vm);
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Sending…');
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'NeverQuestAlone can\'t see the game');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Voxwarden can\'t see the game');
   assert.equal(vm.evaluate('NS.HUD.h.sub.maxLines'), '1');
-  assert.equal(vm.evaluate('NS.HUD.h.view.detail'), 'NeverQuestAlone can\'t see the game: see why in the NeverQuestAlone app.', 'the whole of it a click away');
+  assert.equal(vm.evaluate('NS.HUD.h.view.detail'), 'Voxwarden can\'t see the game: see why in the Voxwarden app.', 'the whole of it a click away');
   // The persona's name, when the app named another.
   apply(vm, cap('blocked', { companion: 'Skully', p: provider({ companion: 'Skully' }) }));
   vm.advance(9);

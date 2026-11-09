@@ -80,7 +80,7 @@ test('money: a throw after the provider billed an attempt still counts it: settl
     await env.backend.send(sendParams(CHAT, 'm_2', 'draw it'));
     const err = await waitFor(() => env.chats('error')[0], 5000, 'the error');
     assert.equal(err.errorKind, 'unknown');
-    assert.equal(err.errorMessage, 'Something went wrong with Anthropic. See the details in the NeverQuestAlone app.');
+    assert.equal(err.errorMessage, 'Something went wrong with Anthropic. See the details in the Voxwarden app.');
     assert.equal(env.chats('final').length, 0);
     assert.equal(chatCalls(mock).length, 1);
     const d = env.backend.caps.details();
@@ -311,7 +311,7 @@ test('money: a ledger that can\'t be written answers the message with its line a
     const err = await waitFor(() => env.chats('error')[0], 3000, 'the line');
     // Its own kind and line (SY-12): a write on this computer, never the AI's fault.
     assert.equal(err.errorKind, 'local_write');
-    assert.equal(err.errorMessage, "NeverQuestAlone couldn't save on this computer, so nothing was sent. Click Retry. Restart your computer if it keeps happening.");
+    assert.equal(err.errorMessage, "Voxwarden couldn't save on this computer, so nothing was sent. Click Retry. Restart your computer if it keeps happening.");
     assert.equal(err.action, 'retry');
     await sleep(50);
     assert.equal(chatCalls(mock).length, 0);
@@ -368,7 +368,7 @@ test('money (code health BR-09, bones-ux-writer UX-W02): the game hears a held c
     assert.deepEqual([env.backend.slotExtras().rt.line, env.backend.slotExtras().rt.action], ['Today\'s spend unknown', 'desktop'], 'straight apostrophes in game');
     await env.backend.send(sendParams(CHAT, 'm_h1', 'hi'));
     const err = await waitFor(() => env.chats('error')[0], 3000, 'refused');
-    assert.deepEqual([err.errorKind, err.errorMessage, err.action], ['cap_spend', 'Today\'s spend couldn\'t be read, so NeverQuestAlone rests. Set your limit again in the NeverQuestAlone app.', 'desktop']);
+    assert.deepEqual([err.errorKind, err.errorMessage, err.action], ['cap_spend', 'Today\'s spend couldn\'t be read, so Voxwarden rests. Set your limit again in the Voxwarden app.', 'desktop']);
     // Acknowledged: a limit reached later is said as before.
     await env.backend.setConfig({ caps: { dailyUsd: 1 } });
     assert.equal(env.backend.slotExtras().rt.line, 'Ready');

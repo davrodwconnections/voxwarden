@@ -1,4 +1,4 @@
-// NeverQuestAlone desktop app: the main process's player-facing strings on the setup path
+// Voxwarden desktop app: the main process's player-facing strings on the setup path
 // (native dialogs, the tray, desktop notifications). Becomes app/desktop/src/strings.mjs.
 //
 // Source: the onboarding build spec (revision 2.11) §3.2, §3.4.3, §3.5, §3.7, §3.11, §3.12, §4 and
@@ -74,7 +74,7 @@ export const STRINGS = {
   // §3.2 M1: moveToApplications threw (app.moveToApplicationsFolder). Shown in S1's move card.
   moveToApplications: {
     failed: {
-      headline: 'NeverQuestAlone couldn’t move to {os:Applications}.',
+      headline: 'Voxwarden couldn’t move to {os:Applications}.',
       detail: 'Drag it into {os:Applications} yourself, then open it from there.',
     },
   },
@@ -82,13 +82,13 @@ export const STRINGS = {
   // §3.11, §9.2 the tray's first item, and the tray's word for a reached limit.
   tray: {
     finishSetupLabel: 'Finish setup', // until onboarded; opens the window at the saved screen
-    openAppLabel: 'Open NeverQuestAlone', // after onboarded (today's, main.mjs:360)
+    openAppLabel: 'Open Voxwarden', // after onboarded (today's, main.mjs:360)
     capState: 'Daily spend limit reached', // the tray line's state word (status-text.mjs STATE_WORDS.cap)
     // Until onboarded, the tray's line while nothing needs fixing: the window bar's word (bones-ux-writer r3, UX-W25).
     setupLine: 'Setting up',
-    tooltip: 'NeverQuestAlone · {line}', // {line}: the tray's line
-    pauseLabel: 'Pause NeverQuestAlone', // a checkbox item
-    quitLabel: 'Quit NeverQuestAlone',
+    tooltip: 'Voxwarden · {line}', // {line}: the tray's line
+    pauseLabel: 'Pause Voxwarden', // a checkbox item
+    quitLabel: 'Quit Voxwarden',
   },
 
   // §3.7, §9.2 desktop notifications (ER-5; only while appState.alerts is true).
@@ -96,19 +96,19 @@ export const STRINGS = {
     // Posted once at Continue (S3), macOS only, silent, so macOS asks once.
     alertsOn: {
       title: 'Notifications are on.',
-      body: 'This is where NeverQuestAlone tells you when something needs you.',
+      body: 'This is where Voxwarden tells you when something needs you.',
     },
     // Only with a daily spend limit the player set (§3.12).
     cap: {
       title: 'You’ve reached your daily spend limit ({amount}).',
       titleNoAmount: 'You’ve reached your daily spend limit.', // not in the spec: the limit's amount unknown
-      body: 'Raise it or turn it off in NeverQuestAlone, or it resets at midnight.',
+      body: 'Raise it or turn it off in Voxwarden, or it resets at midnight.',
     },
     // The limit held because today's spend couldn't be read (code health BR-09): Home's card's words
     // (renderer/strings.js homeCard.capUnread; bones-ux-writer UX-W02).
     capUnread: {
       title: 'Today’s spend couldn’t be read, so {name} rests.',
-      body: 'Set your limit again in NeverQuestAlone.',
+      body: 'Set your limit again in Voxwarden.',
     },
     // The other states that need the player (status-text.mjs): bones-ux-writer onboarding r1's words
     // (UX-W12; no table had them). {co} is the AI company, {app} the app that runs a local model. The
@@ -117,17 +117,17 @@ export const STRINGS = {
     keyInvalid: {
       title: 'Your {co} key was rejected.',
       titleNoCo: 'Your key was rejected.',
-      body: 'Replace it in NeverQuestAlone.',
+      body: 'Replace it in Voxwarden.',
     },
     signedOut: {
       title: 'Your {co} sign-in ended.',
       titleNoCo: 'Your sign-in ended.',
-      body: 'Sign in again in NeverQuestAlone.',
+      body: 'Sign in again in Voxwarden.',
     },
     outOfCredit: {
       title: 'Your {co} account is out of credit.',
       titleNoCo: 'Your account at your AI company is out of credit.',
-      body: 'Add credit at {co}, then test your key in NeverQuestAlone.',
+      body: 'Add credit at {co}, then test your key in Voxwarden.',
     },
     localDown: {
       title: '{name} can’t reach {app}.',
@@ -135,7 +135,7 @@ export const STRINGS = {
     },
     lastError: {
       title: 'The last message failed.', // when the bridge's own headline is missing
-      body: 'Open NeverQuestAlone for the fix.',
+      body: 'Open Voxwarden for the fix.',
     },
     sendingPaused: {
       title: 'Sending is paused.', // when the bridge's own headline is missing; the detail is the bridge's
@@ -149,14 +149,14 @@ export const STRINGS = {
   limitConfirm: {
     raise: {
       message: 'Raise your daily spend limit to {amount}?',
-      detail: 'It’s {before} now. NeverQuestAlone keeps sending until today’s spend reaches {amount}.', // {before}: today's limit
+      detail: 'It’s {before} now. Voxwarden keeps sending until today’s spend reaches {amount}.', // {before}: today's limit
       okLabel: 'Raise limit',
     },
     // Not in the spec: a limit that can't be read now, so every change asks and nothing says how it
     // compares (bones-ux-writer onboarding r1, UX-W11).
     set: {
       message: 'Set your daily spend limit to {amount}?',
-      detail: 'NeverQuestAlone couldn’t read the limit you have now. With this one, it stops sending when today’s spend reaches {amount}.',
+      detail: 'Voxwarden couldn’t read the limit you have now. With this one, it stops sending when today’s spend reaches {amount}.',
       okLabel: 'Set limit',
     },
     off: { // today's ipc.mjs capsConfirm words

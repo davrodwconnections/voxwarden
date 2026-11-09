@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // What electron-builder builds the app with, against the app's identity (open-shell lane 2a, for 1.4.5):
 // the app id, product name and NSIS guid it takes are the ones in plugins/<plugin>/identity.json
-// (bridge/identity.mjs reads it, and frozen_names_test holds NeverQuestAlone's to the names 1.4.4 shipped
+// (bridge/identity.mjs reads it, and frozen_names_test holds Voxwarden's to the names 1.4.4 shipped
 // with), so what's built equals identity.json, which equals 1.4.4.
 //
 //   node tools/check-built-identity.mjs <electron-builder project folder | builder-effective-config.yaml>

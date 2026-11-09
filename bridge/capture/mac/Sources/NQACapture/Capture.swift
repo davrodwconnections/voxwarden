@@ -90,7 +90,7 @@ final class CaptureController: NSObject, SCStreamOutput, SCStreamDelegate {
         saidPermission = granted
         out.emit(["info": "screen recording: \(granted ? "granted" : "not granted")", "permission": granted])
         #if NQA_PUBLIC_ID
-        // NeverQuestAlone's helper asks nothing here (onboarding spec §9.4): macOS's box shows only on
+        // Voxwarden's helper asks nothing here (onboarding spec §9.4): macOS's box shows only on
         // the player's Allow in the app (--request-permission). Until it's granted, the loop waits.
         #else
         if !granted {
@@ -257,7 +257,7 @@ final class CaptureController: NSObject, SCStreamOutput, SCStreamDelegate {
                 if ns.code == -3801 {
                     // The user declined / hasn't granted Screen Recording yet, or took it back.
                     sayPermission(false)
-                    noteWaiting("screen recording permission needed (\(ns.domain) \(ns.code)): enable NeverQuestAlone Capture in System Settings > Privacy & Security > Screen & System Audio Recording",
+                    noteWaiting("screen recording permission needed (\(ns.domain) \(ns.code)): enable Voxwarden Capture in System Settings > Privacy & Security > Screen & System Audio Recording",
                                 warn: true)
                     if opts.probePath != nil { exit(4) }
                 } else {

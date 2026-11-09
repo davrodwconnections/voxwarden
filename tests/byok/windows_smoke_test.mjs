@@ -133,7 +133,7 @@ test('--test-image decodes strips the addon\'s Codec.lua drew (4, 5 and 6.5 px),
   const text = record(41, 'fastest way to Hyjal from here? ✓ Mulgore → Hyjal');
   for (const pitch of [4, 5, 6.5]) {
     const file = path.join(TMP, `strip-${pitch}.ppm`);
-    fs.writeFileSync(file, ppm(renderRgb(encodeWithCodec('NeverQuestAlone', 41, text), { pitch, width: 1400, height: 400 })));
+    fs.writeFileSync(file, ppm(renderRgb(encodeWithCodec('Voxwarden', 41, text), { pitch, width: 1400, height: 400 })));
     const r = spawnSync(EXE, ['--test-image', file], { encoding: 'utf8', windowsHide: true, timeout: 20000 });
     assert.equal(r.status, 0, r.stderr);
     const out = JSON.parse(r.stdout.trim());
@@ -238,8 +238,8 @@ test('DR-05, D-03: WowUp.exe is never the game, even open first and larger; the 
   const upText = record(8, 'the addon manager\'s window');
   const gameImage = path.join(TMP, 'game.ppm');
   const upImage = path.join(TMP, 'wowup.ppm');
-  fs.writeFileSync(gameImage, ppm(renderRgb(encodeWithCodec('NeverQuestAlone', 7, gameText), { pitch: 4, width: 900, height: 300 })));
-  fs.writeFileSync(upImage, ppm(renderRgb(encodeWithCodec('NeverQuestAlone', 8, upText), { pitch: 4, width: 900, height: 300 })));
+  fs.writeFileSync(gameImage, ppm(renderRgb(encodeWithCodec('Voxwarden', 7, gameText), { pitch: 4, width: 900, height: 300 })));
+  fs.writeFileSync(upImage, ppm(renderRgb(encodeWithCodec('Voxwarden', 8, upText), { pitch: 4, width: 900, height: 300 })));
   // The WoW folder exists before the app starts (boot passes only an existing one as --exe-dir); on
   // this runner it's under %TEMP%, which is in 8.3 short names (RUNNER~1), as the helper must handle.
   const gameDir = path.join(TMP, 'World of Warcraft', '_forever_');
@@ -298,7 +298,7 @@ test('a game window shown after the helper started is found at once: a shown-win
   if (!built) return;
   const text = record(9, 'hello from a window shown later');
   const image = path.join(TMP, 'later.ppm');
-  fs.writeFileSync(image, ppm(renderRgb(encodeWithCodec('NeverQuestAlone', 9, text), { pitch: 4, width: 900, height: 300 })));
+  fs.writeFileSync(image, ppm(renderRgb(encodeWithCodec('Voxwarden', 9, text), { pitch: 4, width: 900, height: 300 })));
   // The WoW folder exists before the helper starts (boot passes only an existing one as --exe-dir).
   const gameDir = path.join(TMP, 'WoW shown later', '_forever_');
   fs.mkdirSync(gameDir, { recursive: true });
@@ -354,13 +354,13 @@ function realScene(built) {
   let imageFile = null;
   const draw = (id, text) => {
     const tmp = `${imageFile}.tmp`;
-    fs.writeFileSync(tmp, ppm(renderRgb(encodeWithCodec('NeverQuestAlone', id, text), { pitch: 4, width: 900, height: 300 })));
+    fs.writeFileSync(tmp, ppm(renderRgb(encodeWithCodec('Voxwarden', id, text), { pitch: 4, width: 900, height: 300 })));
     renameWithRetry(createRetrier(), tmp, imageFile);
   };
   return {
     async start({ flavorDir, root, text }) {
       imageFile = path.join(root, 'strip.ppm');
-      fs.writeFileSync(imageFile, ppm(renderRgb(encodeWithCodec('NeverQuestAlone', 51, text), { pitch: 4, width: 900, height: 300 })));
+      fs.writeFileSync(imageFile, ppm(renderRgb(encodeWithCodec('Voxwarden', 51, text), { pitch: 4, width: 900, height: 300 })));
       kids.push(await standIn(built.strip, path.join(flavorDir, 'Wow.exe'), imageFile, [16, 16, 960, 360]));
     },
     async cover() {
@@ -513,7 +513,7 @@ test('NTFS: a doorbell re-created while its old name is still "delete pending": 
 test('Credential Manager: the pinned @napi-rs/keyring saves, reads, lists and deletes a key as "<provider>.<service>"', { skip: onlyWin }, async () => {
   const { createKeyStore } = await import('../../bridge/byok/security/keystore.mjs');
   const { CANARY_KEYS } = await import('./helpers/canary.mjs');
-  const service = `NeverQuestAlone CI ${process.pid}`;
+  const service = `Voxwarden CI ${process.pid}`;
   const ks = createKeyStore({ backend: 'os', service });
   assert.deepEqual(await ks.probe(), { ok: true });
   try {
@@ -530,14 +530,14 @@ test('Credential Manager: the pinned @napi-rs/keyring saves, reads, lists and de
   }
   assert.equal(await ks.get('anthropic'), null);
   const nsis = fs.readFileSync(path.join(REPO, 'app', 'desktop', 'build', 'installer.nsh'), 'utf8');
-  assert.match(nsis, /CredDeleteW\(w "\$\{PROVIDER\}\.NeverQuestAlone"/);
+  assert.match(nsis, /CredDeleteW\(w "\$\{PROVIDER\}\.Voxwarden"/);
 });
 
-test('folders: config and data under %APPDATA%\\NeverQuestAlone (Electron\'s userData too), logs under %LOCALAPPDATA%', { skip: onlyWin }, async () => {
+test('folders: config and data under %APPDATA%\\Voxwarden (Electron\'s userData too), logs under %LOCALAPPDATA%', { skip: onlyWin }, async () => {
   const { publicPaths } = await import('../../bridge/byok/paths.mjs');
   const p = publicPaths();
-  assert.equal(p.config.toLowerCase(), path.win32.join(process.env.APPDATA, 'NeverQuestAlone').toLowerCase());
-  assert.equal(p.logs.toLowerCase(), path.win32.join(process.env.LOCALAPPDATA, 'NeverQuestAlone', 'logs').toLowerCase());
+  assert.equal(p.config.toLowerCase(), path.win32.join(process.env.APPDATA, 'Voxwarden').toLowerCase());
+  assert.equal(p.logs.toLowerCase(), path.win32.join(process.env.LOCALAPPDATA, 'Voxwarden', 'logs').toLowerCase());
   // The same writes the bridge makes, in a scratch folder under %LOCALAPPDATA% (real NTFS, real Defender).
   const dir = fs.mkdtempSync(path.join(process.env.LOCALAPPDATA, 'bones-ci-'));
   try {
@@ -567,7 +567,7 @@ function icaclsGrants(dir, out) {
   return grants;
 }
 
-test('folders: %APPDATA%\\NeverQuestAlone, made as the app makes it, is readable only by this account (and SYSTEM and Administrators), as a 0700 folder is on POSIX (SY-23)', { skip: onlyWin }, async () => {
+test('folders: %APPDATA%\\Voxwarden, made as the app makes it, is readable only by this account (and SYSTEM and Administrators), as a 0700 folder is on POSIX (SY-23)', { skip: onlyWin }, async () => {
   const { publicPaths } = await import('../../bridge/byok/paths.mjs');
   const dir = publicPaths().data;
   const existed = fs.existsSync(dir);

@@ -18,7 +18,7 @@ export const BRAIN_MAX_TOKENS = 400; // short answers (S4): a few sentences and 
 const SLOT = { 1: 'head', 2: 'neck', 3: 'shoulder', 4: 'shirt', 5: 'chest', 6: 'waist', 7: 'legs', 8: 'feet', 9: 'wrist', 10: 'hands', 11: 'finger', 12: 'finger', 13: 'trinket', 14: 'trinket', 15: 'back', 16: 'main hand', 17: 'off hand', 18: 'ranged', 19: 'tabard' };
 
 let promptText = null;
-export function brainPrompt({ name = 'NeverQuestAlone', lang = 'Spanish' } = {}) {
+export function brainPrompt({ name = 'Voxwarden', lang = 'Spanish' } = {}) {
   promptText ??= fs.readFileSync(path.join(HERE, 'brain-prompt.md'), 'utf8');
   return promptText.replace(/\{\{name\}\}/g, name).replace(/\{\{language\}\}/g, `Answer in ${lang} unless the player writes in another language`);
 }
@@ -56,7 +56,7 @@ export function compactGame(raw, db = null) {
 const ageText = s => (!Number.isFinite(s) ? 'now' : s < 90 ? 'now' : s < 3600 ? `${Math.round(s / 60)} minutes ago` : `${Math.round(s / 3600)} hours ago: it may be out of date`);
 
 /** The request for one brain turn. db may be passed (tests); otherwise the app's brain file. */
-export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'NeverQuestAlone', maxHistory = 4, ageSeconds = null, key = null } = {}) {
+export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'Voxwarden', maxHistory = 4, ageSeconds = null, key = null } = {}) {
   let own = null;
   if (!db) {
     const file = brainFile(appData);

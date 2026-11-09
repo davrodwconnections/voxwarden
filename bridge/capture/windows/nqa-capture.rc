@@ -17,11 +17,11 @@ BEGIN
   BEGIN
     BLOCK "040904B0"
     BEGIN
-      VALUE "FileDescription", "NeverQuestAlone capture helper"
+      VALUE "FileDescription", "Voxwarden capture helper"
       VALUE "FileVersion", "1.4.19"
       VALUE "InternalName", "nqa-capture"
       VALUE "OriginalFilename", "nqa-capture.exe"
-      VALUE "ProductName", "NeverQuestAlone"
+      VALUE "ProductName", "Voxwarden"
       VALUE "ProductVersion", "1.4.19"
       VALUE "LegalCopyright", "MIT"
     END

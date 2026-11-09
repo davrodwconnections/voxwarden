@@ -1,7 +1,7 @@
 // swift-tools-version: 6.0
-// NeverQuestAlone Capture: the macOS ScreenCaptureKit helper (PRD §9.10).
+// Voxwarden Capture: the macOS ScreenCaptureKit helper (PRD §9.10).
 // `swift build -c release` produces the binary; build-app.sh wraps it in
-// "NeverQuestAlone Capture.app" and signs it with the stable local identity so the
+// "Voxwarden Capture.app" and signs it with the stable local identity so the
 // Screen Recording grant belongs to the app and survives rebuilds.
 import PackageDescription
 

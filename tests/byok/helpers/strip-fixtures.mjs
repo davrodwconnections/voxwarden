@@ -1,5 +1,5 @@
 // Strip fixtures for the capture decoders (PRD §11.1, §11.3): encode with the
-// addon's real Codec.lua in a Lua VM (NeverQuestAlone's C7 2C; or upstream wow-ai's
+// addon's real Codec.lua in a Lua VM (Voxwarden's C7 2C; or upstream wow-ai's
 // C7 1A, which is the same codec with the other magic: code health RP-02), render with
 // tests/helpers/strip-render.js (pitch, title bar, busy background, noise, gamma), and
 // hand back raw RGB, a binary PPM (for the C harness) or a PNG (for capture_x11.py).
@@ -15,9 +15,9 @@ const { render } = require('../../helpers/strip-render.js');
 const { lua, lauxlib, lualib, to_luastring, to_jsstring } = fengari;
 
 export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const CODEC = path.join(REPO, 'addon', 'NeverQuestAlone', 'Codec.lua');
+const CODEC = path.join(REPO, 'addon', 'Voxwarden', 'Codec.lua');
 const CODECS = {
-  NeverQuestAlone: { magic: [0xC7, 0x2C] },
+  Voxwarden: { magic: [0xC7, 0x2C] },
   // Upstream's strip (protocol v1), for the decoders' --magic C71A: the shipped encoder with its
   // second magic byte set to upstream's, as tests/helpers/strip-render.js draws it (AD-11).
   upstream: { magic: [0xC7, 0x1A] },
@@ -54,7 +54,7 @@ export function bytesToCells(bytes) {
 }
 
 /** The same frame as Codec.lua, for byte payloads Lua literals can't carry cleanly (invalid UTF-8). */
-export function encodeBytes(id, payload, magic = CODECS.NeverQuestAlone.magic) {
+export function encodeBytes(id, payload, magic = CODECS.Voxwarden.magic) {
   const bytes = [magic[0], magic[1], (id >> 8) & 255, id & 255, (payload.length >> 8) & 255, payload.length & 255, ...payload];
   let s1 = 0, s2 = 0;
   for (let i = 2; i < bytes.length; i++) { s1 = (s1 + bytes[i]) % 255; s2 = (s2 + s1) % 255; }

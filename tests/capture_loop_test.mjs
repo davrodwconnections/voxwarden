@@ -104,7 +104,7 @@ function writeSavedVariables(flavorDir, vm) {
   fs.mkdirSync(dir, { recursive: true });
   const out = vm.outboxWires();
   const entries = out.map(e => `\t\t{\n\t\t\t["key"] = "${e.key}",\n\t\t\t["hex"] = "${Buffer.from(e.wire, 'utf8').toString('hex')}",\n\t\t},\n`).join('');
-  fs.writeFileSync(path.join(dir, 'NeverQuestAlone.lua'), `NQADB = {\n\t["token"] = "${vm.evaluate('NQADB.token')}",\n\t["outbox"] = {\n${entries}\t},\n}\n`);
+  fs.writeFileSync(path.join(dir, 'Voxwarden.lua'), `NQADB = {\n\t["token"] = "${vm.evaluate('NQADB.token')}",\n\t["outbox"] = {\n${entries}\t},\n}\n`);
   return out;
 }
 

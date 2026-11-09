@@ -3,7 +3,7 @@
 // Covers `local function X` and `local X = ...`; bare forward declarations
 // (`local Finish`) are fine and are skipped.
 //
-//   node tests/order_check.js <addon folder>      e.g. addon/NeverQuestAlone
+//   node tests/order_check.js <addon folder>      e.g. addon/Voxwarden
 'use strict';
 const fs = require('fs');
 const path = require('path');

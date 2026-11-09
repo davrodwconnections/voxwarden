@@ -41,7 +41,7 @@ export function spanText(ms) {
  * (the minute's or the hour's); the desktop app's status names the window (status-view.mjs).
  */
 export function autoPausedLine(name) {
-  return `${name || 'NeverQuestAlone'} paused check-ins: your next message turns them back on.`;
+  return `${name || 'Voxwarden'} paused check-ins: your next message turns them back on.`;
 }
 
 /** The typed guard's line: {headline, detail}; the desktop app has the Resume sending button. */

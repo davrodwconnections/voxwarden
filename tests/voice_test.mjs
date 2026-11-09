@@ -118,7 +118,7 @@ test('voice: the voice inbox holds one whole JSON file per entry (written aside,
   for (let i = 1; i < INBOX_MAX_FILES; i++) appendVoiceInbox(dir, { kind: 'exchange', text: `n${i}` });
   assert.deepEqual(appendVoiceInbox(dir, { kind: 'exchange', text: 'one too many' }), { ok: false, reason: 'inbox_full' });
   assert.equal(inboxEntries(dir).length, INBOX_MAX_FILES, 'every accepted entry is kept whole');
-  assert.equal(appDataDir({ platform: 'win32', env: { APPDATA: 'C:\\Users\\a\\AppData\\Roaming' }, home: 'C:\\Users\\a' }), 'C:\\Users\\a\\AppData\\Roaming\\NeverQuestAlone');
+  assert.equal(appDataDir({ platform: 'win32', env: { APPDATA: 'C:\\Users\\a\\AppData\\Roaming' }, home: 'C:\\Users\\a' }), 'C:\\Users\\a\\AppData\\Roaming\\Voxwarden');
   assert.equal(appDataDir({ platform: 'linux', env: { NQA_APP_DATA: '/x' } }), '/x');
 });
 
@@ -225,7 +225,7 @@ test('voice: the local server serves the page, refuses other hosts (DNS rebindin
     const page = await fetch(base + '/');
     assert.equal(page.status, 200);
     assert.match(page.headers.get('content-security-policy'), /connect-src 'self' https:\/\/api\.openai\.com/);
-    assert.match(await page.text(), /NeverQuestAlone/);
+    assert.match(await page.text(), /Voxwarden/);
     const js = await (await fetch(base + '/app.js')).text();
     assert.doesNotMatch(js, /sk-secret-key/);
     const post = (p, body, origin = `http://127.0.0.1:${port}`) => fetch(base + p, { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -368,7 +368,7 @@ test('voice page: your words and its answers are paired by item id, even when yo
   await sleep(10);
   const ex = p.posts.filter(x => x.url === '/exchange').map(x => [x.body.user, x.body.assistant]);
   assert.deepEqual(ex, [['Question one?', 'Answer one.'], ['Question two?', 'Answer two.']]);
-  assert.deepEqual(p.lines(), ['Tú: Question one?', 'NeverQuestAlone: Answer one.', 'Tú: Question two?', 'NeverQuestAlone: Answer two.']);
+  assert.deepEqual(p.lines(), ['Tú: Question one?', 'Voxwarden: Answer one.', 'Tú: Question two?', 'Voxwarden: Answer two.']);
 });
 
 // ---- driven from the game (odd/tasks/nqa-voice-controls.md T2-T4, T10, T12, T13) --------------------

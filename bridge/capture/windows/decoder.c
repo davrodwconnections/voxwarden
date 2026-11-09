@@ -1,4 +1,4 @@
-/* NeverQuestAlone strip decoder, portable C (PRD §11.3, DB11). See decoder.h.
+/* Voxwarden strip decoder, portable C (PRD §11.3, DB11). See decoder.h.
  * Each function mirrors its namesake in StripDecoder.swift; keep them in step. */
 #include "decoder.h"
 

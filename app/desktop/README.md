@@ -1,4 +1,4 @@
-# NeverQuestAlone desktop app
+# Voxwarden desktop app
 
 The tray app players run (BYOK PRD §11.2 DB10, §11.5 DB12, §16; BUILD-PLAN "Desktop app"). One Electron process runs the bridge in-process behind the app API, a tray (status, Open, Pause, Quit) and one settings window made on demand: setup (§16.1's steps less the limits step: 8 in all), Provider & keys, Usage, Connections, Last request, Privacy, Memory, Diagnostics, Updates, About. The tray and the window follow the bridge's status pushes (`api.onChange`, debounced 150 ms).
 
@@ -30,9 +30,9 @@ The model check's notice (`status().backend.notice`, PV-3) shows once as a plain
 
 ```bash
 CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --dir   # unsigned local build in dist/; the log says UNSIGNED BUILD
-"dist/mac-arm64/NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone" --self-test
-node scripts/self-test.mjs "dist/mac-arm64/NeverQuestAlone.app"     # both runs, checked: the JSON line, the quit's lines, exit 0
-node ../../tools/check-fuses.mjs "dist/mac-arm64/NeverQuestAlone.app" # every fuse of the plan (the release gate)
+"dist/mac-arm64/Voxwarden.app/Contents/MacOS/Voxwarden" --self-test
+node scripts/self-test.mjs "dist/mac-arm64/Voxwarden.app"     # both runs, checked: the JSON line, the quit's lines, exit 0
+node ../../tools/check-fuses.mjs "dist/mac-arm64/Voxwarden.app" # every fuse of the plan (the release gate)
 node scripts/dist.mjs --mac        # release build; signing only from environment variables
 ```
 
@@ -40,9 +40,9 @@ Signing comes only from the environment: `CSC_LINK`/`CSC_KEY_PASSWORD` (Develope
 
 `scripts/fuses.cjs` (afterPack) flips the fuses before signing, all six of PRD §11.2's list hardened: RunAsNode, `NODE_OPTIONS` and `--inspect` off; load only from the asar, with its integrity checked; and `GrantFileProtocolExtraPrivileges` off, since the page comes from `nqa://app/`. Cookies are encrypted. `tools/check-fuses.mjs` (release.yml's gate) checks every wire of a packaged app against that plan, and fails if the plan ever asks for less than the PRD.
 
-The package carries the bridge boot imports (an explicit list in `electron-builder.yml`, checked against boot's real import graph by `app_build_test`), its manifests, prices and prompt pack, and the addon, all inside `app.asar`, plus `@napi-rs/keyring` for the OS key store (its `.node` unpacked, so outside the asar's integrity hash: on a signed Mac app the code signature covers it; on a per-user Windows or Linux install the player's own account could replace it, which crosses no boundary there). The bridge is ES modules only, so it needs no `package.json` of its own. Each OS's capture helper goes in Resources beside `app.asar` (`src/api-loader.mjs` `CAPTURE_HELPERS`): `NeverQuestAlone Capture.app` (built for arm64 and x86_64 by `bridge/capture/mac/build-app.sh --universal`; `npm run dist` builds it ad hoc when it's missing, and `scripts/sign-mac.cjs`, electron-builder's sign hook, re-signs it with the app's Developer ID, the hardened runtime and no entitlements, SR-06), `capture/nqa-capture.exe` (`bridge/capture/windows/build.sh`) and `capture/capture_x11.py`. `scripts/fuses.cjs` fails a build whose helper is missing.
+The package carries the bridge boot imports (an explicit list in `electron-builder.yml`, checked against boot's real import graph by `app_build_test`), its manifests, prices and prompt pack, and the addon, all inside `app.asar`, plus `@napi-rs/keyring` for the OS key store (its `.node` unpacked, so outside the asar's integrity hash: on a signed Mac app the code signature covers it; on a per-user Windows or Linux install the player's own account could replace it, which crosses no boundary there). The bridge is ES modules only, so it needs no `package.json` of its own. Each OS's capture helper goes in Resources beside `app.asar` (`src/api-loader.mjs` `CAPTURE_HELPERS`): `Voxwarden Capture.app` (built for arm64 and x86_64 by `bridge/capture/mac/build-app.sh --universal`; `npm run dist` builds it ad hoc when it's missing, and `scripts/sign-mac.cjs`, electron-builder's sign hook, re-signs it with the app's Developer ID, the hardened runtime and no entitlements, SR-06), `capture/nqa-capture.exe` (`bridge/capture/windows/build.sh`) and `capture/capture_x11.py`. `scripts/fuses.cjs` fails a build whose helper is missing.
 
-Updates come from the releases of the public repository `tommygeoco/neverquestalone`, which also holds the source: the releases in the app's identity (`plugins/<plugin>/identity.json`, the plugin the root package.json names), which the updater reads and `scripts/plugin-config.mjs` turns into electron-builder's `publish`.
+Updates come from the releases of the public repository `davrodwconnections/voxwarden`, which also holds the source: the releases in the app's identity (`plugins/<plugin>/identity.json`, the plugin the root package.json names), which the updater reads and `scripts/plugin-config.mjs` turns into electron-builder's `publish`.
 
 ## The app API
 
@@ -60,4 +60,4 @@ The self-test ends through the app's real quit, never `app.exit` (systems critic
 
 ## Uninstall
 
-In the app (General → Uninstall): the bridge's `uninstall` removes the keys and, when asked, the addon; the shell turns off the login item, resets Screen Recording for the app and the capture helper on macOS, shows the last step (drag the app to the Trash, …) in a dialog that stays until Okay, then quits and deletes the data folder, the logs folder, electron-updater's cache and Squirrel.Mac's (`src/uninstall.mjs`). The Windows uninstaller (`build/installer.nsh`) also removes the Run value, the `NeverQuestAlone` credentials (and the `NeverQuestAlone` ones earlier alpha builds saved) and the update cache, except when it runs as part of an update.
+In the app (General → Uninstall): the bridge's `uninstall` removes the keys and, when asked, the addon; the shell turns off the login item, resets Screen Recording for the app and the capture helper on macOS, shows the last step (drag the app to the Trash, …) in a dialog that stays until Okay, then quits and deletes the data folder, the logs folder, electron-updater's cache and Squirrel.Mac's (`src/uninstall.mjs`). The Windows uninstaller (`build/installer.nsh`) also removes the Run value, the `Voxwarden` credentials (and the `Voxwarden` ones earlier alpha builds saved) and the update cache, except when it runs as part of an update.

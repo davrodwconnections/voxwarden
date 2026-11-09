@@ -37,6 +37,6 @@ test('install: interface number from the client version; slot TOCs rewritten whe
   assert.equal(slotInterface(addons), '16002');
   assert.equal(countSlots(addons), 3);
   for (const f of ['present', 'bell_push_a', 'bell_push_b', 'bell_alive_a', 'bell_alive_b', 'bell_act']) {
-    assert.ok(fs.existsSync(path.join(addons, 'NeverQuestAlone', 'sig', 'ctl', `${f}.wav`)), `doorbell ${f} made at setup`);
+    assert.ok(fs.existsSync(path.join(addons, 'Voxwarden', 'sig', 'ctl', `${f}.wav`)), `doorbell ${f} made at setup`);
   }
 });

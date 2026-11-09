@@ -1,10 +1,10 @@
 # Contributing
 
-Thanks for helping make NeverQuestAlone better. The README’s [Build your own](README.md#build-your-own) section says what this repository holds, and [Get started](docs/get-started.md) shows how to build and run it.
+Thanks for helping make Voxwarden better. The README’s [Build your own](README.md#build-your-own) section says what this repository holds, and [Get started](docs/get-started.md) shows how to build and run it.
 
 ## How a pull request lands
 
-We build NeverQuestAlone from a private repository, and each release copies its source here as one commit. So a pull request here isn’t merged here:
+We build Voxwarden from a private repository, and each release copies its source here as one commit. So a pull request here isn’t merged here:
 
 1. We review it here, as usual.
 2. If we take it, we make your change in the private repository ourselves.
@@ -13,7 +13,7 @@ We build NeverQuestAlone from a private repository, and each release copies its 
 
 ## License
 
-Everything you contribute is under the [MIT license](LICENSE), like the rest of NeverQuestAlone’s code.
+Everything you contribute is under the [MIT license](LICENSE), like the rest of Voxwarden’s code.
 
 ## Before you open one
 

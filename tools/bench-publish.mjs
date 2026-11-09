@@ -37,7 +37,7 @@ let bridge = null;
 try {
   const addons = path.join(root, 'AddOns');
   installSlots(addons, { count: SLOT_COUNT, iface: '16001' });
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true }); // the addon's own folder, for the reload inbox
+  fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true }); // the addon's own folder, for the reload inbox
   const gw = {};
   const logs = [];
   bridge = createBridge({ transport: { slots: SLOT_COUNT, slotWindow: MODE === 'window' } }, {

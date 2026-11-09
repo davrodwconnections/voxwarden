@@ -1,5 +1,5 @@
 // The JavaScript strip decoder (bridge/transport/strip.mjs) and picture readers
-// (images.mjs): the live strip as NeverQuestAlone Capture sees it, and a screenshot's
+// (images.mjs): the live strip as Voxwarden Capture sees it, and a screenshot's
 // 8 px strip through the game's formats, JPEG included.
 import test from 'node:test';
 import assert from 'node:assert/strict';

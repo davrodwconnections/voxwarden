@@ -1,4 +1,4 @@
-// NeverQuestAlone's preload (BYOK PRD §11.2, SC-3): the only door between the
+// Voxwarden's preload (BYOK PRD §11.2, SC-3): the only door between the
 // settings page and the main process. It runs sandboxed, so it can require
 // nothing but Electron's renderer modules, and it exposes one frozen object,
 // window.nqa, with one async function per call in ipc.mjs (the CALLS list

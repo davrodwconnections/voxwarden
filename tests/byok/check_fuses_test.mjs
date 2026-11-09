@@ -72,20 +72,20 @@ test('no wire, a short wire, a removed fuse or another version all fail', () => 
 
 test('paths: an .app reads its Electron Framework; an unpacked folder, each file with a wire', (t) => {
   const d = tmpdir(t);
-  const app = path.join(d, 'NeverQuestAlone.app');
+  const app = path.join(d, 'Voxwarden.app');
   const fw = path.join(app, 'Contents', 'Frameworks', 'Electron Framework.framework', 'Electron Framework');
   fs.mkdirSync(path.dirname(fw), { recursive: true });
   fs.mkdirSync(path.join(app, 'Contents', 'MacOS'), { recursive: true });
   fs.writeFileSync(fw, binary(wire(FLIPPED), wire(FLIPPED)));
-  fs.writeFileSync(path.join(app, 'Contents', 'MacOS', 'NeverQuestAlone'), Buffer.alloc(10));
+  fs.writeFileSync(path.join(app, 'Contents', 'MacOS', 'Voxwarden'), Buffer.alloc(10));
   assert.deepEqual(fuseFiles(app), [fw]);
-  assert.deepEqual(fuseFiles(path.join(app, 'Contents', 'MacOS', 'NeverQuestAlone')), [fw]);
+  assert.deepEqual(fuseFiles(path.join(app, 'Contents', 'MacOS', 'Voxwarden')), [fw]);
   const unpacked = path.join(d, 'win-unpacked');
   fs.mkdirSync(path.join(unpacked, 'resources'), { recursive: true });
-  fs.writeFileSync(path.join(unpacked, 'NeverQuestAlone.exe'), binary(wire(FLIPPED)));
+  fs.writeFileSync(path.join(unpacked, 'Voxwarden.exe'), binary(wire(FLIPPED)));
   fs.writeFileSync(path.join(unpacked, 'ffmpeg.dll'), Buffer.alloc(50));
   fs.writeFileSync(path.join(unpacked, 'resources', 'app.asar'), binary(wire()));
-  assert.deepEqual(fuseFiles(unpacked), [path.join(unpacked, 'NeverQuestAlone.exe')]);
+  assert.deepEqual(fuseFiles(unpacked), [path.join(unpacked, 'Voxwarden.exe')]);
   fs.mkdirSync(path.join(d, 'plain'));
   fs.writeFileSync(path.join(d, 'plain', 'readme.txt'), 'no wire here');
   assert.throws(() => fuseFiles(path.join(d, 'plain')), /no file .* carries a fuse wire/);
@@ -134,14 +134,14 @@ test('W(d): Electron\'s stock default_app.asar never ships: afterPack drops it f
   const hooks = createRequire(import.meta.url)(path.join(import.meta.dirname, '..', '..', 'app', 'desktop', 'scripts', 'fuses.cjs'));
   assert.equal(hooks.DEFAULT_APP, 'default_app.asar');
   // A Mac app and a Windows unpacked folder as electron-builder leaves them, with a flipped wire.
-  const app = path.join(d, 'NeverQuestAlone.app');
+  const app = path.join(d, 'Voxwarden.app');
   const fw = path.join(app, 'Contents', 'Frameworks', 'Electron Framework.framework', 'Electron Framework');
   fs.mkdirSync(path.dirname(fw), { recursive: true });
   fs.mkdirSync(path.join(app, 'Contents', 'Resources'), { recursive: true });
   fs.writeFileSync(fw, binary(wire(FLIPPED)));
   const unpacked = path.join(d, 'win-unpacked');
   fs.mkdirSync(path.join(unpacked, 'resources'), { recursive: true });
-  fs.writeFileSync(path.join(unpacked, 'NeverQuestAlone.exe'), binary(wire(FLIPPED)));
+  fs.writeFileSync(path.join(unpacked, 'Voxwarden.exe'), binary(wire(FLIPPED)));
   for (const res of [path.join(app, 'Contents', 'Resources'), path.join(unpacked, 'resources')]) {
     fs.writeFileSync(path.join(res, 'app.asar'), 'the app');
     fs.writeFileSync(path.join(res, 'default_app.asar'), 'Electron\'s default app');

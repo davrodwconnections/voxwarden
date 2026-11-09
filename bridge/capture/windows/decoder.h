@@ -1,4 +1,4 @@
-/* NeverQuestAlone strip decoder, portable C (PRD §11.3, DB11; K5).
+/* Voxwarden strip decoder, portable C (PRD §11.3, DB11; K5).
  *
  * A port of the macOS decoder (bridge/capture/mac/Sources/StripDecoder/
  * StripDecoder.swift) with the same rules and the same search:
@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct {
   int cells, rows;           /* 200 x 48 */
-  uint8_t magic[2];          /* C7 2C (NeverQuestAlone); upstream wow-ai is C7 1A */
+  uint8_t magic[2];          /* C7 2C (Voxwarden); upstream wow-ai is C7 1A */
   int search_rows;           /* pixel rows searched for the strip's first row */
   int search_cols;           /* pixel columns searched for the first cell */
   double min_pitch, max_pitch;

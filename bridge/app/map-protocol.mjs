@@ -38,7 +38,7 @@ export function splitSummary(text) {
 //   {"op":"clear","layer":"mining"}    {"op":"clearall"}
 
 export const MAP_KINDS = new Set(['ore', 'herb', 'quest', 'turnin', 'kill', 'loot', 'object', 'explore', 'npc', 'trainer', 'vendor', 'dungeon', 'flight', 'poi']);
-// NeverQuestAlone: a point may also carry `note` (what to do at the stop) and `q` (quest
+// Voxwarden: a point may also carry `note` (what to do at the stop) and `q` (quest
 // ids whose progress the addon shows); notes are budgeted so maps stay small
 // enough for the slot files.
 export const MAP_LIMITS = { layers: 12, pointsPerLayer: 400, totalPoints: 1500, label: 80, title: 80, note: 200, quests: 6, layerNotes: 6000, mapNotes: 16000, layerName: 32, mapIdMax: 99999 };
@@ -353,7 +353,7 @@ export function applyMapCommands(map, cmds, now = Date.now()) {
 }
 
 // Pull ```wowmap blocks out of a reply: a JSON object, an array, or one object per line.
-// NeverQuestAlone (public BYOK PRD §6.3, RT-3): anchored like the UI blocks in render.mjs. Each fence is
+// Voxwarden (public BYOK PRD §6.3, RT-3): anchored like the UI blocks in render.mjs. Each fence is
 // on a line of its own (up to 3 spaces in), and the body opens no other fence, so a block that's
 // never closed can't swallow the ```wowchips block after it. A block written inline, or never
 // closed, stays in the text; the caller reports it (byok/runtime/repair.mjs mapFailures).

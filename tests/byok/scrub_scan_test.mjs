@@ -148,14 +148,14 @@ test('the public repo on the owner\'s account (moved 2026-10-05): its address an
   const login = rot13('gbzzltrbpb');
   // Shaped like the real terms: a name matching the login's first part, a home path with the login.
   const { patterns } = parseTerms(`name ${login.slice(0, 5)}|\\b${login.slice(5)}\\b\nhome-path [\\\\/]Users[\\\\/]${login}(?![\\w.-])`);
-  for (const fine of [`https://github.com/${login}/neverquestalone/releases`, `RELEASES_REPO: ${login}/neverquestalone`, `https://github.com/${login}/neverquestalone.git`,
-    `          owner: ${login}`, `"owner": "${login}",`, `/github\\.com\\/${login}\\/neverquestalone\\/blob/`, `the latest release of ${login}/neverquestalone.`]) {
+  for (const fine of [`https://github.com/${login}/voxwarden/releases`, `RELEASES_REPO: ${login}/voxwarden`, `https://github.com/${login}/voxwarden.git`,
+    `          owner: ${login}`, `"owner": "${login}",`, `/github\\.com\\/${login}\\/voxwarden\\/blob/`, `the latest release of ${login}/voxwarden.`]) {
     assert.deepEqual(scanLine(fine, patterns), [], fine);
   }
-  for (const leak of [`/Users/${login}/code`, `${login}/another-repo`, `by ${login}`, `${login}/neverquestalone-private`, `${login}.github.io/neverquestalone`]) {
+  for (const leak of [`/Users/${login}/code`, `${login}/another-repo`, `by ${login}`, `${login}/voxwarden-private`, `${login}.github.io/voxwarden`]) {
     assert.ok(scanLine(leak, patterns).length, leak);
   }
-  const line = `${login}/neverquestalone by ${login}`;
+  const line = `${login}/voxwarden by ${login}`;
   assert.deepEqual(scanLine(line, patterns).map(h => h.index), [line.lastIndexOf(login)], 'the mask keeps every column');
 });
 
@@ -275,7 +275,7 @@ test('binaries: ASCII and UTF-16LE strings are scanned; compressed files are lis
 
 test('files over 64 MB are read in overlapping chunks, not skipped (the single-executable case)', (t) => {
   const d = tmpdir(t);
-  const big = path.join(d, 'tree', 'neverquestalone');
+  const big = path.join(d, 'tree', 'voxwarden');
   fs.mkdirSync(path.dirname(big));
   const size = MAX_FILE + 1024 * 1024;
   const fd = fs.openSync(big, 'w');
@@ -336,24 +336,24 @@ test('compressed bytes: the 4-letter term and the address-shaped run an installe
   plant(payload, 300_000, SHORT_ADDRESS);
   const dist = path.join(d, 'dist');
   fs.mkdirSync(dist);
-  fs.writeFileSync(path.join(dist, 'NeverQuestAlone-Setup-9.9.9.exe'), Buffer.concat([Buffer.from('MZ\0\0'), Buffer.alloc(ENTROPY_BLOCK - 4), payload]));
+  fs.writeFileSync(path.join(dist, 'Voxwarden-Setup-9.9.9.exe'), Buffer.concat([Buffer.from('MZ\0\0'), Buffer.alloc(ENTROPY_BLOCK - 4), payload]));
   // As release.yml's Windows job scans it: --strict, tools/scrub-allow.txt, which no longer turns a pattern off for the installer.
   assert.ok(!parseAllow(fs.readFileSync(path.join(ROOT, 'tools', 'scrub-allow.txt'), 'utf8')).some(e => /Setup/.test(e.glob) && e.id === '*'), 'no blanket line for the installer');
   let r = capture(['--dir', dist, '--terms', terms, '--strict', '--unscanned-ok', '*.blockmap']);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /^PASS: no hits\.$/m);
   // Not silent: counted in the summary and listed by file, under --strict too.
-  assert.match(r.out, /^compressed bytes, not scanned as text: NeverQuestAlone-Setup-9\.9\.9\.exe \(512\.0 KB, \d+ short runs\)$/m);
+  assert.match(r.out, /^compressed bytes, not scanned as text: Voxwarden-Setup-9\.9\.9\.exe \(512\.0 KB, \d+ short runs\)$/m);
   assert.match(r.out, /^compressed bytes, not scanned as text: 512\.0 KB in 1 file, \d+ short runs skipped \(blocks over 7\.5 bits a byte; runs of 20 characters or more in them are still read\)$/m);
   const json = JSON.parse(capture(['--dir', dist, '--terms', terms, '--strict', '--json']).out);
-  assert.deepEqual(json.stats.compressedPaths.map(c => [c.path, c.bytes]), [['NeverQuestAlone-Setup-9.9.9.exe', 512 * 1024]]);
+  assert.deepEqual(json.stats.compressedPaths.map(c => [c.path, c.bytes]), [['Voxwarden-Setup-9.9.9.exe', 512 * 1024]]);
   assert.equal(json.stats.compressedBytes, 512 * 1024);
   assert.ok(json.stats.compressedRuns >= 2, 'the planted runs among the skipped');
   // The same runs in readable bytes (a binary of zeros): both hits, so nothing else changed.
   const zeros = Buffer.alloc(512 * 1024);
   plant(zeros, 100_000, ` ${CHAR}.x`);
   plant(zeros, 300_000, SHORT_ADDRESS);
-  assert.deepEqual(scanBuffer(zeros, 'NeverQuestAlone-Setup-9.9.9.exe', { patterns: pats }).map(h => [h.pattern, h.offset]), [['email', 300_000], ['character', 100_001]].sort((a, b) => a[0] < b[0] ? -1 : 1));
+  assert.deepEqual(scanBuffer(zeros, 'Voxwarden-Setup-9.9.9.exe', { patterns: pats }).map(h => [h.pattern, h.offset]), [['email', 300_000], ['character', 100_001]].sort((a, b) => a[0] < b[0] ? -1 : 1));
   // Real text in compressed bytes, a run of 20 or more characters, is still read.
   const stored = crypto.randomBytes(64 * 1024);
   const at = plant(stored, 9_000, `a stored file says ${CHAR} hi`);
@@ -365,13 +365,13 @@ test('compressed bytes under --strict: each file\'s line names how many short ru
   // 512 KB of compressed-looking bytes that are the same on every run (SHA-256 in counter mode), as an installer.
   const bytes = Buffer.concat(Array.from({ length: (512 * 1024) / 32 }, (_, i) => crypto.createHash('sha256').update(`nqa-${i}`).digest()));
   fs.mkdirSync(path.join(d, 'dist'));
-  fs.writeFileSync(path.join(d, 'dist', 'NeverQuestAlone-Setup-9.9.9.exe'), bytes);
+  fs.writeFileSync(path.join(d, 'dist', 'Voxwarden-Setup-9.9.9.exe'), bytes);
   fs.writeFileSync(path.join(d, 'dist', 'notes.txt'), 'clean\n');
   for (const extra of [[], ['--summary']]) {
     const r = capture(['--dir', path.join(d, 'dist'), '--no-terms', '--strict', ...extra]);
     assert.equal(r.code, 0, r.out);
     // The line a release log shows for the installer: its compressed bytes and the runs skipped in them.
-    assert.match(r.out, /^compressed bytes, not scanned as text: NeverQuestAlone-Setup-9\.9\.9\.exe \(512\.0 KB, 939 short runs\)$/m, extra.join(' '));
+    assert.match(r.out, /^compressed bytes, not scanned as text: Voxwarden-Setup-9\.9\.9\.exe \(512\.0 KB, 939 short runs\)$/m, extra.join(' '));
     assert.match(r.out, /^compressed bytes, not scanned as text: 512\.0 KB in 1 file, 939 short runs skipped \(/m, extra.join(' '));
     assert.doesNotMatch(r.out, /notes\.txt \(/, 'a text file has none');
   }
@@ -379,7 +379,7 @@ test('compressed bytes under --strict: each file\'s line names how many short ru
 
 test('compressed bytes in a file over 64 MB: counted once across the chunks\' overlap, and a short run on a chunk boundary is skipped there as anywhere (code health AP-06)', (t) => {
   const d = tmpdir(t);
-  const big = path.join(d, 'tree', 'NeverQuestAlone.exe');
+  const big = path.join(d, 'tree', 'Voxwarden.exe');
   fs.mkdirSync(path.dirname(big));
   const size = MAX_FILE + 1024 * 1024;
   const fd = fs.openSync(big, 'w');
@@ -398,7 +398,7 @@ test('compressed bytes in a file over 64 MB: counted once across the chunks\' ov
   assert.equal(stats.chunked, 1);
   assert.deepEqual(hits.map(h => [h.pattern, h.offset]), [['character', size - 1000 + 9]]);
   assert.equal(stats.compressedBytes, 1024 * 1024, 'the overlap counted once');
-  assert.deepEqual(stats.compressedPaths.map(c => [c.path, c.bytes]), [['NeverQuestAlone.exe', 1024 * 1024]]);
+  assert.deepEqual(stats.compressedPaths.map(c => [c.path, c.bytes]), [['Voxwarden.exe', 1024 * 1024]]);
 });
 
 test('escapes and percent-encoding are read decoded too (audit EX-06): a term behind \\uXXXX, \\xXX or %XX is a hit at its line\'s own id, once per pattern', () => {
@@ -554,7 +554,7 @@ test('UTF-8 runs in compressed bytes (code health EX-06, AP-06): a short one is 
   const bytes = Buffer.concat(Array.from({ length: (512 * 1024) / 32 }, (_, i) => crypto.createHash('sha256').update(`nqa-${i}`).digest()));
   assert.ok(extractStrings(bytes).filter(s => s.utf8).length > 0);
   const stats = { files: 0, text: 0, binary: 0, chunked: 0, unscanned: 0, unscannedPaths: [] };
-  scanBuffer(bytes, 'NeverQuestAlone-Setup-9.9.9.exe', { patterns: BUILTIN, stats });
+  scanBuffer(bytes, 'Voxwarden-Setup-9.9.9.exe', { patterns: BUILTIN, stats });
   assert.equal(stats.compressedRuns, 939);
   // An ASCII run inside a UTF-8 one: one hit, at the ASCII run's id, as before.
   const zeros = Buffer.alloc(256);
@@ -712,7 +712,7 @@ test('signature regions (code health EX-06): a PE\'s certificate table gives the
     const { pe, at } = signedPE(gap);
     assert.deepEqual(signatureRanges(pe), [[at, pe.length]], gap);
     const stats = blankStats();
-    const hits = scanBuffer(pe, 'win-unpacked/NeverQuestAlone.exe', { patterns: SIG_PATTERNS, stats });
+    const hits = scanBuffer(pe, 'win-unpacked/Voxwarden.exe', { patterns: SIG_PATTERNS, stats });
     return { gap, pe, at, stats, lines: hits.map(h => [h.pattern, h.offset - at, h.id]) };
   });
   // The layouts are what they say: the runs' block over 7.5 bits a byte on a block and after compressed bytes, under it after zeros.
@@ -726,10 +726,10 @@ test('signature regions (code health EX-06): a PE\'s certificate table gives the
   assert.ok(seen.every(s => s.stats.compressedRuns > 0));
   // Allowed by exact id, as tools/scrub-allow.txt allows the real signer's two lines; another line still fails.
   const allow = parseAllow(SIGNER_IDS.map(id => `**/win-unpacked/*.exe name ${id}`).join('\n'));
-  for (const s of seen) assert.ok(scanBuffer(s.pe, 'dist/win-unpacked/NeverQuestAlone.exe', { patterns: SIG_PATTERNS }).every(h => allowedBy(h, allow)), s.gap);
+  for (const s of seen) assert.ok(scanBuffer(s.pe, 'dist/win-unpacked/Voxwarden.exe', { patterns: SIG_PATTERNS }).every(h => allowedBy(h, allow)), s.gap);
   const other = signedPE('aligned');
   plant(other.pe, other.at + 0x900, `by ${SIGNER}`);
-  assert.deepEqual(scanBuffer(other.pe, 'dist/win-unpacked/NeverQuestAlone.exe', { patterns: SIG_PATTERNS }).filter(h => !allowedBy(h, allow)).map(h => [h.offset - other.at, h.id]), [[0x900 + 'by '.length, lineId(`by ${SIGNER}`)]]);
+  assert.deepEqual(scanBuffer(other.pe, 'dist/win-unpacked/Voxwarden.exe', { patterns: SIG_PATTERNS }).filter(h => !allowedBy(h, allow)).map(h => [h.offset - other.at, h.id]), [[0x900 + 'by '.length, lineId(`by ${SIGNER}`)]]);
   // A PE32 header reads the same.
   const pe32 = signedPE('zeros', { pe32: true });
   assert.deepEqual(signatureRanges(pe32.pe), [[pe32.at, pe32.pe.length]]);
@@ -746,7 +746,7 @@ test('signature regions (code health EX-06): a Mach-O\'s code signature, thin an
   // The chance runs in the hash slots and the code lie in blocks the gate skips, at both places.
   assert.ok(thin.every(({ m, dataoff }) => gatedAt(m, dataoff + CODESIG.hashes[0] + 0x2000) && gatedAt(m, 0x1200)));
   for (const { where, m, dataoff } of thin) {
-    const hits = scanBuffer(m, 'NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone', { patterns: SIG_PATTERNS });
+    const hits = scanBuffer(m, 'Voxwarden.app/Contents/MacOS/Voxwarden', { patterns: SIG_PATTERNS });
     assert.deepEqual(hits.map(h => [h.pattern, h.offset, h.id]), signerLines(dataoff + CODESIG.cms), where);
   }
   // The gate alone (the SuperBlob's magic broken, so no region) flapped here too.
@@ -755,7 +755,7 @@ test('signature regions (code health EX-06): a Mach-O\'s code signature, thin an
   for (const wide of [false, true]) {
     const { fat, at } = makeFat(thin.map(({ m }, i) => ({ cputype: i ? 0x0100000c : 0x01000007, buf: m })), wide);
     assert.deepEqual(signatureRanges(fat), thin.flatMap(({ m, dataoff }, i) => [[at[i] + dataoff, at[i] + dataoff + CODESIG.hashes[0]], [at[i] + dataoff + CODESIG.hashes[1], at[i] + m.length]]), `wide ${wide}`);
-    const hits = scanBuffer(fat, 'NeverQuestAlone Capture.app/Contents/MacOS/NQACapture', { patterns: SIG_PATTERNS });
+    const hits = scanBuffer(fat, 'Voxwarden Capture.app/Contents/MacOS/NQACapture', { patterns: SIG_PATTERNS });
     assert.deepEqual(hits.map(h => [h.pattern, h.offset, h.id]), thin.flatMap(({ dataoff }, i) => signerLines(at[i] + dataoff + CODESIG.cms)), `wide ${wide}`);
   }
 });
@@ -841,7 +841,7 @@ test('signature regions (code health EX-06): a header or a signature cut short, 
 
 test('signature regions in a file read in chunks (code health EX-06): a table across a chunk\'s end is found from the headers read in place, its two lines count once, and none of its bytes count as compressed', (t) => {
   const d = tmpdir(t);
-  const file = path.join(d, 'NeverQuestAlone.exe');
+  const file = path.join(d, 'Voxwarden.exe');
   const table = certTable();
   const at = CHUNK - 0x700; // the signer's runs just past the first chunk's end, in its 64 KB overlap too
   const write = (head) => {
@@ -852,28 +852,28 @@ test('signature regions in a file read in chunks (code health EX-06): a table ac
   const fd = fs.openSync(file, 'r');
   try { assert.deepEqual(signatureRanges({ fd, size: fs.fstatSync(fd).size }), [[at, at + table.length]]); } finally { fs.closeSync(fd); }
   const stats = blankStats();
-  assert.deepEqual(scanLargeFile(file, 'win-unpacked/NeverQuestAlone.exe', { patterns: SIG_PATTERNS, stats }).map(h => [h.pattern, h.offset, h.id]), signerLines(at));
+  assert.deepEqual(scanLargeFile(file, 'win-unpacked/Voxwarden.exe', { patterns: SIG_PATTERNS, stats }).map(h => [h.pattern, h.offset, h.id]), signerLines(at));
   assert.deepEqual([stats.signed, stats.signedBytes, stats.compressedBytes ?? 0], [1, table.length, 0]);
   // The gate alone (no region) skipped both: their block is certificate bytes alone.
   const broken = peHeaders(at, table.length);
   broken.write('PX', 0x80, 'latin1');
   write(broken);
-  assert.deepEqual(scanLargeFile(file, 'win-unpacked/NeverQuestAlone.exe', { patterns: SIG_PATTERNS }), []);
+  assert.deepEqual(scanLargeFile(file, 'win-unpacked/Voxwarden.exe', { patterns: SIG_PATTERNS }), []);
 });
 
 test('signature regions under --strict (code health EX-06): a release folder passes with the signer\'s two ids allowed by exact id, fails on them without, and the summary says how much it read as signature regions', (t) => {
   const d = tmpdir(t);
   const dist = path.join(d, 'dist');
   const files = {
-    'win-unpacked/NeverQuestAlone.exe': signedPE('zeros').pe,
-    'NeverQuestAlone-Setup-9.9.9.exe': signedPE('compressed').pe,
-    'mac/NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone': machO(MACHO_AT.aligned),
+    'win-unpacked/Voxwarden.exe': signedPE('zeros').pe,
+    'Voxwarden-Setup-9.9.9.exe': signedPE('compressed').pe,
+    'mac/Voxwarden.app/Contents/MacOS/Voxwarden': machO(MACHO_AT.aligned),
   };
   writeTree(dist, files);
   const terms = path.join(d, 'terms.txt');
   fs.writeFileSync(terms, SIG_TERMS);
   const allow = path.join(d, 'allow.txt');
-  fs.writeFileSync(allow, ['**/win-unpacked/*.exe', '**/NeverQuestAlone-Setup*.exe', '**/NeverQuestAlone.app/Contents/MacOS/*'].flatMap(g => SIGNER_IDS.map(id => `${g} name ${id}`)).join('\n') + '\n');
+  fs.writeFileSync(allow, ['**/win-unpacked/*.exe', '**/Voxwarden-Setup*.exe', '**/Voxwarden.app/Contents/MacOS/*'].flatMap(g => SIGNER_IDS.map(id => `${g} name ${id}`)).join('\n') + '\n');
   const bytes = Object.values(files).reduce((n, b) => n + signatureRanges(b).reduce((k, [s, e]) => k + e - s, 0), 0);
   const r = capture(['--dir', dist, '--terms', terms, '--strict', '--allow', allow]);
   assert.equal(r.code, 0, r.out);
@@ -970,7 +970,7 @@ test('allowlist: path globs, pattern, line id; an edited line is a hit again', (
   assert.equal(allowedBy(shallow, allow)?.line, 4, '**/ matches no folder too');
   const [other] = scanText(`on ${HOST}`, { patterns: ALL, path: 'docs/a/b/c.txt' });
   assert.equal(allowedBy(other, allow), null);
-  const [copied] = scanText(line, { patterns: ALL, path: 'stage/NeverQuestAlone/LICENSE.txt' });
+  const [copied] = scanText(line, { patterns: ALL, path: 'stage/Voxwarden/LICENSE.txt' });
   assert.equal(allowedBy(copied, parseAllow(`** name ${lineId(line)}`))?.line, 1, 'a line allowed anywhere');
   assert.equal(allowedBy(copied, parseAllow(`LICENSE name ${lineId(line)}`)), null);
   assert.equal(allowedBy({ source: 'commit', path: 'commit abc1234 author', pattern: 'email', id: 'x' }, allow)?.line, 5);

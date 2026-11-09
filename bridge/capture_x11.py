@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""NeverQuestAlone's Linux/X11 capture helper: screen-captures the top-left corner of
+"""Voxwarden's Linux/X11 capture helper: screen-captures the top-left corner of
 the WoW client window (running under Wine) and decodes the addon's pixel strip (see
 Codec.lua in the addon). Prints one JSON line per new message to stdout, with the
-same {info|warn|error[,kind]|id,text} contract as the other NeverQuestAlone helpers
+same {info|warn|error[,kind]|id,text} contract as the other Voxwarden helpers
 (PRD §11.1, PF-7). Started by bridge/transport/capture.mjs.
 
 Like the Windows helper it also reports the game's lifecycle, {"game": "absent" |
@@ -17,7 +17,7 @@ Zero dependencies: python3 + ctypes against libX11.
   capture_x11.py --probe out.png          save what the capture sees once and exit (it also
                                           tries the other known magic, and says which decoded)
   capture_x11.py --window-name NAME       match a window by title instead of WM_CLASS
-  capture_x11.py --magic C72C             the strip's magic: C72C (NeverQuestAlone, the default)
+  capture_x11.py --magic C72C             the strip's magic: C72C (Voxwarden, the default)
                                           or C71A (upstream wow-ai's WoWAI addon)
   capture_x11.py --pitch-search           when the fixed --cell doesn't decode, measure the
                                           cell pitch (--min-pitch 3 to --max-pitch 6 px)
@@ -35,7 +35,7 @@ import time
 import zlib
 
 DEFAULT_MAGIC = "C72C"
-KNOWN_MAGICS = {"C72C": "NeverQuestAlone", "C71A": "the WoWAI addon (wow-ai)"}
+KNOWN_MAGICS = {"C72C": "Voxwarden", "C71A": "the WoWAI addon (wow-ai)"}
 EXIT_GRACE = 10.0  # s: with no pid to watch, a window gone this long means the game quit
 # Code health BR-15 (PF-09): the search for the game's window ran every 3 s for as long as the game
 # stayed closed. It waits 3 s at first, twice as long after each search that finds none, at most a
@@ -51,7 +51,7 @@ def parse_magic(text):
     if s[:2].lower() == "0x":
         s = s[2:]
     if len(s) != 4 or any(c not in "0123456789abcdefABCDEF" for c in s):
-        raise ValueError("magic must be 4 hex digits, e.g. C72C (NeverQuestAlone) or C71A (wow-ai)")
+        raise ValueError("magic must be 4 hex digits, e.g. C72C (Voxwarden) or C71A (wow-ai)")
     v = int(s, 16)
     return (v >> 8, v & 0xFF)
 
@@ -74,7 +74,7 @@ def build_parser():
     p.add_argument("--keep-composited", action="store_true",
                    help="ask the compositor not to unredirect the game window (_NET_WM_BYPASS_COMPOSITOR=2)")
     p.add_argument("--magic", type=_magic_arg, default=parse_magic(DEFAULT_MAGIC),
-                   help="the strip's two magic bytes as hex: C72C (NeverQuestAlone, default) or C71A (wow-ai)")
+                   help="the strip's two magic bytes as hex: C72C (Voxwarden, default) or C71A (wow-ai)")
     p.add_argument("--pitch-search", action="store_true",
                    help="when --cell doesn't decode, measure the cell pitch between --min-pitch and --max-pitch")
     p.add_argument("--min-pitch", type=float, default=3.0)
@@ -341,7 +341,7 @@ def with_magic(magic, fn):
 
 def probe_decode(px, width, height):
     """--probe's verdict: decode with the configured magic; if that finds no strip, try the
-    other known magic too, so `npm run probe` answers for NeverQuestAlone's and wow-ai's addons."""
+    other known magic too, so `npm run probe` answers for Voxwarden's and wow-ai's addons."""
     msg, off = find_and_decode(px, width, height, None)
     out = {"strip": msg, "offset": off, "magic": magic_text()}
     if msg and not msg.get("error"):

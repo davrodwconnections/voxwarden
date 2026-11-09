@@ -477,7 +477,7 @@ test('run directly (not through LaunchServices), the app refuses to capture', { 
   const { spawnSync } = require('child_process');
   const r = spawnSync(BIN, ['--socket', '/tmp/nqa-no-such.sock'], { encoding: 'utf8', timeout: 10000 });
   assert.equal(r.status, 5, r.stderr);
-  assert.match(r.stderr, /only runs as "NeverQuestAlone Capture.app"/);
+  assert.match(r.stderr, /only runs as "Voxwarden Capture.app"/);
   const p = spawnSync(BIN, ['--check-permission'], { encoding: 'utf8', timeout: 10000 });
   assert.equal(p.status, 5);
 });
@@ -500,7 +500,7 @@ test('with the game closed nothing runs on a timer: no App Nap opt-out, no stats
 });
 
 // The app's own Screen Recording check and request (onboarding spec §9.4): new instances beside a
-// socket helper, so both come before the socket and the instance lock; NeverQuestAlone's helper
+// socket helper, so both come before the socket and the instance lock; Voxwarden's helper
 // never asks at start (only on the player's Allow).
 test('--request-permission: parsed; handled with --check-permission before the socket and the lock; the public build asks only then', () => {
   const src = f => fs.readFileSync(path.join(PKG, 'Sources', 'NQACapture', f), 'utf8');
@@ -516,11 +516,11 @@ test('--request-permission: parsed; handled with --check-permission before the s
   const capture = src('Capture.swift');
   const pub = /#if NQA_PUBLIC_ID\n([\s\S]*?)#else\n([\s\S]*?)#endif/.exec(capture);
   assert.ok(pub, 'start() branches on the public build');
-  assert.doesNotMatch(pub[1], /CGRequestScreenCaptureAccess/, 'NeverQuestAlone’s helper asks nothing at start');
+  assert.doesNotMatch(pub[1], /CGRequestScreenCaptureAccess/, 'Voxwarden’s helper asks nothing at start');
   assert.match(pub[2], /CGRequestScreenCaptureAccess/, 'your build keeps its prompt');
   assert.match(capture, /#if NQA_PUBLIC_ID\n\s+\/\/ Every ScreenCaptureKit call waits for the grant/);
   const build = fs.readFileSync(path.join(PKG, 'build-app.sh'), 'utf8');
-  assert.match(build, /NAME="NeverQuestAlone"/);
+  assert.match(build, /NAME="Voxwarden"/);
   assert.match(fs.readFileSync(path.join(PKG, 'Info.plist'), 'utf8'), /<string>__NAME__<\/string>[\s\S]*<string>__USAGE__<\/string>/);
 });
 
@@ -530,7 +530,7 @@ test('run directly, --request-permission refuses too (the grant belongs to the a
   assert.equal(r.status, 5, r.stderr);
 });
 
-// ---------------------------------------------------------------- NeverQuestAlone's helper (code health BR-01)
+// ---------------------------------------------------------------- Voxwarden's helper (code health BR-01)
 // The public build (-DNQA_PUBLIC_ID, in the Swift build folder build-app.sh --public uses) is a Screen
 // Recording grant that any process of the player's could otherwise launch with its own socket and its
 // own aim (the old audit LS-01). Argv can't aim it, and who serves its socket is checked first. These
@@ -544,7 +544,7 @@ const SRC = path.join(PKG, 'Sources', 'NQACapture');
 const REPO = path.join(__dirname, '..');
 // The app's own id and helper: its identity's (the plugin the root package.json names; bridge/identity.mjs
 // reads the same file). The identifier this helper's source asks for is the app's when the app ships the
-// helper; an app without one (the example's) doesn't, and NeverQuestAlone's is pinned in frozen_names_test.
+// helper; an app without one (the example's) doesn't, and Voxwarden's is pinned in frozen_names_test.
 const IDENTITY = require(path.join(REPO, 'plugins', require(path.join(REPO, 'package.json')).plugin, 'identity.json'));
 const APP_ID = IDENTITY.appId;
 const SHIPS_HELPER = !!IDENTITY.captureHelper;
@@ -561,7 +561,7 @@ function publicBinary() {
   return publicBin;
 }
 
-/** A Swift file as one build compiles it: NeverQuestAlone's (-DNQA_PUBLIC_ID) or a checkout's. */
+/** A Swift file as one build compiles it: Voxwarden's (-DNQA_PUBLIC_ID) or a checkout's. */
 function buildView(src, pub = true) {
   const keep = []; // per open #if: whether this build compiles the branch (null: another condition, kept)
   const out = [];
@@ -578,7 +578,7 @@ function buildView(src, pub = true) {
 }
 const swiftSource = f => fs.readFileSync(path.join(SRC, f), 'utf8');
 
-test('BR-01: NeverQuestAlone\'s helper refuses every flag that aims it, with a typed line and exit 7, before anything else; a checkout\'s build doesn\'t', { skip }, () => {
+test('BR-01: Voxwarden\'s helper refuses every flag that aims it, with a typed line and exit 7, before anything else; a checkout\'s build doesn\'t', { skip }, () => {
   const exe = publicBinary();
   const dir = fs.mkdtempSync(path.join(PTMP, 'argv-'));
   const png = path.join(dir, 'x.png');
@@ -606,7 +606,7 @@ test('BR-01: NeverQuestAlone\'s helper refuses every flag that aims it, with a t
 
 test('BR-01: who serves the socket is checked after connecting and before the lock, the capture or any permission call; a checkout\'s build doesn\'t check its socket\'s owner (both answer the app\'s --check-peer: LS-03)', () => {
   const main = buildView(swiftSource('main.swift'));
-  const at = s => { const i = main.indexOf(s); assert.ok(i >= 0, `NeverQuestAlone's main.swift has no ${s}`); return i; };
+  const at = s => { const i = main.indexOf(s); assert.ok(i >= 0, `Voxwarden's main.swift has no ${s}`); return i; };
   const check = at('peerRefusal(fd: out.fd)');
   assert.ok(at('out.connect(socketPath: sock)') < check);
   for (const later of ['InstanceLock.acquire(path: lockPath)', 'NSApplication.shared', 'CaptureController(', 'controller.start()', 'out.onCommand']) assert.ok(check < at(later), later);
@@ -629,12 +629,12 @@ test('BR-01: who serves the socket is checked after connecting and before the lo
   assert.doesNotMatch(buildView(swiftSource('main.swift'), false), /peerRefusal\(fd: out\.fd\)|opts\.refused/);
   const devPeer = buildView(swiftSource('PeerCheck.swift'), false);
   assert.doesNotMatch(devPeer, /ownTeam|peerRequirement|nqaAppIdentifier|func peerRefusal\(fd: Int32\) ->/);
-  assert.match(devPeer, /func peerRefusal\(fd: Int32, requirement text: String, who: String = "the socket's owner", wanted: String = "NeverQuestAlone"\) -> String\?/);
+  assert.match(devPeer, /func peerRefusal\(fd: Int32, requirement text: String, who: String = "the socket's owner", wanted: String = "Voxwarden"\) -> String\?/);
   assert.doesNotMatch(buildView(swiftSource('Options.swift'), false), /refused/);
   for (const pub of [true, false]) {
     const m = buildView(swiftSource('main.swift'), pub);
     const mode = m.slice(m.indexOf('if let requirement = opts.checkPeer {'), m.indexOf('if let path = opts.testImage {'));
-    assert.match(mode, /peerRefusal\(fd: 3, requirement: requirement, who: "the program that connected", wanted: "NeverQuestAlone's capture helper"\)/);
+    assert.match(mode, /peerRefusal\(fd: 3, requirement: requirement, who: "the program that connected", wanted: "Voxwarden's capture helper"\)/);
     assert.match(mode, /exit\(6\)\n    \}\n    exit\(0\)\n\}/);
     assert.doesNotMatch(mode.replace(/^\s*\/\/.*$/gm, ''), /\bout\.|\.connect\(|InstanceLock|CGPreflight|CGRequest|SCShareable|NSApplication/, 'nothing else runs in it');
     assert.ok(m.indexOf('if let requirement = opts.checkPeer {') < m.indexOf('refuseUnlessLaunchedAsApp()'), 'run directly by the app, not through LaunchServices');
@@ -706,7 +706,7 @@ test('BR-01: the peer check names whoever serves the socket by its audit token a
   try {
     const r = run('check', nodeSock, ad);
     assert.equal(r.connected, true);
-    assert.match(r.refused, /^the socket's owner isn't NeverQuestAlone \(-?\d+\)$/);
+    assert.match(r.refused, /^the socket's owner isn't Voxwarden \(-?\d+\)$/);
     // A helper with no team (this ad hoc harness, as an ad hoc or locally signed build is) skips the check.
     assert.deepEqual(run('team'), { team: null });
     assert.deepEqual(run('check', nodeSock), { connected: true, refused: null });
@@ -719,7 +719,7 @@ test('BR-01: the peer check names whoever serves the socket by its audit token a
     const first = await new Promise(r => serve.stdout.once('data', d => r(JSON.parse(String(d)))));
     assert.equal(first.listening, true);
     assert.deepEqual(run('check', appSock, ad), { connected: true, refused: null });
-    assert.match(run('check', appSock, run('requirement', 'ABCDE12345').requirement).refused, /isn't NeverQuestAlone/);
+    assert.match(run('check', appSock, run('requirement', 'ABCDE12345').requirement).refused, /isn't Voxwarden/);
   } finally { serve.kill(); }
 
   // Signed by a team, it asks what boot asks of it, mirrored: the app's identifier and that team's Developer ID.
@@ -769,14 +769,14 @@ test('code health LS-03 / peer check: the helper\'s --check-peer names whoever c
   fs.writeFileSync(path.join(dir, 'client.c'), CLIENT_C);
   const client = path.join(dir, 'client');
   execFileSync('cc', ['-o', client, path.join(dir, 'client.c')], { stdio: ['ignore', 'ignore', 'inherit'] });
-  // Ad hoc signatures (no identity, no keychain): one as NeverQuestAlone's helper (its bundle id), one as another program.
+  // Ad hoc signatures (no identity, no keychain): one as Voxwarden's helper (its bundle id), one as another program.
   const PUB = fs.readFileSync(path.join(REPO, 'app', 'desktop', 'build', 'bridge', 'capture', 'mac', 'BUNDLE_ID'), 'utf8').trim();
   const signedAs = (id) => { const f = path.join(dir, id); fs.copyFileSync(client, f); execFileSync('codesign', ['--force', '--sign', '-', '--identifier', id, f], { stdio: ['ignore', 'ignore', 'pipe'] }); return f; };
   const asHelper = signedAs(PUB);
   const other = signedAs('org.example.other');
   const own = `identifier "${PUB}"`; // what an ad hoc stand-in can meet: the helper's bundle id, no team
   const team = buildRequirement({ bundleId: PUB, teamId: 'ABCDE12345' }); // boot's, with a Developer ID team
-  const NOT = /^the program that connected isn't NeverQuestAlone's capture helper \(-\d+\)$/;
+  const NOT = /^the program that connected isn't Voxwarden's capture helper \(-\d+\)$/;
   const kids = [];
   const run = (cmd, args) => { const p = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'ignore'] }); kids.push(p); return p; };
 

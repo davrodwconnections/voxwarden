@@ -40,7 +40,7 @@ export const DEFAULTS = {
     effort: 'low',
     auth: 'key',
     authBy: {},
-    persona: { name: 'NeverQuestAlone' },
+    persona: { name: 'Voxwarden' },
     caps: { dailyUsd: null },
     privacy: { identity: false, otherNames: false, companion: false, echo: false, gameContext: true },
     transcripts: { retentionDays: 30 },
@@ -122,7 +122,7 @@ export function configWithDefaults(user = {}) {
 }
 
 /**
- * NeverQuestAlone's load (SY-12): a config.json that can't be read or parsed is moved aside to
+ * Voxwarden's load (SY-12): a config.json that can't be read or parsed is moved aside to
  * config.json.corrupt-<ms> and the app starts on the defaults, instead of failing at every start.
  * → {config, reset: {keptAs} | null} (keptAs: the moved file, or null if it couldn't be moved).
  * loadConfig itself refuses one (the developer command line's): a developer fixes the file.

@@ -87,9 +87,9 @@ export function splitLinked(text) {
 /** The fixed line of an event turn, or null for an unknown kind: never game text (the summary takes numbers only). */
 export function eventLine(event) {
   const kind = event?.kind;
-  if (kind === 'recap') return '[NeverQuestAlone event] Session recap. Sent by the app after the game closed, not typed by the player.';
+  if (kind === 'recap') return '[Voxwarden event] Session recap. Sent by the app after the game closed, not typed by the player.';
   if (!EVENT_KINDS.has(kind)) return null;
-  return `[NeverQuestAlone event] ${eventSummary(kind, event?.args || event || {})}. Sent by the addon, not typed by the player.`;
+  return `[Voxwarden event] ${eventSummary(kind, event?.args || event || {})}. Sent by the addon, not typed by the player.`;
 }
 
 // Apply fn to every string in a JSON value.

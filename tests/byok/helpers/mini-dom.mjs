@@ -263,7 +263,7 @@ class Document extends Node {
 }
 
 /**
- * The shell index.html builds: NeverQuestAlone's panel (the wordmark, the portrait button with its status
+ * The shell index.html builds: Voxwarden's panel (the wordmark, the portrait button with its status
  * line, the tracker, the nav with its buttons as index.html has them, the foot), the stage (top
  * bar, banners, page, the sheet's host) and the live region.
  */
@@ -287,9 +287,9 @@ function buildShell(doc) {
   for (const m of navHtml.matchAll(BUTTON)) nav.append(navButton(m));
   const tracker = el('ol', { class: 'tracker', id: 'tracker', 'aria-label': 'Setup progress' });
   tracker.hidden = true;
-  const companion = el('aside', { class: 'companion', id: 'companion', 'aria-label': 'NeverQuestAlone' },
-    el('p', { class: 'wordmark', id: 'wordmark', 'aria-hidden': 'true' }, 'NeverQuestAlone'),
-    el('button', { type: 'button', class: 'bones-btn', id: 'bones-btn', 'aria-label': 'NeverQuestAlone' },
+  const companion = el('aside', { class: 'companion', id: 'companion', 'aria-label': 'Voxwarden' },
+    el('p', { class: 'wordmark', id: 'wordmark', 'aria-hidden': 'true' }, 'Voxwarden'),
+    el('button', { type: 'button', class: 'bones-btn', id: 'bones-btn', 'aria-label': 'Voxwarden' },
       el('span', { class: 'portrait', id: 'portrait', 'data-mood': 'idle', 'aria-hidden': 'true' }),
       el('span', { class: 'status-tip', id: 'status-tip', 'aria-hidden': 'true' })),
     tracker, nav,

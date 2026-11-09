@@ -149,10 +149,10 @@ export function sendingLines(sp) {
 }
 
 /** The check-ins fuse's line (spec §9.9; systems plan D4): the window that tripped, the companion's name. */
-export function checkInsLine(fuse, name = 'NeverQuestAlone') {
+export function checkInsLine(fuse, name = 'Voxwarden') {
   if (!isObj(fuse)) return null;
   const n = Number.isInteger(fuse.turns) && fuse.turns > 0 ? fuse.turns : 10;
-  const who = clip(name, 24) || 'NeverQuestAlone';
+  const who = clip(name, 24) || 'Voxwarden';
   return { line: `${who} paused check-ins: more than ${n} came in ${spanText(fuse.windowMs ?? 60_000)}, which normal play doesn’t do. Your next message turns them back on.` };
 }
 
@@ -170,13 +170,13 @@ export function checkInsLine(fuse, name = 'NeverQuestAlone') {
  * action is Restart screen reading (restart_capture); its Windows words name the top-left corner,
  * where an overlay covers the corner Bones reads; a Mac has no such cover, so its words name the button.
  */
-export function screenView(capture, { platform = 'darwin', name = 'NeverQuestAlone' } = {}) {
+export function screenView(capture, { platform = 'darwin', name = 'Voxwarden' } = {}) {
   if (!isObj(capture) || capture.state === 'no_game') return null;
   if (capture.mode === 'reload' || capture.state === 'off') {
     return { state: capture.state === 'off' ? 'off' : 'reload', mode: 'none', ok: true, headline: 'No screen reading', detail: NO_SCREEN_READING, command: NO_SCREEN_READING_COMMAND };
   }
   // The companion's own name (STYLE §11; bones-ux-writer r2, UX-W26), as checkInsLine takes it.
-  const who = clip(name, 24) || 'NeverQuestAlone';
+  const who = clip(name, 24) || 'Voxwarden';
   // The app reads the screen, not the companion (STYLE §9; UX-W10): "{name} can’t see the game." only for the failure.
   const cant = `${who} can’t see the game.`;
   const corner = 'Keep the top of WoW’s window on screen.';

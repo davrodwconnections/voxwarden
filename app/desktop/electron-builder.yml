@@ -1,4 +1,4 @@
-# NeverQuestAlone packaging (BYOK PRD §11.1 installers and signing, §11.2
+# Voxwarden packaging (BYOK PRD §11.1 installers and signing, §11.2
 # SC-9, §11.5 DB12; PF-2, PF-4).
 #
 # Signing comes only from environment variables, never from this file or a
@@ -85,9 +85,20 @@ files:
       - byok/providers/manifests/*.json
       - byok/usage/prices.json
       - byok/runtime/pack.md
+      - byok/runtime/chat-pack.md
+  - from: ../../tools
+    to: tools
+    filter:
+      - brain/**/*.mjs
+      - brain/mechanics.json
+      - voice/**/*.mjs
+      - voice/*.md
+      - voice/*.html
+      - voice/*.js
+      - subscription-proxy/*.mjs
   # The bridge is ES modules only (code health BR-24), so it needs no package.json of
   # its own under the app's "type": "module". The capture helper's bundle id is
-  # NeverQuestAlone's own (build/bridge/capture/mac/BUNDLE_ID), never a
+  # Voxwarden's own (build/bridge/capture/mac/BUNDLE_ID), never a
   # checkout's: the code requirement (transport/capture.mjs) and the
   # uninstall's Screen Recording reset read it (final review L3-4).
   - from: build/bridge
@@ -95,10 +106,10 @@ files:
     filter:
       - capture/mac/BUNDLE_ID
   # The addon the app installs into WoW (§11.4; bridge/byok/wow.mjs ADDON_SOURCE), with
-  # its Media: the icon its TOC names (## IconTexture: Media/NeverQuestAlone.tga) and Bones's portraits;
+  # its Media: the icon its TOC names (## IconTexture: Media/Voxwarden.tga) and Bones's portraits;
   # and its NOTICE.txt, which goes wherever that art goes: the MIT license doesn't cover it.
-  - from: ../../addon/NeverQuestAlone
-    to: addon/NeverQuestAlone
+  - from: ../../addon/Voxwarden
+    to: addon/Voxwarden
     filter:
       - "**/*.lua"
       - "**/*.toc"
@@ -148,19 +159,12 @@ mac:
   # the app's Developer ID, and boot accepts the app's own team for it. A build
   # without it fails (scripts/fuses.cjs).
   #
-  # The icon's asset catalog (Contents/Resources/Assets.car, compiled by actool from the kit's
-  # Assets.xcassets): with CFBundleIconName = AppIcon (extendInfo below), macOS 26+ draws the 16 and 32 px
-  # sizes full-bleed from it; with the .icns alone it shrinks the icon onto a plate. macOS 11 to 15 read
-  # CFBundleIconFile (the .icns, mac.icon above).
-  extraResources:
-    - from: build/Assets.car
-      to: Assets.car
+  # Voxwarden ships its own standard ICNS. No inherited compiled artwork catalog ships.
   # notarize is left unset: electron-builder notarizes when APPLE_* are set.
   # A tray app: no Dock icon at launch or at login (nothing appears by itself).
   # main.mjs shows the Dock icon while the settings window is open.
   extendInfo:
     LSUIElement: true
-    CFBundleIconName: AppIcon
 
 dmg:
   title: "${productName}"
@@ -202,9 +206,9 @@ win:
         - nqa-capture.exe
 
 nsis:
-  # guid: the identity's nsisGuid (scripts/plugin-config.mjs). NeverQuestAlone's is pinned
+  # guid: the identity's nsisGuid (scripts/plugin-config.mjs). Voxwarden's is pinned
   # (rename spec §1.13, H23): the value electron-builder derives from appId
-  # com.neverquestalone.app (UUIDv5 in its namespace), written out so a later appId
+  # com.voxwarden.app (UUIDv5 in its namespace), written out so a later appId
   # edit can't install side by side. Frozen: tests/frozen_names_test.mjs.
   oneClick: true
   perMachine: false

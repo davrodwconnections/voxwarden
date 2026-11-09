@@ -61,10 +61,10 @@ test('echo: bridge.echo "on" lets /nqa echo decide (summary, full, short, off); 
   assert.equal(vm.evaluate('NS.Notify.EchoMode()'), 'summary');
   let lines = arrive(vm, slot, replyRec(id, 'Line one\nLine two\n\nTL;DR: two lines.', 'Two lines.'));
   assert.equal(lines.length, 1);
-  assert.ok(lines[0].startsWith('|cff7ec8ff[NeverQuestAlone · Chat 1]|r Two lines.'), lines[0]);
+  assert.ok(lines[0].startsWith('|cff7ec8ff[Voxwarden · Chat 1]|r Two lines.'), lines[0]);
   vm.slash('echo full');
   lines = arrive(vm, slot, replyRec(id, 'A\nB'));
-  assert.deepEqual(lines.slice(0, 2), ['|cff7ec8ff[NeverQuestAlone · Chat 1]|r A', '    B']);
+  assert.deepEqual(lines.slice(0, 2), ['|cff7ec8ff[Voxwarden · Chat 1]|r A', '    B']);
   vm.slash('echo off');
   assert.deepEqual(arrive(vm, slot, replyRec(id, 'quiet')), []);
   // The desktop's switch turned off in the app: the next reply stays out, and on again brings it back.
@@ -82,7 +82,7 @@ test('echo: without the cap (an app from before it) /nqa echo alone decides, as 
   assert.equal(oc.vm.evaluate('NS.Notify.DesktopEchoOff()'), 'false');
   assert.equal(arrive(oc.vm, ocSlot, replyRec(oc.id, 'Hello.\n\nTL;DR: hello.', 'Hello.')).length, 1);
   oc.vm.slash('echo');
-  assert.equal(oc.vm.chatLines().at(-1), '|cff7ec8ff[NeverQuestAlone]|r Replies in Your Chat Frame: TL;DR. Settings has it too.');
+  assert.equal(oc.vm.chatLines().at(-1), '|cff7ec8ff[Voxwarden]|r Replies in Your Chat Frame: TL;DR. Settings has it too.');
   // A public bridge without the echo cap.
   const pub = setup(byokSlot());
   assert.equal(arrive(pub.vm, records => byokSlot({ records }).replace('think = "medium"', 'think = "medium", echo = "off"'), replyRec(pub.id, 'Hi.\n\nTL;DR: hi.', 'Hi.')).length, 1);
@@ -91,18 +91,18 @@ test('echo: without the cap (an app from before it) /nqa echo alone decides, as 
 test('echo: /nqa echo and the Settings row say plainly that the desktop\'s switch is off, only when asked; on, today\'s words', () => {
   const { vm } = setup(echoSlot('off'));
   vm.slash('echo');
-  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[NeverQuestAlone]|r Replies in Your Chat Frame: TL;DR. It\'s off in the NeverQuestAlone app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
+  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[Voxwarden]|r Replies in Your Chat Frame: TL;DR. It\'s off in the Voxwarden app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
   vm.slash('echo full');
-  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[NeverQuestAlone]|r Replies in Your Chat Frame: Whole Reply. It\'s off in the NeverQuestAlone app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
+  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[Voxwarden]|r Replies in Your Chat Frame: Whole Reply. It\'s off in the Voxwarden app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
   assert.equal(vm.evaluate('NQADB.settings.echo'), 'full');
   // In the window, the answer is its notice (as every command's).
   vm.slash('');
   vm.slash('echo');
-  assert.equal(notice(vm), 'Replies in Your Chat Frame: Whole Reply. It\'s off in the NeverQuestAlone app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
+  assert.equal(notice(vm), 'Replies in Your Chat Frame: Whole Reply. It\'s off in the Voxwarden app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
   // The Settings row's tooltip in the public build, read when shown (as the companion switch's): its
   // pubTip, which the list gets there (Settings.lua AddSteps); main's row keeps its string (E-047's slider).
   const tip = '(function() for _, c in ipairs(NS.Settings.CHOICES) do if c[3] == "echo" then return c.pubTip() end end end)()';
-  assert.equal(vm.evaluate(tip), 'Sets how much of each reply also shows in your chat frame; the window always has all of it. It\'s off in the NeverQuestAlone app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
+  assert.equal(vm.evaluate(tip), 'Sets how much of each reply also shows in your chat frame; the window always has all of it. It\'s off in the Voxwarden app right now, so none show: turn on Replies in chat frame under Settings, Show more.');
   apply(vm, echoSlot('on'));
   assert.equal(vm.evaluate(tip), 'Sets how much of each reply also shows in your chat frame; the window always has all of it.');
   vm.slash('echo');

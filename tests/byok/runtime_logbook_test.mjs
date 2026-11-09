@@ -58,7 +58,7 @@ test('logbook: facts go between the markers, and everything outside them stays b
   assert.match(after, /- Location: Mulgore, Bloodhoof Village \(map 1412, 49\.6, 66\.3\)/);
   assert.match(after, /- Professions: Mining 8\/75/);
   assert.match(after, /- Gear: slot 16 \(2495\) ilvl 5/);
-  assert.match(after, /Written by NeverQuestAlone from game data: edit outside the markers\./);
+  assert.match(after, /Written by Voxwarden from game data: edit outside the markers\./);
   assert.equal(after.split(START).length, 2, 'one facts block');
   const quests = read(dataDir, 'quests');
   assert.match(quests, /- 748 Poison Water \(L5\): Prairie Wolf Paw 3\/6/);
@@ -223,7 +223,7 @@ test('logbook: the memory folder is one safe path segment per character', () => 
 
 test('log.md keeps its newest entries only (systems plan Batch 7): the heading stays, the oldest entries go', () => {
   assert.equal(LOG_MAX_ENTRIES, 500);
-  const head = '# Log\n\nMilestones and sessions, written by NeverQuestAlone from game data.\n';
+  const head = '# Log\n\nMilestones and sessions, written by Voxwarden from game data.\n';
   const entries = Array.from({ length: 7 }, (_, i) => `- Sep ${i + 1} · level ${i + 2} <!-- nqa:m level:${i + 2} -->`);
   const text = `${head}${entries.join('\n')}\n`;
   assert.equal(capLog(text, 10), text, 'under the cap: unchanged');

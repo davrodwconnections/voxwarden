@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 // Build the addon zip that CurseForge, Wago, WowUp and a manual install unpack
-// into Interface/AddOns: NeverQuestAlone with its doorbells, and the slot pool.
+// into Interface/AddOns: Voxwarden with its doorbells, and the slot pool.
 //
 // An addon-only install works at once (Copy and Paste, Paste.lua). Because the
 // zip also carries every file the transport needs, and the client only sees
 // files that exist when the UI loads (PROTOCOL.md §1, §3), a player who adds
-// the NeverQuestAlone app later is heard without restarting WoW
+// the Voxwarden app later is heard without restarting WoW
 // (docs/ADDON-FIRST.md).
 //
-//   node tools/package-addon.mjs [--out <dir>] [--name <file.zip>]   → <dir>/NeverQuestAlone-<version>.zip (default dist/)
+//   node tools/package-addon.mjs [--out <dir>] [--name <file.zip>]   → <dir>/Voxwarden-<version>.zip (default dist/)
 //
-// The repository's LICENSE goes in as NeverQuestAlone/LICENSE.txt, as the release job
+// The repository's LICENSE goes in as Voxwarden/LICENSE.txt, as the release job
 // ships it, so that job can build its zip with this.
 //
 // No dependencies: zlib does the deflate and the CRC. Entries are sorted and
@@ -23,7 +23,7 @@ import { SLOT_COUNT, SLOT_PLACEHOLDER, slotName, slotToc } from '../bridge/trans
 import { BELLS, signalPaths } from '../bridge/transport/signals.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const ADDON_DIR = path.join(REPO, 'addon', 'NeverQuestAlone');
+export const ADDON_DIR = path.join(REPO, 'addon', 'Voxwarden');
 
 /** A TOC's ## fields and the files it lists, with / separators. */
 export function readToc(text) {
@@ -44,11 +44,11 @@ export function readToc(text) {
  * slot's TOC and placeholder inbox, as setup makes them (slots.mjs).
  */
 export function addonEntries({ addonDir = ADDON_DIR, slots = SLOT_COUNT, license = path.join(REPO, 'LICENSE') } = {}) {
-  const { fields, files } = readToc(fs.readFileSync(path.join(addonDir, 'NeverQuestAlone.toc'), 'utf8'));
+  const { fields, files } = readToc(fs.readFileSync(path.join(addonDir, 'Voxwarden.toc'), 'utf8'));
   const iface = fields.Interface, version = fields.Version;
-  if (!/^\d+$/.test(iface || '')) throw new Error('NeverQuestAlone.toc has no ## Interface number');
-  if (!/^[\w.-]+$/.test(version || '')) throw new Error('NeverQuestAlone.toc has no ## Version');
-  for (const f of files) if (!fs.existsSync(path.join(addonDir, f))) throw new Error(`NeverQuestAlone.toc lists ${f}, which is missing`);
+  if (!/^\d+$/.test(iface || '')) throw new Error('Voxwarden.toc has no ## Interface number');
+  if (!/^[\w.-]+$/.test(version || '')) throw new Error('Voxwarden.toc has no ## Version');
+  for (const f of files) if (!fs.existsSync(path.join(addonDir, f))) throw new Error(`Voxwarden.toc lists ${f}, which is missing`);
 
   const entries = [];
   const walk = (dir, rel) => {
@@ -56,12 +56,12 @@ export function addonEntries({ addonDir = ADDON_DIR, slots = SLOT_COUNT, license
       if (e.name.startsWith('.') || (!rel && e.name === 'sig')) continue;
       const r = rel ? `${rel}/${e.name}` : e.name;
       if (e.isDirectory()) walk(path.join(dir, e.name), r);
-      else if (e.isFile()) entries.push({ name: `NeverQuestAlone/${r}`, data: fs.readFileSync(path.join(dir, e.name)) });
+      else if (e.isFile()) entries.push({ name: `Voxwarden/${r}`, data: fs.readFileSync(path.join(dir, e.name)) });
     }
   };
   walk(addonDir, '');
-  if (license && fs.existsSync(license) && !entries.some(e => e.name === 'NeverQuestAlone/LICENSE.txt')) {
-    entries.push({ name: 'NeverQuestAlone/LICENSE.txt', data: fs.readFileSync(license) });
+  if (license && fs.existsSync(license) && !entries.some(e => e.name === 'Voxwarden/LICENSE.txt')) {
+    entries.push({ name: 'Voxwarden/LICENSE.txt', data: fs.readFileSync(license) });
   }
 
   const root = path.resolve('addons');
@@ -177,12 +177,12 @@ export function zip(entries, { date = buildDate() } = {}) {
   return Buffer.concat([...locals, cd, end]);
 }
 
-/** Build the zip into outDir (as name, else NeverQuestAlone-<version>.zip). Returns { file, bytes, files }. */
+/** Build the zip into outDir (as name, else Voxwarden-<version>.zip). Returns { file, bytes, files }. */
 export function packageAddon({ outDir = path.join(REPO, 'dist'), name = null, addonDir = ADDON_DIR, date = buildDate() } = {}) {
   const { version, entries } = addonEntries({ addonDir });
   const buf = zip(entries, { date });
   fs.mkdirSync(outDir, { recursive: true });
-  const file = path.join(outDir, name || `NeverQuestAlone-${version}.zip`);
+  const file = path.join(outDir, name || `Voxwarden-${version}.zip`);
   fs.writeFileSync(file, buf);
   return { file, bytes: buf.length, files: entries.length };
 }

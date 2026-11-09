@@ -42,7 +42,7 @@ test('the scheme: nqa://app, standard and secure, nothing more', () => {
   assert.equal(ORIGIN, 'nqa://app');
   assert.equal(PAGE_URL, 'nqa://app/index.html');
   assert.deepEqual(schemePrivileges(), [{ scheme: 'nqa', privileges: { standard: true, secure: true } }]);
-  // The page's own files: markup, script and style, its images (NeverQuestAlone's mark, the in-game frames,
+  // The page's own files: markup, script and style, its images (Voxwarden's mark, the in-game frames,
   // the line icons) and its bundled faces.
   assert.deepEqual(Object.keys(MIME).sort(), ['.css', '.html', '.js', '.png', '.svg', '.webp', '.woff2']);
   assert.equal(MIME['.woff2'], 'font/woff2');

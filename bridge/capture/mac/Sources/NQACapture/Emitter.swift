@@ -5,7 +5,7 @@ import Foundation
 /// The process exits when the bridge goes away: socket closed or stdout broken.
 final class Emitter {
     private let queue = DispatchQueue(label: "nqa.capture.emit")
-    /// The bridge's socket once connected, else stdout (NeverQuestAlone's build asks who serves the
+    /// The bridge's socket once connected, else stdout (Voxwarden's build asks who serves the
     /// socket before anything is sent on it: PeerCheck.swift).
     private(set) var fd: Int32 = STDOUT_FILENO
     private var readSource: DispatchSourceRead?

@@ -15,7 +15,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 function files(dir, ext) {
   const out = [];
   for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
-    // A / path on every OS, as ALLOW names files (Windows CI 36645719445: addon\\NeverQuestAlone\\Paste.lua missed its allowance).
+    // A / path on every OS, as ALLOW names files (Windows CI 36645719445: addon\\Voxwarden\\Paste.lua missed its allowance).
     const rel = path.posix.join(dir, e.name);
     if (e.isDirectory() && e.name !== 'node_modules') out.push(...files(rel, ext));
     else if (e.isFile() && e.name.endsWith(ext)) out.push(rel);
@@ -35,7 +35,7 @@ const ALLOW = [
   // route is held to what a route from the app is).
   ['bridge/app/map-protocol.mjs', /^export const MAP_LIMITS = \{ .*\bquests: 6\b/],
   ['bridge/app/map-protocol.mjs', /^const q = Array\.isArray\(p\.q\) .*\.slice\(0, MAP_LIMITS\.quests\) : \[\];$/],
-  ['addon/NeverQuestAlone/Paste.lua', /^local MAP = \{ .*\bquests = 6\b/],
+  ['addon/Voxwarden/Paste.lua', /^local MAP = \{ .*\bquests = 6\b/],
 ];
 const allowed = (file, line) => ALLOW.some(([f, re]) => f === file && re.test(line.trim()));
 
@@ -70,9 +70,9 @@ test('quest caps: MAX_QUESTS (a stale 25 on WoW: Forever, whose log holds 40) is
     src.split('\n').forEach((l, i) => { if (/(?<![\w"])MAX_QUESTS(?![\w"])/.test(l)) found.push(`${file}:${i + 1}: ${l.trim()}`); });
   }
   assert.deepEqual(found, []);
-  const store = fs.readFileSync(path.join(ROOT, 'addon/NeverQuestAlone/Store.lua'), 'utf8');
+  const store = fs.readFileSync(path.join(ROOT, 'addon/Voxwarden/Store.lua'), 'utf8');
   assert.match(store, /function ns\.QuestLogMax\(/);
-  for (const file of ['addon/NeverQuestAlone/QoL.lua', 'addon/NeverQuestAlone/Chats.lua', 'addon/NeverQuestAlone/Companion.lua', 'addon/NeverQuestAlone/Map.lua']) {
+  for (const file of ['addon/Voxwarden/QoL.lua', 'addon/Voxwarden/Chats.lua', 'addon/Voxwarden/Companion.lua', 'addon/Voxwarden/Map.lua']) {
     assert.match(fs.readFileSync(path.join(ROOT, file), 'utf8'), /ns\.QuestLog(Max)?\(/, `${file} reads the log or its cap through Store.lua`);
   }
 });

@@ -49,7 +49,7 @@ test('no tracked path or file carries an earlier name', () => {
       if (!a || a.count !== n) found.push(`${f} (${n} × ${id})`);
     }
   }
-  assert.deepEqual(found.slice(0, 50), [], `${found.length} hit(s): an earlier name is back; write NeverQuestAlone's (rename spec §4)`);
+  assert.deepEqual(found.slice(0, 50), [], `${found.length} hit(s): an earlier name is back; write Voxwarden's (rename spec §4)`);
 });
 
 test('no file a player or visitor gets carries the retired gateway\'s name: the source export\'s own guard (the publish gate runs it too)', () => {
@@ -72,12 +72,12 @@ test('no file a player or visitor gets carries the personal handle', () => {
 
 test('the handle as the public repo\'s owner (moved to the owner\'s account, 2026-10-05) is fine; anywhere else it is a hit', () => {
   const login = rot13('gbzzltrbpb');
-  for (const fine of [`https://github.com/${login}/neverquestalone/releases`, `-R ${login}/neverquestalone --clobber`, `https://github.com/${login}/neverquestalone.git`,
-    `the latest release of ${login}/neverquestalone.`, `/github\\.com\\/${login}\\/neverquestalone\\/blob/`, `          owner: ${login}`, `"owner": "${login}",`]) {
+  for (const fine of [`https://github.com/${login}/voxwarden/releases`, `-R ${login}/voxwarden --clobber`, `https://github.com/${login}/voxwarden.git`,
+    `the latest release of ${login}/voxwarden.`, `/github\\.com\\/${login}\\/voxwarden\\/blob/`, `          owner: ${login}`, `"owner": "${login}",`]) {
     assert.deepEqual(handleHits(fine), [], fine);
   }
   for (const leak of [`/Users/${login}/code`, `${login}/another-repo`, `com.${login}.app`, `by ${login}`, `1+${login}@users.noreply.github.com`,
-    `${login}/neverquestalone-private`, `${login}.github.io/neverquestalone`, `x${login}/neverquestalone`, `owner: ${login}x`]) {
+    `${login}/voxwarden-private`, `${login}.github.io/voxwarden`, `x${login}/voxwarden`, `owner: ${login}x`]) {
     assert.equal(handleHits(leak).length, 1, leak);
   }
 });

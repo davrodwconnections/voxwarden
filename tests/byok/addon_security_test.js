@@ -30,7 +30,7 @@ function byok(opts = {}) {
   return vm;
 }
 // The bridge's own refusal, word for word, as one string (bones-ux-writer round 2, UX-W08).
-const REFUSED = 'That looks like an API key, so it wasn\'t sent. Keys go in the NeverQuestAlone app, never in game.';
+const REFUSED = 'That looks like an API key, so it wasn\'t sent. Keys go in the Voxwarden app, never in game.';
 
 const KEYS = [
   'sk-ant-api03-CANARYabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP',
@@ -363,7 +363,7 @@ function UnitIsPlayer(u) return true end
 function UnitReaction(a, b) return 5 end
 `;
   for (const vm of [capless({ extra: SELF }), byok({ extra: SELF })]) {
-    assert.equal(vm.evaluate('NeverQuestAlone.QuickAsk("target")'), 'true');
+    assert.equal(vm.evaluate('Voxwarden.QuickAsk("target")'), 'true');
     const wire = vm.outboxWires().at(-1).wire;
     assert.ok(wire.includes('What do you know about my target: myself ('), wire);
     assert.ok(!wire.includes('my target: Testchar'), 'not the character\'s name');

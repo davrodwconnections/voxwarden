@@ -153,7 +153,7 @@ export function guardNetworkEnv(env = process.env) {
 }
 
 /** The one line the app shows, logs and writes to stderr when it won't start because of the environment. */
-export const refuseLine = name => `NeverQuestAlone won’t start while ${name} is set, because it would send your API key through a proxy. Start it again without that variable.`;
+export const refuseLine = name => `Voxwarden won’t start while ${name} is set, because it would send your API key through a proxy. Start it again without that variable.`;
 
 // ---------------------------------------------------------------------------
 // What a dependency's loader reads to choose the code it loads (SR-05). The key store's binding
@@ -294,4 +294,4 @@ export function launchSwitches({ packaged = true, hasSwitch = () => false, argv 
 }
 
 /** The one line a packaged app writes to stderr when it won't start with a switch (shown in plain ASCII, at most 64 characters). */
-export const switchLine = name => `NeverQuestAlone won’t start with --${String(name).replace(/[^\x21-\x7e]/g, '?').slice(0, 64)}. Start it again without it.`;
+export const switchLine = name => `Voxwarden won’t start with --${String(name).replace(/[^\x21-\x7e]/g, '?').slice(0, 64)}. Start it again without it.`;

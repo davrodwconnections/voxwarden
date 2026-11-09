@@ -1,4 +1,4 @@
-/* NeverQuestAlone's window: "the companion panel" (the redesign's build spec, 2026-09-30), drawn
+/* Voxwarden's window: "the companion panel" (the redesign's build spec, 2026-09-30), drawn
    the way a modern Mac utility is (the 1.3 refresh, after Raycast): flat near-black surfaces, no
    gradients and no glows, compact rows, quiet sentence-case section names, key hints in small
    chips. The colours are the landing's shared tokens (one product); the type is the landing's own
@@ -493,8 +493,8 @@ h1 { font: 500 26px/32px var(--sans); letter-spacing: 0; color: var(--text); }
 /* The picture of where your data goes. */
 .flow-arrow { position: relative; height: 2px; background: var(--accent); border-radius: 1px; }
 .flow-arrow i { position: absolute; right: 1px; top: -4px; width: 8px; height: 8px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); transform: rotate(45deg); }
-/* NeverQuestAlone sits apart under Your Mac, muted, with no line to the arrow: it's off the path (CL-design-40). */
-/* NeverQuestAlone: a quiet node that gets nothing (CL-design-24), never an error's red strike. */
+/* Voxwarden sits apart under Your Mac, muted, with no line to the arrow: it's off the path (CL-design-40). */
+/* Voxwarden: a quiet node that gets nothing (CL-design-24), never an error's red strike. */
 
 /* ---------------------------------------------------------------------------
    Home: the alert, the stats, the last request. */

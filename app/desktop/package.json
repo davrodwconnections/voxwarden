@@ -1,11 +1,11 @@
 {
-  "name": "neverquestalone",
-  "productName": "NeverQuestAlone",
+  "name": "voxwarden",
+  "productName": "Voxwarden",
   "version": "1.4.19",
   "private": true,
   "description": "The intelligent quest companion for World of Warcraft: Forever",
   "license": "MIT",
-  "author": "The NeverQuestAlone authors",
+  "author": "David Rodriguez",
   "type": "module",
   "main": "main.mjs",
   "engines": {
@@ -36,5 +36,13 @@
     "@electron/get": {
       "undici": "7.30.1"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davrodwconnections/voxwarden.git"
+  },
+  "homepage": "https://github.com/davrodwconnections/voxwarden",
+  "bugs": {
+    "url": "https://github.com/davrodwconnections/voxwarden/issues"
   }
 }

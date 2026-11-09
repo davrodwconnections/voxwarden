@@ -15,7 +15,7 @@
 // button's second half: a helper that can't start (missing, unsigned, a socket that won't open) is
 // tried again at once, its backoff started over.
 //
-// - darwin: "NeverQuestAlone Capture.app" (ScreenCaptureKit) on <state>/capture.sock
+// - darwin: "Voxwarden Capture.app" (ScreenCaptureKit) on <state>/capture.sock
 //   (0600, born under umask 077), launched through LaunchServices so the Screen
 //   Recording grant belongs to the app, never to node (V-13). It is launched only
 //   if it satisfies a code requirement: the bundle id from capture/mac/BUNDLE_ID
@@ -74,7 +74,7 @@ export function readBundleId(file = BUNDLE_ID_FILE) {
 export const CAPTURE_BUNDLE_ID = readBundleId();
 
 /** The local self-signed identity: a code-signing certificate with exactly this name (build-app.sh says how). */
-export const IDENTITY_NAME = 'NeverQuestAlone Local Code Signing';
+export const IDENTITY_NAME = 'Voxwarden Local Code Signing';
 
 /** What codesign says about an app (diagnostics only; the gate is the requirement). */
 export function appSigning(app, run = spawnSync) {
@@ -386,7 +386,7 @@ export function checkPeer(socket, { exe, requirement, timeoutMs = PEER_CHECK_MS,
       if (settled) return;
       settled = true;
       if (timer) clearTimeout(timer);
-      resolve({ ok, why: ok ? null : String(why || 'refused').replace(/^NeverQuestAlone Capture: refused: /, '').slice(0, 200) });
+      resolve({ ok, why: ok ? null : String(why || 'refused').replace(/^Voxwarden Capture: refused: /, '').slice(0, 200) });
     };
     if (!exe) { done(false, 'no capture helper executable to check with'); return; }
     let child;

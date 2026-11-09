@@ -18,7 +18,7 @@ test('config: the byok section carries the PRD defaults (DB7, DB8, DB14, DB22, R
   assert.equal(b.provider, 'anthropic', 'no AI chosen yet: Claude with no key, so setup opens on its first screen');
   assert.equal(b.model, null, 'the manifest\'s pinned model');
   assert.equal(b.effort, 'low', 'DB22');
-  assert.equal(b.persona.name, 'NeverQuestAlone');
+  assert.equal(b.persona.name, 'Voxwarden');
   assert.deepEqual(b.caps, { dailyUsd: null }, 'no limits of the build\'s own (the owner, 2026-09-26): no spend cap unless the player sets one');
   assert.deepEqual(b.privacy, { identity: false, otherNames: false, companion: false, echo: false, gameContext: true }, 'automatic turns off until the player opts in');
   assert.equal(b.transcripts.retentionDays, 30);
@@ -42,7 +42,7 @@ test('config: the defaults are the product\'s: no backend key (there is one), no
 test('code health BR-28: an old config.json\'s logLevel, sessions, gameContext and companion load to nothing; saving keeps them in the file, unread', () => {
   const dir = tmp();
   const f = path.join(dir, 'config.json');
-  const old = { logLevel: 'debug', sessions: { thinking: 'high', labels: { main: 'NeverQuestAlone' } }, gameContext: false, companion: { enabled: true, maxTurnsPerDay: 3 },
+  const old = { logLevel: 'debug', sessions: { thinking: 'high', labels: { main: 'Voxwarden' } }, gameContext: false, companion: { enabled: true, maxTurnsPerDay: 3 },
     byok: { provider: 'anthropic', privacy: { companion: false, gameContext: true } } };
   fs.writeFileSync(f, JSON.stringify(old));
   for (const c of [loadConfig(f), configWithDefaults(loadConfig(f))]) {

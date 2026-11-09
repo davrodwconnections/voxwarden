@@ -490,7 +490,7 @@ const act = (id, label, desktop = false) => ({ id, label, desktop });
 export const PICK_ANOTHER_AI = Object.freeze(act('pick_provider', 'Pick Another AI', true));
 
 // userLine(err, names) → {headline, detail, action, alt?}. names: provider (display
-// name, <P>), model (<M>), companion (<Name>), product ("NeverQuestAlone"),
+// name, <P>), model (<M>), companion (<Name>), product ("Voxwarden"),
 // fallbackModel (<M2>), capMicros (the daily spend cap the player set), final (no retries left), now,
 // timeZone, thinking (false: the model has no thinking levels, so no Thinking to lower). Provider
 // text never appears; these lines are the whole message.
@@ -498,15 +498,15 @@ export function userLine(err, names = {}) {
   // [UX-W07] With no name, "Your AI company" ("provider" is never a player's word).
   const P = names.provider || err?.provider || 'Your AI company';
   const M = names.model || 'This model';
-  const N = names.companion || 'NeverQuestAlone';
-  const product = names.product || 'NeverQuestAlone';
+  const N = names.companion || 'Voxwarden';
+  const product = names.product || 'Voxwarden';
   const now = names.now ?? Date.now();
   const tz = names.timeZone;
   const final = !!names.final;
   const unnamed = P === 'Your AI company';
   const fit = t => (unnamed ? t.replace(/([Yy])our Your AI company/g, '$1our AI company').replace(/([^.!?] )Your AI company/g, '$1your AI company') : t);
   const line = (headline, detail, action) => ({ headline: fit(headline), detail: fit(detail), action });
-  // In game the fix is named where it is, "the NeverQuestAlone app" (STYLE §2.1), and a button
+  // In game the fix is named where it is, "the Voxwarden app" (STYLE §2.1), and a button
   // is clicked (§3); labels are Title Case verbs (§2.3, §6), Retry for every resend. [PUI-01]
   const app = `the ${product} app`;
   switch (err?.kind) {

@@ -16,11 +16,11 @@ function ring(vm) {
 }
 // A slot with none of the new caps.
 function oldSlot({ push = 0, nonce = null, records = [], caps = '"state", "evt", "think", "z", "ctx"', gw = '{ state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }' } = {}) {
-  return `{ v = 2, ts = "2026-09-26T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.3.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = {}, caps = { ${caps} }, think = "medium" }, gw = ${gw}, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {}, records = { ${records.join(', ')} } }`;
+  return `{ v = 2, ts = "2026-09-26T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.3.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = {}, caps = { ${caps} }, think = "medium" }, gw = ${gw}, agents = { { id = "main", name = "Voxwarden" } }, chats = {}, records = { ${records.join(', ')} } }`;
 }
 const CAPS = '"state", "evt", "think", "z", "ctx", "provider", "usage", "ekind", "model"';
 function provider(o = {}) {
-  const p = { id: 'anthropic', name: 'Anthropic', model: 'claude-haiku-4-5', modelName: 'Haiku 4.5', effort: 'low', effortSupported: true, auth: 'key', keyState: 'ok', privacy: 'cloud-no-train', product: 'NeverQuestAlone', companion: 'NeverQuestAlone', ...o };
+  const p = { id: 'anthropic', name: 'Anthropic', model: 'claude-haiku-4-5', modelName: 'Haiku 4.5', effort: 'low', effortSupported: true, auth: 'key', keyState: 'ok', privacy: 'cloud-no-train', product: 'Voxwarden', companion: 'Voxwarden', ...o };
   return '{ ' + Object.entries(p).filter(([, v]) => v !== null).map(([k, v]) => `${k} = ${typeof v === 'string' ? lstr(v) : v}`).join(', ') + ' }';
 }
 // bridge.usage as the public build sends it: no limits of its own (no capMicros
@@ -34,7 +34,7 @@ const PLAYER_CAP = 1000000;
 const capped = (o = {}) => usage({ capMicros: PLAYER_CAP, ...o });
 // A BYOK bridge's slot: the new caps, bridge.provider, bridge.usage and rt, and
 // bridge.backend "byok" (the core names the public build in every slot).
-function byokSlot({ caps = CAPS, p = provider(), u = usage(), rt = '{ state = "ready" }', records = [], nonce = null, push = 0, companion = 'NeverQuestAlone' } = {}) {
+function byokSlot({ caps = CAPS, p = provider(), u = usage(), rt = '{ state = "ready" }', records = [], nonce = null, push = 0, companion = 'Voxwarden' } = {}) {
   return `{ v = 2, ts = "2026-09-26T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = {}, caps = { ${caps} }, think = "medium", backend = "byok", provider = ${p}, usage = ${u} }, gw = { state = "ready", ver = "byok-1", queued = 0 }, rt = ${rt}, agents = { { id = "main", name = ${lstr(companion)} } }, chats = {}, records = { ${records.join(', ')} } }`;
 }
 // A copy of the addon an earlier desktop app installed (the consolidation plan's

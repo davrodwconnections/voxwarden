@@ -1,4 +1,4 @@
-// Parity (open-shell PRD §2, §3; lane 2a): until the shell and the WoW plugin are split, NeverQuestAlone
+// Parity (open-shell PRD §2, §3; lane 2a): until the shell and the WoW plugin are split, Voxwarden
 // sends the AI and writes the game exactly what it did before the split began. For each case of
 // tools/last-request-fixtures.mjs (game state, a message or a check-in, and settings in), byte for
 // byte, with only times and random ids normalized:
@@ -38,15 +38,15 @@ test('parity: a recording is read through today\'s normalizer: a publish count i
   const ids = { a: 'aaaaaaaaaaaaaaaa', b: 'bbbbbbbbbbbbbbbb', nil: 'cccccccccccccccc', inbox: 'dddddddddddddddd' };
   const old = {
     about: 'a recording made before the rule',
-    files: { 'NQA_S###/Inbox.lua [001-004]': ids.a, 'NQA_S###/Inbox.lua [005-009]': ids.b, 'NQA_S###/Inbox.lua [010-200]': ids.nil, 'NeverQuestAlone/Inbox.lua': ids.inbox, '<bridge state>/outbox.jsonl': null },
+    files: { 'NQA_S###/Inbox.lua [001-004]': ids.a, 'NQA_S###/Inbox.lua [005-009]': ids.b, 'NQA_S###/Inbox.lua [010-200]': ids.nil, 'Voxwarden/Inbox.lua': ids.inbox, '<bridge state>/outbox.jsonl': null },
     texts: { [ids.a]: at(2), [ids.b]: at(3), [ids.nil]: 'NQA_SlotData = nil\n', [ids.inbox]: `NQA_Inbox = { push = 3 }\n` },
   };
   const read = renormalized(old);
   const slot = Object.keys(read.texts).find(id => read.texts[id].includes('NQA_SlotData = {'));
-  assert.deepEqual(Object.keys(read.files), ['NQA_S###/Inbox.lua [001-009]', 'NQA_S###/Inbox.lua [010-200]', 'NeverQuestAlone/Inbox.lua', '<bridge state>/outbox.jsonl']);
+  assert.deepEqual(Object.keys(read.files), ['NQA_S###/Inbox.lua [001-009]', 'NQA_S###/Inbox.lua [010-200]', 'Voxwarden/Inbox.lua', '<bridge state>/outbox.jsonl']);
   assert.equal(read.files['NQA_S###/Inbox.lua [001-009]'], slot);
   assert.match(read.texts[slot], /push = <push>,/);
-  assert.equal(read.texts[read.files['NeverQuestAlone/Inbox.lua']], 'NQA_Inbox = { push = <push> }\n');
+  assert.equal(read.texts[read.files['Voxwarden/Inbox.lua']], 'NQA_Inbox = { push = <push> }\n');
   assert.equal(read.files['<bridge state>/outbox.jsonl'], null);
   assert.equal(Object.keys(read.texts).length, 3, 'the two slot tables are one text now');
   assert.deepEqual(renormalized(read), read, 'today\'s recordings read as they are');

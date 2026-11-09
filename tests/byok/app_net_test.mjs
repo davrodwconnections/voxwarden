@@ -29,7 +29,7 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\])\/\/
 
 test('the update hosts are exactly GitHub releases and its two asset CDNs; not its API, which a public feed never uses (SY-14)', () => {
   assert.deepEqual([...UPDATE_HOSTS].sort(), ['github.com', 'objects.githubusercontent.com', 'release-assets.githubusercontent.com']);
-  assert.equal(checkShellRequest('https://api.github.com/repos/OWNER/neverquestalone/releases/latest', ON).allow, false);
+  assert.equal(checkShellRequest('https://api.github.com/repos/OWNER/voxwarden/releases/latest', ON).allow, false);
   assert.equal(UPDATER_PARTITION, 'electron-updater');
 });
 
@@ -40,8 +40,8 @@ test('allowed: the app page and its files from nqa://app/; https to each update 
     assert.equal(v.kind, 'page');
   }
   for (const url of [
-    'https://github.com/OWNER/neverquestalone/releases.atom',
-    'https://github.com/OWNER/neverquestalone/releases/download/v0.2.0/latest-mac.yml',
+    'https://github.com/OWNER/voxwarden/releases.atom',
+    'https://github.com/OWNER/voxwarden/releases/download/v0.2.0/latest-mac.yml',
     'https://objects.githubusercontent.com/github-production-release-asset/1/2?X-Amz-Signature=abc',
     'https://release-assets.githubusercontent.com/github-production-release-asset/1/2',
     'https://GITHUB.COM/OWNER/r/releases.atom',
@@ -223,7 +223,7 @@ test('the environment Node reads for the bridge\'s connections: certificate chec
     assert.ok(Object.hasOwn(env, name), `${name} left as it is`);
   }
   assert.equal(guardNetworkEnv({ NODE_EXTRA_CA_CERTS: '/tmp/x.pem', NODE_USE_ENV_PROXY: '1' }).refuse, 'NODE_USE_ENV_PROXY');
-  assert.equal(refuseLine('NODE_USE_ENV_PROXY'), 'NeverQuestAlone won’t start while NODE_USE_ENV_PROXY is set, because it would send your API key through a proxy. Start it again without that variable.');
+  assert.equal(refuseLine('NODE_USE_ENV_PROXY'), 'Voxwarden won’t start while NODE_USE_ENV_PROXY is set, because it would send your API key through a proxy. Start it again without that variable.');
   // The fuse that does it (scripts/fuses.cjs; tests/byok/app_build_test.mjs pins the whole plan), and the reasons, beside the list.
   assert.equal(createRequire(import.meta.url)(path.join(APP, 'scripts', 'fuses.cjs')).FUSE_PLAN.EnableNodeOptionsEnvironmentVariable, false);
   const src = fs.readFileSync(path.join(APP, 'src', 'net-guard.mjs'), 'utf8');
@@ -378,7 +378,7 @@ test('main.mjs: the launch is checked in src/launch-guard.mjs, the first of the 
   const at = s => { const i = lg.indexOf(s); assert.ok(i > 0, s); return i; };
   assert.ok(at('export const LOADER_FOUND = guardLoaderEnv(process.env);') < at('export const NET_ENV = guardNetworkEnv(process.env);'));
   assert.ok(at('export const NET_ENV') < at('const refused = launchSwitches({ packaged: app.isPackaged, hasSwitch: s => app.commandLine.hasSwitch(s), argv: process.argv });'));
-  assert.match(lg.slice(at('const refused = ')), /^const refused = [^\n]+\nif \(refused\.length\) \{\n\s+for \(const s of refused\) \{ try \{ app\.commandLine\.removeSwitch\(s\); \} catch \{\} \}\n\s+try \{ fs\.writeSync\(2, `\$\{switchLine\(refused\[0\]\)\}\\n`\); \} catch \{\}\n\s+if \(process\.argv\.includes\('--self-test'\)\) \{\n\s+const error = DEBUG_SWITCHES\.includes\(refused\[0\]\) \? 'debug_switch' : 'launch_switch';\n\s+try \{ fs\.writeSync\(1, `\$\{JSON\.stringify\(\{ selfTest: 'neverquestalone', ok: false, error, switch: refused\[0\] \}\)\}\\n`\); \} catch \{\}\n\s+\}\n\s+app\.exit\(1\);\n\}/);
+  assert.match(lg.slice(at('const refused = ')), /^const refused = [^\n]+\nif \(refused\.length\) \{\n\s+for \(const s of refused\) \{ try \{ app\.commandLine\.removeSwitch\(s\); \} catch \{\} \}\n\s+try \{ fs\.writeSync\(2, `\$\{switchLine\(refused\[0\]\)\}\\n`\); \} catch \{\}\n\s+if \(process\.argv\.includes\('--self-test'\)\) \{\n\s+const error = DEBUG_SWITCHES\.includes\(refused\[0\]\) \? 'debug_switch' : 'launch_switch';\n\s+try \{ fs\.writeSync\(1, `\$\{JSON\.stringify\(\{ selfTest: 'voxwarden', ok: false, error, switch: refused\[0\] \}\)\}\\n`\); \} catch \{\}\n\s+\}\n\s+app\.exit\(1\);\n\}/);
 
   // main.mjs: the environment refusal in start(), before the bridge boots: its line in the log, on stderr and in the box.
   const main = code(mainSrc);
@@ -387,7 +387,7 @@ test('main.mjs: the launch is checked in src/launch-guard.mjs, the first of the 
   const start = main.slice(main.indexOf('async function start()'));
   assert.ok(start.indexOf('if (NET_ENV.refuse)') > start.indexOf('await app.whenReady()'), 'the box needs ready');
   assert.ok(start.indexOf('if (NET_ENV.refuse)') < start.indexOf('loadApi('), 'refused before the bridge boots');
-  assert.match(start, /if \(NET_ENV\.refuse\) \{\n\s+const line = refuseLine\(NET_ENV\.refuse\);\n\s+log\(line\);\n\s+try \{ fs\.writeSync\(2, `\$\{line\}\\n`\); \} catch \{\}\n\s+if \(HEADLESS\) \{\n\s+try \{ fs\.writeSync\(1, `\$\{JSON\.stringify\(\{ selfTest: 'neverquestalone', ok: false, error: 'env_proxy', variable: NET_ENV\.refuse \}\)\}\\n`\); \} catch \{\}\n[\s\S]*?dialog\.showErrorBox\('NeverQuestAlone', line\);\n\s+\}\n\s+app\.exit\(1\);\n\s+return;/);
+  assert.match(start, /if \(NET_ENV\.refuse\) \{\n\s+const line = refuseLine\(NET_ENV\.refuse\);\n\s+log\(line\);\n\s+try \{ fs\.writeSync\(2, `\$\{line\}\\n`\); \} catch \{\}\n\s+if \(HEADLESS\) \{\n\s+try \{ fs\.writeSync\(1, `\$\{JSON\.stringify\(\{ selfTest: 'voxwarden', ok: false, error: 'env_proxy', variable: NET_ENV\.refuse \}\)\}\\n`\); \} catch \{\}\n[\s\S]*?dialog\.showErrorBox\('Voxwarden', line\);\n\s+\}\n\s+app\.exit\(1\);\n\s+return;/);
   assert.match(start, /const removedEnv = \[\.\.\.LOADER_FOUND\.removed, \.\.\.NET_ENV\.removed\];\n\s+if \(removedEnv\.length\) log\(/);
   // The self-test's pass names each check (AP-02), the loader's too: gone, and the key store's binding loads (packaged).
   assert.match(main, /c\.networkEnv = \{/);
@@ -408,7 +408,7 @@ test('a packaged app won’t start with Chromium’s debugging switches, V8 flag
   for (const s of ['inspect', 'inspect-brk']) assert.ok(!DEBUG_SWITCHES.includes(s), s);
   // Chromium's own parser (app.commandLine.hasSwitch) as a set; argv as process.argv has it.
   const line = (...on) => s => on.includes(s);
-  const exe = '/Applications/NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone';
+  const exe = '/Applications/Voxwarden.app/Contents/MacOS/Voxwarden';
   for (const s of DEBUG_SWITCHES) {
     assert.deepEqual(debugSwitches({ packaged: true, hasSwitch: line(s), argv: [exe] }), [s], `${s}: Chromium sees it`);
     for (const a of [`--${s}`, `--${s}=9222`, `-${s}`, `/${s}`, `--${s.toUpperCase()}=x`]) {
@@ -422,7 +422,7 @@ test('a packaged app won’t start with Chromium’s debugging switches, V8 flag
   // A development run stays debuggable; a command line that can't answer is refused.
   assert.deepEqual(debugSwitches({ packaged: false, hasSwitch: line(...DEBUG_SWITCHES), argv: [exe, '--remote-debugging-port=9222'] }), []);
   assert.deepEqual(debugSwitches({ packaged: true, hasSwitch: () => { throw new Error('no command line'); }, argv: [exe] }), [...DEBUG_SWITCHES]);
-  assert.equal(switchLine('remote-debugging-port'), 'NeverQuestAlone won’t start with --remote-debugging-port. Start it again without it.');
+  assert.equal(switchLine('remote-debugging-port'), 'Voxwarden won’t start with --remote-debugging-port. Start it again without it.');
   // debugSwitches is launchSwitches' Chromium-parser half for these (SR-05; src/launch-guard.mjs calls launchSwitches):
   // whatever it finds, the launch check refuses, first, in its order, wherever argv hides it.
   for (const s of DEBUG_SWITCHES) {
@@ -433,8 +433,8 @@ test('a packaged app won’t start with Chromium’s debugging switches, V8 flag
 });
 
 test('a packaged app starts only with the switches its own launchers pass: every allowed form starts it, the four process-launch switches and anything else are refused in every syntax, and a development run keeps them all (SR-05)', () => {
-  const MAC = '/Applications/NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone';
-  const WIN = 'C:\\Users\\p\\AppData\\Local\\Programs\\NeverQuestAlone\\NeverQuestAlone.exe';
+  const MAC = '/Applications/Voxwarden.app/Contents/MacOS/Voxwarden';
+  const WIN = 'C:\\Users\\p\\AppData\\Local\\Programs\\Voxwarden\\Voxwarden.exe';
   const exeFor = platform => (platform === 'win32' ? WIN : MAC);
   const check = (platform, args, opts = {}) => launchSwitches({ packaged: true, platform, argv: [exeFor(platform), ...args], ...opts });
   const line = (...on) => s => on.includes(s);
@@ -503,6 +503,6 @@ test('a packaged app starts only with the switches its own launchers pass: every
   assert.equal(allowedSwitch('use-mock-keychain', { platform: 'darwin' }), false);
   assert.equal(allowedSwitch('use-mock-keychain', { platform: 'darwin', selfTest: true }), true);
   assert.equal(allowedSwitch('embedding', { platform: 'win32' }), true);
-  assert.equal(switchLine('gpu-launcher'), 'NeverQuestAlone won’t start with --gpu-launcher. Start it again without it.');
-  assert.equal(switchLine(`x\u001b[31m${'y'.repeat(80)}`), `NeverQuestAlone won’t start with --x?[31m${'y'.repeat(58)}. Start it again without it.`, 'shown in plain ASCII, at most 64 characters');
+  assert.equal(switchLine('gpu-launcher'), 'Voxwarden won’t start with --gpu-launcher. Start it again without it.');
+  assert.equal(switchLine(`x\u001b[31m${'y'.repeat(80)}`), `Voxwarden won’t start with --x?[31m${'y'.repeat(58)}. Start it again without it.`, 'shown in plain ASCII, at most 64 characters');
 });

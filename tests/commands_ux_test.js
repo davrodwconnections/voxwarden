@@ -18,7 +18,7 @@ function ring(vm, bell = null) {
   return vm;
 }
 function slotLua({ push = 0, nonce = null } = {}) {
-  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.3.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = {} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {}, records = {} }`;
+  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.3.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = {} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {}, records = {} }`;
 }
 function confirmHello(vm) {
   vm.advance(3.1);
@@ -44,7 +44,7 @@ const answer = vm => (vm.evaluate('NQAFrame.shown') === 'true' ? notice(vm) : vm
 const pick = (vm, label) => vm.run(`for _, b in ipairs(NQAPopupMenu.items) do if b.shown and b.label.text == ${JSON.stringify(label)} then b.scripts.OnClick(b) end end`);
 
 // Every command word and argument main took before this change (COMMAND_ARGS at
-// 3fae333): each must still run as a command, not go to NeverQuestAlone as a message.
+// 3fae333): each must still run as a command, not go to Voxwarden as a message.
 const OLD = [
   'help', 'diag', 'slots', 'probe', 'delete', 'stop', 'reload', 'copy', 'state', 'apicheck',
   'new', 'new Recap', 'rename', 'rename Recap', 'chat', 'chat 1', 'chats', 'chats 1', 'pin', 'pin 1', 'unpin', 'unpin 1',
@@ -60,7 +60,7 @@ const OLD = [
   'waypoint', 'waypoint on', 'waypoint off', 'tooltips', 'tooltips on', 'tooltips off', 'quips', 'quips on', 'quips off', 'roll', 'settings',
   'model', 'model gpt',
 ];
-// The old roadmap's words (M2), which only ever answered "comes in a later version": words for NeverQuestAlone now.
+// The old roadmap's words (M2), which only ever answered "comes in a later version": words for Voxwarden now.
 const ROADMAP = ['steer go left', 'reset', 'agent', 'agent coder', 'main', 'main on', 'attach sponsor', 'detach', 'inbox', 'watch cron on', 'quiet', 'quiet 30', 'quiet off', 'more', 'rhook', 'rhook on'];
 
 test('every old command and alias still runs as a command: nothing a player, a doc or the owner types stops working', () => {
@@ -71,7 +71,7 @@ test('every old command and alias still runs as a command: nothing a player, a d
   };
   const broken = OLD.filter(l => isCmd(l) !== 'true');
   assert.deepEqual(broken, [], 'no longer commands');
-  assert.deepEqual(ROADMAP.filter(l => isCmd(l) === 'true'), [], 'the old roadmap\'s words go to NeverQuestAlone as messages');
+  assert.deepEqual(ROADMAP.filter(l => isCmd(l) === 'true'), [], 'the old roadmap\'s words go to Voxwarden as messages');
   assert.deepEqual([vm.evaluate('SLASH_BONES1'), vm.evaluate('SLASH_BONES2'), vm.evaluate('SLASH_BONESREPLY1')], ['/nqa', '/bones', '/br'], 'the slash words: /nqa, and /bones as its silent alias');
 });
 
@@ -228,7 +228,7 @@ test('aliases: /nqa options and /nqa config open Settings; /nqa hud bar is the H
   assert.deepEqual([vm.evaluate('NQADB.settings.hudMin'), vm.evaluate('NQADB.settings.hudCompass')], ['true', 'false']);
   vm.slash('hud full');
   vm.slash('hud');
-  const said = (vm.chatLines().pop() || '').replace(/^\|c[0-9a-f]{8}\[NeverQuestAlone\]\|r /, '');
+  const said = (vm.chatLines().pop() || '').replace(/^\|c[0-9a-f]{8}\[Voxwarden\]\|r /, '');
   // || shows as one |; a lone | followed by r would be a colour reset and eat the letter.
   assert.doesNotMatch(said.replace(/\|\|/g, ''), /\|[a-zA-Z]/, `no stray escape: ${said}`);
   assert.match(said, /^The HUD is on\. Change it with \/nqa hud on, off, full, bar, compass or reset\.$/, said);
@@ -242,17 +242,17 @@ test('the window\'s portrait: a click opens its menu (Open Settings, Bind Keys),
   assert.ok(vm.num('NS.UI.ui.portraitBtn:GetFrameLevel()') >= 510, 'over PortraitFrameTemplate\'s portrait (level 510+)');
   vm.run(`${p} p.scripts.OnClick(p, "LeftButton")`);
   assert.deepEqual(menuItems(vm), ['Open Settings', 'Bind Keys']);
-  assert.equal(menuTitle(vm), 'NeverQuestAlone');
+  assert.equal(menuTitle(vm), 'Voxwarden');
   pick(vm, 'Open Settings');
   assert.equal(vm.evaluate('NQASettings.shown'), 'true');
   vm.run('NQASettings:Hide()');
   vm.run(`${p} p.scripts.OnClick(p, "RightButton")`);
   assert.deepEqual(menuItems(vm), ['Open Settings', 'Bind Keys'], 'right-click, the same');
   pick(vm, 'Bind Keys');
-  assert.ok(vm.chatLines().some(l => l.includes('Options > Keybindings > NeverQuestAlone')), 'no Settings API here: it says where (the keys\' own section, C-127)');
-  // Its tooltip: NeverQuestAlone, and what a click and a drag do.
+  assert.ok(vm.chatLines().some(l => l.includes('Options > Keybindings > Voxwarden')), 'no Settings API here: it says where (the keys\' own section, C-127)');
+  // Its tooltip: Voxwarden, and what a click and a drag do.
   const tip = tipOf(vm, `${p} p.scripts.OnEnter(p)`);
-  assert.match(tip, /^NeverQuestAlone\n/, tip);
+  assert.match(tip, /^Voxwarden\n/, tip);
   assert.match(tip, /Click for Settings and key bindings/, tip);
   assert.equal(vm.evaluate('NS.UI.ui.portraitBtn.glow.layer'), 'HIGHLIGHT', 'the round glow a bag\'s portrait shows under the pointer');
   assert.match(tip, /Drag to move the window/, tip);
@@ -288,7 +288,7 @@ test('Settings: Screen Reading off is stream mode (nothing drawn, messages wait 
   vm.slash('settings');
   const idx = vm.num('(function() for i, sw in ipairs(NS.Settings.SWITCHES) do if sw[2] == "Screen Reading" then return i end end end)()');
   assert.ok(idx > 0, 'a Screen Reading switch');
-  assert.equal(vm.evaluate(`NS.Settings.SWITCHES[${idx}][1]`), 'What NeverQuestAlone Knows');
+  assert.equal(vm.evaluate(`NS.Settings.SWITCHES[${idx}][1]`), 'What Voxwarden Knows');
   assert.match(vm.evaluate(`NS.Settings.SWITCHES[${idx - 1}][2]`), /^Check-Ins$/, 'right after the Check-Ins row (the fallback window lists them in order)');
   assert.equal(vm.evaluate(`NS.Settings.SWITCHES[${idx}][6]`), 'true', 'on by default');
   // The tooltip is a function (its line changes while the app's switch is off).
@@ -348,7 +348,7 @@ test('Settings: Screen Reading off is stream mode (nothing drawn, messages wait 
 
 // The desktop app's Screen Reading switch (its Your data page; the orchestrator's trust plan, 2026-10-03):
 // off there wins over this addon's own, which is kept; the slot says it (bridge.reading, cap reading).
-test('Screen Reading off in the NeverQuestAlone app: nothing is drawn, the player\'s own switch and mode word are kept, and every line names the app; on again draws again', () => {
+test('Screen Reading off in the Voxwarden app: nothing is drawn, the player\'s own switch and mode word are kept, and every line names the app; on again draws again', () => {
   const vm = confirmHello(newVM().login());
   const slot = reading => `NS.Transport.HandleSlotData({ v = NS.PROTOCOL, token = NQADB.token, now = time(), bridge = { caps = { "reading" }, reading = "${reading}" }, records = {} }, "slot")`;
   const T = () => [vm.evaluate('NQADB.settings.mode'), vm.evaluate('NQADB.settings.stream'), vm.evaluate('NS.Transport.StripOut()'), vm.evaluate('NS.Transport.ModeWord()'), vm.evaluate('NS.Transport.DesktopReadingOff()')];
@@ -360,19 +360,19 @@ test('Screen Reading off in the NeverQuestAlone app: nothing is drawn, the playe
   vm.slash('settings');
   const idx = vm.num('(function() for i, sw in ipairs(NS.Settings.SWITCHES) do if sw[2] == "Screen Reading" then return i end end end)()');
   assert.equal(vm.evaluate(`NS.Settings.SWITCHES[${idx}][3]()`), 'true', 'the box keeps the player\'s own choice, as Check-Ins does');
-  assert.match(vm.evaluate(`NS.Settings.SWITCHES[${idx}][5]()`), /It's off on the NeverQuestAlone app's Your data page right now, so your messages wait for a reload; turn it back on there too\.$/);
+  assert.match(vm.evaluate(`NS.Settings.SWITCHES[${idx}][5]()`), /It's off on the Voxwarden app's Your data page right now, so your messages wait for a reload; turn it back on there too\.$/);
   assert.equal(vm.evaluate('NS.UI.StatusText()'), 'No screen reading: your messages wait for a reload, and replies still come in.');
   vm.slash('reading');
-  assert.match(answer(vm), /Screen reading is off in the NeverQuestAlone app: nothing is drawn on your screen, so your messages wait for a reload, and replies still come in\. Screen reading, on the app's Your data page, turns it back on\.$/);
+  assert.match(answer(vm), /Screen reading is off in the Voxwarden app: nothing is drawn on your screen, so your messages wait for a reload, and replies still come in\. Screen reading, on the app's Your data page, turns it back on\.$/);
   // Off here too: both switches have to go back on, and every line says so (SRS-W-01).
   vm.slash('reading off');
-  assert.match(answer(vm), /Screen reading is off here and in the NeverQuestAlone app: .* Turn it back on in Settings and on the app's Your data page\.$/);
-  assert.equal(vm.evaluate('select(2, NS.UI.StatusText()).note'), "Turn it back on in Settings and on the NeverQuestAlone app's Your data page.");
+  assert.match(answer(vm), /Screen reading is off here and in the Voxwarden app: .* Turn it back on in Settings and on the app's Your data page\.$/);
+  assert.equal(vm.evaluate('select(2, NS.UI.StatusText()).note'), "Turn it back on in Settings and on the Voxwarden app's Your data page.");
   vm.slash('reading on');
   // Off here while the app's own switch was off: its helper was stopped, nobody heard, so nothing waits
   // for a reload (SY-17); the app's on again says this addon's mode afresh.
   assert.equal(vm.evaluate('NS.R.toldOff'), null);
-  assert.equal(vm.evaluate('NS.Transport.ModeLabel()'), 'stream (off in the NeverQuestAlone app)');
+  assert.equal(vm.evaluate('NS.Transport.ModeLabel()'), 'stream (off in the Voxwarden app)');
   // On again in the app: drawn again, said as pixel.
   vm.run(slot('on'));
   assert.deepEqual(T(), ['pixel', 'false', 'true', 'pixel', 'false'], 'on again: drawn again');
@@ -384,10 +384,10 @@ test('Screen Reading off in the NeverQuestAlone app: nothing is drawn, the playe
 
 // SY-01: the app's switch, both ways, reaches the game by the push bell alone (no /reload, no idle
 // check): off, the strip goes but the bell is still heard; on again, the next ring draws again.
-test('Screen Reading in the NeverQuestAlone app reaches the game by the push bell, off and on again', () => {
+test('Screen Reading in the Voxwarden app reaches the game by the push bell, off and on again', () => {
   const vm = confirmHello(newVM().login());
   const nonce = vm.evaluate('NS.R.nonce');
-  const lua = (reading, push) => `{ v = 2, ts = "2026-10-03T20:00:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.2", push = ${push}, nonce = "${nonce}", acked = {}, caps = { "reading" }, reading = "${reading}" }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = {}, records = {} }`;
+  const lua = (reading, push) => `{ v = 2, ts = "2026-10-03T20:00:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.2", push = ${push}, nonce = "${nonce}", acked = {}, caps = { "reading" }, reading = "${reading}" }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = {}, records = {} }`;
   const at = () => [vm.evaluate('NS.Transport.DesktopReadingOff()'), vm.evaluate('NS.Transport.StripOut()')];
   vm.advance(1.6); // a push ring loads at most one slot per 1.5 s
   vm.slot(lua('off', 1));
@@ -442,7 +442,7 @@ test('status lines fit the window\'s status line, two lines at most, at its defa
   // A message stuck on the strip (DR-07): on screen, unread, well past its 15 s.
   vm.run('NS.R.out = { k = true }; NS.R.sentAt = { k = GetTime() - 3599 }; NS.R.vis = { k = 3599 }; NS.Transport.OutboxDepth = function() return 1 end; NS.Transport.BridgeAlive = function() return true end; NS.Transport.SlotOnly = function() return false end');
   lines.push(['unseen', vm.evaluate('NS.UI.StatusText()')]);
-  assert.equal(lines[2][1], '|cffffd100NeverQuestAlone hasn\'t read your message yet.|r', 'what\'s wrong, in the line itself (the banner has its Reload)');
+  assert.equal(lines[2][1], '|cffffd100Voxwarden hasn\'t read your message yet.|r', 'what\'s wrong, in the line itself (the banner has its Reload)');
   // C-115: a button only while the line has more to say: this one says it all.
   vm.run('NS.UI.RenderStatus()');
   assert.equal(vm.evaluate('NS.UI.ui.statusHit.kind'), 'Button');
@@ -589,15 +589,15 @@ test('ways back name a click first: the small bar\'s X and the Game Data box', (
   vm.slash('');
   vm.run('local b = NS.UI.ui.miniClose; b.scripts.OnClick(b)');
   const line = vm.chatLines().pop();
-  assert.match(line, /NeverQuestAlone is hidden\. Click NeverQuestAlone in the minimap's addon menu, or type \/nqa, to bring it back\./, line);
-  assert.match(tipOf(vm, 'local b = NS.UI.ui.miniClose; b.scripts.OnEnter(b)'), /Click NeverQuestAlone in the minimap's addon menu, or type \/nqa, to bring it back\./);
+  assert.match(line, /Voxwarden is hidden\. Click Voxwarden in the minimap's addon menu, or type \/nqa, to bring it back\./, line);
+  assert.match(tipOf(vm, 'local b = NS.UI.ui.miniClose; b.scripts.OnEnter(b)'), /Click Voxwarden in the minimap's addon menu, or type \/nqa, to bring it back\./);
   assert.match(tipOf(vm, 'STUB.compartment.funcOnEnter({})'), /Right-click for Settings/);
   vm.slash('context off');
   vm.run('NS.UI.RenderContext()');
   assert.equal(vm.evaluate('NS.UI.ui.ctx.note'), 'Game Data with Messages, in Settings, turns it back on.');
   assert.equal(vm.evaluate('NS.Settings.SWITCHES[5][2]'), 'Game Data with Messages', 'the row the note names');
   // Every label another file names is a row's own.
-  assert.deepEqual(vm.json('NS.Settings.LABELS'), { hud: 'NeverQuestAlone HUD', waypoint: 'Next Stop as a Waypoint', dnd: 'Quiet in Combat', context: 'Game Data with Messages', checkins: 'Check-Ins', screen: 'Screen Reading', tooltips: 'Upgrade Verdicts in Item Tooltips', quips: "One-Liners" });
+  assert.deepEqual(vm.json('NS.Settings.LABELS'), { hud: 'Voxwarden HUD', waypoint: 'Next Stop as a Waypoint', dnd: 'Quiet in Combat', context: 'Game Data with Messages', checkins: 'Check-Ins', screen: 'Screen Reading', tooltips: 'Upgrade Verdicts in Item Tooltips', quips: "One-Liners" });
   assert.doesNotMatch(vm.evaluate('NS.UI.ui.ctx.note'), /\/nqa/);
   vm.slash('context on');
   vm.run('NS.UI.RenderContext()');

@@ -6,7 +6,7 @@ status: ready
 
 # Release your own
 
-The code is MIT-licensed, but the name NeverQuestAlone and its artwork aren’t: a build you release carries your own name, icons, signature and updates.
+The code is MIT-licensed, but the name Voxwarden and its artwork aren’t: a build you release carries your own name, icons, signature and updates.
 
 ## 1 Name it
 
@@ -23,15 +23,15 @@ A build takes its name and IDs from one file, `plugins/<id>/identity.json`, in t
 | `releases` | The GitHub repository updates come from, as `{ "owner": "…", "repo": "…" }`, or `null` for no updates. |
 | `copyright` | Your app’s copyright line. |
 
-The build refuses to sign an app that has NeverQuestAlone’s `appId` or `keychainService` under another name, or another plugin’s.
+The build refuses to sign an app that has Voxwarden’s `appId` or `keychainService` under another name, or another plugin’s.
 
 `identity.json` renames what the system sees. Change these too:
 
 - `name` and `productName` in `app/desktop/package.json`: a run from source takes its data folder from them.
 - The Mac capture helper’s own ID, in `app/desktop/build/bridge/capture/mac/BUNDLE_ID`, and the app ID it expects, your `appId`, in `bridge/capture/mac/Sources/NQACapture/PeerCheck.swift`.
-- The icons in `app/desktop/build/`, and the words in the app and the addon, which say NeverQuestAlone.
+- The icons in `app/desktop/build/`, and the words in the app and the addon, which say Voxwarden.
 
-`tests/frozen_names_test.mjs` holds NeverQuestAlone’s own names, so rewrite it for yours.
+`tests/frozen_names_test.mjs` holds Voxwarden’s own names, so rewrite it for yours.
 
 ## 2 Sign it as yourself
 
@@ -61,14 +61,14 @@ Before you tell anyone:
 - In a public repository, `gh attestation verify <file> --repo <owner>/<repo> --signer-workflow <owner>/<repo>/.github/workflows/release.yml` says your release workflow built it.
 - Install the previous version, publish a new one, and check that the app updates itself.
 
-## Check NeverQuestAlone’s public build
+## Check Voxwarden’s public build
 
-Each NeverQuestAlone release tag is also built in public, unsigned, by `public-build.yml` in tommygeoco/neverquestalone, which records where each file was built. Download a run’s files from that repository’s Actions tab, or with `gh run download <run id> -R tommygeoco/neverquestalone -p 'public-build-*'`, then check one:
+Each Voxwarden release tag is also built in public, unsigned, by `public-build.yml` in davrodwconnections/voxwarden, which records where each file was built. Download a run’s files from that repository’s Actions tab, or with `gh run download <run id> -R davrodwconnections/voxwarden -p 'public-build-*'`, then check one:
 
 ```sh
-gh attestation verify <file> -R tommygeoco/neverquestalone
+gh attestation verify <file> -R davrodwconnections/voxwarden
 ```
 
-It passes only for a file built by a workflow in that repository. Add `--signer-workflow tommygeoco/neverquestalone/.github/workflows/public-build.yml --source-ref refs/tags/v<version>` to check the workflow and the tag too.
+It passes only for a file built by a workflow in that repository. Add `--signer-workflow davrodwconnections/voxwarden/.github/workflows/public-build.yml --source-ref refs/tags/v<version>` to check the workflow and the tag too.
 
-NeverQuestAlone’s own downloads are signed and built privately, so they aren’t these files: check them as in step 4. Each release also carries its package list (SBOM).
+Voxwarden’s own downloads are signed and built privately, so they aren’t these files: check them as in step 4. Each release also carries its package list (SBOM).

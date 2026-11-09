@@ -147,7 +147,7 @@ test('status and providers have the mock API\'s shape, and never carry a key', a
   assert.deepEqual(an.models.map(x => [x.id, x.tier]), [['claude-sonnet-5-5', 'default'], ['claude-opus-5-5', 'smarter'], ['claude-fable-5-1', 'other'], ['claude-sonnet-5', 'other'], ['claude-haiku-4-5', 'other']]);
   assert.deepEqual(an.models[0].priceHint, { replyCents: [1.93, 3.35], dayUsd: [0.77, 1.34], at: 40, think: 1024 }, 'PRD §7.3\'s typical turn on Sonnet 5.5 (the prompt pack as its prefix, BR-18), from the bundled prices, with half of Low\'s thinking room (SY-102-1)');
   assert.deepEqual(an.models.find(x => x.id === 'claude-haiku-4-5').priceHint, { replyCents: [0.97, 1.68], dayUsd: [0.39, 0.67], at: 40, think: 1024 }, 'every model its own cost line (Haiku 4.5 starts at Low too: a 2,048 budget)');
-  assert.deepEqual(an.models.find(x => x.id === 'claude-fable-5-1').priceHint, { replyCents: [9.07, 16.76], dayUsd: [3.63, 6.7], at: 40, think: 1024 });
+  assert.deepEqual(an.models.find(x => x.id === 'claude-fable-5-1').priceHint, { replyCents: [9.07, 16.75], dayUsd: [3.63, 6.7], at: 40, think: 1024 });
   // A day at each level (CL-design-37): Low is the start level's figure; Off prices no thinking; Max the most.
   const son = an.models[0];
   assert.deepEqual(son.levelDays.low, son.priceHint.dayUsd, 'Low is the start level\'s day');
@@ -218,7 +218,7 @@ test('status carries the last failure the game sends to the desktop (D-01): the 
   const full = lastErrorView({ kind: 'local_write', code: 'ENOSPC', at: 1 }, { provider: 'Anthropic' });
   assert.deepEqual([full.headline, full.detail, full.action], ['Your disk is full, so nothing was sent.', 'Free up space, then click Retry in game.', null], 'no button: Retry is the game\'s (UX-W22: click, and the table’s “Retry in game”)');
   const ro = lastErrorView({ kind: 'local_write', code: 'EROFS', at: 1 }, { provider: 'Anthropic' });
-  assert.equal(`${ro.headline} ${ro.detail}`, 'NeverQuestAlone couldn’t save on this computer, so nothing was sent. Click Retry in game, or restart your computer.');
+  assert.equal(`${ro.headline} ${ro.detail}`, 'Voxwarden couldn’t save on this computer, so nothing was sent. Click Retry in game, or restart your computer.');
   for (const v of [full, ro]) assert.doesNotMatch(`${v.headline} ${v.detail}`, /Anthropic|Something went wrong/);
   // SY-12: a certificate failure is this computer's to fix too (its clock, or HTTPS scanning), never "offline".
   const tls = lastErrorView({ kind: 'tls', code: 'CERT_NOT_YET_VALID', at: 1 }, { provider: 'Anthropic' });
@@ -226,11 +226,11 @@ test('status carries the last failure the game sends to the desktop (D-01): the 
   assert.equal(lastErrorView({ kind: 'tls', code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY' }, { provider: 'Anthropic' }).detail, 'Turn off HTTPS scanning in your antivirus, then click Retry in game.');
   // fix-empty-reply: an empty reply, twice, is said in the window too (the game's Retry sends it
   // again): Thinking on Your AI, or another model where it has none; the card's button opens the model.
-  const empty = lastErrorView({ kind: 'empty_reply', code: 'length', at: 1, streak: 1 }, { provider: 'Anthropic', companion: 'NeverQuestAlone', thinking: true });
+  const empty = lastErrorView({ kind: 'empty_reply', code: 'length', at: 1, streak: 1 }, { provider: 'Anthropic', companion: 'Voxwarden', thinking: true });
   assert.deepEqual([empty.kind, empty.headline, empty.detail, empty.action, empty.notice, empty.retest],
-    ['empty_reply', 'NeverQuestAlone couldn’t finish a reply.', 'Lower Thinking in Your AI, or ask again in game.', 'pick_model', undefined, undefined]);
-  const noLevels = lastErrorView({ kind: 'empty_reply', code: 'length', at: 1 }, { provider: 'Ollama', companion: 'NeverQuestAlone', thinking: false });
-  assert.deepEqual([noLevels.headline, noLevels.detail, noLevels.action], ['NeverQuestAlone couldn’t finish a reply.', 'Pick another model, or ask again in game.', 'pick_model']);
+    ['empty_reply', 'Voxwarden couldn’t finish a reply.', 'Lower Thinking in Your AI, or ask again in game.', 'pick_model', undefined, undefined]);
+  const noLevels = lastErrorView({ kind: 'empty_reply', code: 'length', at: 1 }, { provider: 'Ollama', companion: 'Voxwarden', thinking: false });
+  assert.deepEqual([noLevels.headline, noLevels.detail, noLevels.action], ['Voxwarden couldn’t finish a reply.', 'Pick another model, or ask again in game.', 'pick_model']);
   for (const v of [empty, noLevels]) assert.doesNotMatch(`${v.headline} ${v.detail}`, /Something went wrong|Anthropic|Ollama|'/);
   // D-30: desktop text has one kind of apostrophe.
   const { desktopLine } = await import('../../bridge/byok/app-api.mjs');
@@ -275,7 +275,7 @@ test('an empty reply, twice (fix-empty-reply): the window\'s card says it in its
   await r.backend.send(sendParams(CHAT, 'e_1', 'where am I?'));
   await waitFor(async () => !!(await r.api.status()).backend.lastError, 5000, 'the failure in status');
   const le = (await r.api.status()).backend.lastError;
-  assert.deepEqual([le.kind, le.headline, le.detail, le.action, le.notice], ['empty_reply', 'NeverQuestAlone couldn’t finish a reply.', 'Lower Thinking in Your AI, or ask again in game.', 'pick_model', undefined]);
+  assert.deepEqual([le.kind, le.headline, le.detail, le.action, le.notice], ['empty_reply', 'Voxwarden couldn’t finish a reply.', 'Lower Thinking in Your AI, or ask again in game.', 'pick_model', undefined]);
   assert.equal(r.mock.requests.filter(q => q.method === 'POST').length, 2, 'one more try in the turn, then the line');
   empty = false;
   await r.backend.send(sendParams(CHAT, 'e_2', 'where am I?'));
@@ -558,7 +558,7 @@ test('desktopLine (D-01): the §10 headline and action id, with a next step for 
   for (const kind of kinds) {
     const l = desktopLine({ kind }, names);
     assert.ok(l.headline && typeof l.detail === 'string', kind);
-    assert.doesNotMatch(`${l.headline} ${l.detail}`, /on your desktop|in NeverQuestAlone on/i, kind);
+    assert.doesNotMatch(`${l.headline} ${l.detail}`, /on your desktop|in Voxwarden on/i, kind);
     assert.equal(l.line, [l.headline, l.detail].filter(Boolean).join(' '));
   }
   // The window's words for the states a card names (bones-ux-writer onboarding r3, UX-W31): the
@@ -701,7 +701,7 @@ test('the runaway fuse (the core\'s; spec §9.9): status().backend.usage and usa
   const st = await r.api.status();
   assert.equal(st.backend.usage.autoPaused, true);
   assert.deepEqual(st.backend.usage.fuse, { turns: 10, windowMs: 60_000 }, 'the window that tripped: the core\'s autoPausedBy, else the per-minute one');
-  assert.match(st.view.checkIns.line, /^NeverQuestAlone paused check-ins: more than 10 came in a minute, which normal play doesn’t do\. Your next message turns them back on\.$/);
+  assert.match(st.view.checkIns.line, /^Voxwarden paused check-ins: more than 10 came in a minute, which normal play doesn’t do\. Your next message turns them back on\.$/);
   assert.equal((await r.api.usage({ days: 1 })).today.autoPaused, true);
   // The hourly window (systems plan D4), when the core says it's the one that tripped.
   bridge.status = () => ({ version: '0.3.1', seq: 0, push: 0, companion: { today: 61, gamePid: null, autoPaused: holds, autoPausedBy: { turns: 60, windowMs: 3_600_000 } } });
@@ -803,11 +803,11 @@ test('findWow, installAddon (the bridge restarts for a new folder), wowRunning; 
   assert.equal(r.restarts.length, 1, 'a new folder: the bridge starts for it');
   assert.equal(r.config.wow.flavorDir, flavor);
   assert.equal(JSON.parse(fs.readFileSync(r.configFile, 'utf8')).wow.flavorDir, flavor);
-  assert.ok(fs.existsSync(path.join(flavor, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc')));
+  assert.ok(fs.existsSync(path.join(flavor, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc')));
   // The parts' row in the game's AddOns list, folded for its first start and recorded once in the
   // app's config (C-119), which the save after the install keeps.
   assert.equal(JSON.parse(fs.readFileSync(r.configFile, 'utf8')).partsFolded, SLOT_CATEGORY);
-  assert.match(fs.readFileSync(addonListFile(flavor), 'latin1'), /\["NeverQuestAlone Parts"\] = true/);
+  assert.match(fs.readFileSync(addonListFile(flavor), 'latin1'), /\["Voxwarden Parts"\] = true/);
   assert.ok(r.lines.map(l => JSON.parse(l)).some(l => l.k === 'app-addon-installed' && l.partsFold === 'folded'), 'logged');
   assert.equal((await r.api.status()).wow.addon, true);
   assert.equal((await r.api.installAddon({ flavorDir: '/somewhere/else' })).error, 'wow_not_found', 'only a folder findWow knows');
@@ -870,7 +870,7 @@ test('diagnostics (SL-7): versions, OS, config, status, connections, log lines; 
   const { text } = await api2.diagnostics();
   // SY-08, SY-18: the transport's counts (the NTFS retries among them) are in Diagnostics, one line.
   assert.match(text, /\ntransport: push 2 \(ok 1\) · unread 12 s · publishes 9, last 13 files in 2 ms · slot errors 1, retries 4 · bell errors 0, retries 2 · window ring 3-14 · store moved aside state\.json:parse\n/);
-  assert.match(text, /^== NeverQuestAlone \(bridge\) ==\nbridge /);
+  assert.match(text, /^== Voxwarden \(bridge\) ==\nbridge /);
   assert.match(text, /Node \d+\.\d+/);
   assert.match(text, new RegExp(`${process.platform} `));
   assert.match(text, /config: \{"wow":\{"flavorDir":"[^"]*nowhere"\},"byok":\{"provider":"anthropic"/);
@@ -908,10 +908,10 @@ test('uninstall: every key out of the store, the app\'s data out of its folder; 
   const root = tmpDir('bones-wowroot-');
   const flavor = path.join(root, '_forever_');
   const addons = path.join(flavor, 'Interface', 'AddOns');
-  for (const d of ['NeverQuestAlone', 'NQA_S001', 'NQA_S002', 'NQA_Data', 'SomeoneElsesAddon']) fs.mkdirSync(path.join(addons, d), { recursive: true });
+  for (const d of ['Voxwarden', 'NQA_S001', 'NQA_S002', 'NQA_Data', 'SomeoneElsesAddon']) fs.mkdirSync(path.join(addons, d), { recursive: true });
   // The game's copy of the chats in each account's SavedVariables (code health AP-11), beside other addons' files.
   const saved = (account, name) => path.join(flavor, 'WTF', 'Account', account, 'SavedVariables', name);
-  for (const [account, name] of [['ACCOUNT1', 'NeverQuestAlone.lua'], ['ACCOUNT1', 'NeverQuestAlone.lua.bak'], ['ACCOUNT1', 'SomeoneElsesAddon.lua'], ['ACCOUNT2', 'NeverQuestAlone.lua'], ['ACCOUNT2', 'Blizzard_Console.lua']]) {
+  for (const [account, name] of [['ACCOUNT1', 'Voxwarden.lua'], ['ACCOUNT1', 'Voxwarden.lua.bak'], ['ACCOUNT1', 'SomeoneElsesAddon.lua'], ['ACCOUNT2', 'Voxwarden.lua'], ['ACCOUNT2', 'Blizzard_Console.lua']]) {
     fs.mkdirSync(path.dirname(saved(account, name)), { recursive: true });
     fs.writeFileSync(saved(account, name), 'NQADB = { chats = {} }\n');
   }
@@ -944,20 +944,20 @@ test('uninstall: every key out of the store, the app\'s data out of its folder; 
   assert.deepEqual(await r.keystore.list([...await r.keystore.list(), 'openrouter']), [], 'every provider’s key, and the old OpenRouter one');
   assert.deepEqual(fs.readdirSync(r.dataDir), ['not-ours.txt'], 'only what the bridge keeps there, by name');
   assert.deepEqual(fs.readdirSync(addons), ['SomeoneElsesAddon'], 'only ours');
-  assert.deepEqual(savedLeft(), ['ACCOUNT1/SomeoneElsesAddon.lua', 'ACCOUNT2/Blizzard_Console.lua'], 'every account’s NeverQuestAlone.lua and .bak (installer.nsh’s rule); other addons’ files stay');
+  assert.deepEqual(savedLeft(), ['ACCOUNT1/SomeoneElsesAddon.lua', 'ACCOUNT2/Blizzard_Console.lua'], 'every account’s Voxwarden.lua and .bak (installer.nsh’s rule); other addons’ files stay');
   assert.ok(fs.existsSync(path.join(flavor, 'WTF', 'Account', 'config-cache.wtf')));
 });
 
 test('uninstall without "remove the addon" leaves the game’s copy of the chats, as it leaves the addon (code health AP-11)', async (t) => {
   const flavor = path.join(tmpDir('bones-wowroot-'), '_forever_');
-  const file = path.join(flavor, 'WTF', 'Account', 'ACCOUNT1', 'SavedVariables', 'NeverQuestAlone.lua');
+  const file = path.join(flavor, 'WTF', 'Account', 'ACCOUNT1', 'SavedVariables', 'Voxwarden.lua');
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, 'NQADB = {}\n');
-  fs.mkdirSync(path.join(flavor, 'Interface', 'AddOns', 'NeverQuestAlone'), { recursive: true });
+  fs.mkdirSync(path.join(flavor, 'Interface', 'AddOns', 'Voxwarden'), { recursive: true });
   const r = await rig(t, { flavorDir: flavor, wow: { run: () => ({ status: 1, stdout: '' }) } });
   assert.deepEqual(await r.api.uninstall({ removeAddon: false }), { ok: true, removed: ['keys', 'data'] });
   assert.ok(fs.existsSync(file));
-  assert.ok(fs.existsSync(path.join(flavor, 'Interface', 'AddOns', 'NeverQuestAlone')));
+  assert.ok(fs.existsSync(path.join(flavor, 'Interface', 'AddOns', 'Voxwarden')));
 });
 
 test('status carries the model check\'s notice when there is one (PV-3, §10)', async () => {
@@ -1054,7 +1054,7 @@ const noteGone = api => api.noteCaptureError === undefined;
 // The screen state DR-06's card reads (display DR-06's bridge half, SY-27): the watchdog's published
 // state, else the app's own: waiting (WoW closed, or the helper not started), window_minimized (said,
 // never an alarm) and watching (no strip read since the helper's current attach: no claim either way).
-// "NeverQuestAlone can see the game." only after a strip read since that attach. A problem with the game's window
+// "Voxwarden can see the game." only after a strip read since that attach. A problem with the game's window
 // gives way to waiting while WoW is closed; one with the helper or the Mac's permission doesn't.
 test('DR-06 (SY-27): the screen state from the watchdog\'s view: its published problem first; else waiting with WoW closed or the helper not started, a minimized WoW without an alarm, and "can see the game" only after a strip read since the attach', async (t) => {
   const base = { state: 'ok', cause: null, since: 1, minimized: false, seen: true, game: true, connected: true };

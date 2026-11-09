@@ -144,7 +144,7 @@ test('with WoW and the addon: the bridge runs on its AddOns folder under a lock 
   assert.equal(st.bridge.running, true);
   assert.equal(st.wow.addon, true);
   // One lock (code health BR-27): the AddOns folder's, none in the state folder.
-  const lock = path.join(w.addonsDir, 'NeverQuestAlone', 'sig', 'bridge.lock');
+  const lock = path.join(w.addonsDir, 'Voxwarden', 'sig', 'bridge.lock');
   assert.equal(JSON.parse(fs.readFileSync(lock, 'utf8')).pid, process.pid);
   if (process.platform !== 'win32') assert.equal(fs.statSync(lock).mode & 0o777, 0o644);
   assert.equal(fs.existsSync(lockFileFor(path.join(root, 'locks'), w.addonsDir)), false);
@@ -235,9 +235,9 @@ test('a write the disk refuses reaches the window at once (code health BR-11): b
   }
 });
 
-test('reload mode reads the newest NeverQuestAlone.lua across WoW accounts (SY-18): boot hands the bridge the WTF folder, not one account\'s file', async (t) => {
+test('reload mode reads the newest Voxwarden.lua across WoW accounts (SY-18): boot hands the bridge the WTF folder, not one account\'s file', async (t) => {
   const w = wowFolder();
-  const sv = acct => path.join(w.flavorDir, 'WTF', 'Account', acct, 'SavedVariables', 'NeverQuestAlone.lua');
+  const sv = acct => path.join(w.flavorDir, 'WTF', 'Account', acct, 'SavedVariables', 'Voxwarden.lua');
   for (const a of ['FIRST', 'SECOND']) fs.mkdirSync(path.dirname(sv(a)), { recursive: true });
   // The game runs (reload mode's files are its /reloads'): while it does, the bridge polls every 2 s
   // (SY-30; with it closed, every 30 s).
@@ -274,15 +274,15 @@ test('a config.json that can\'t be read (SY-12): the app starts on the defaults,
   assert.equal(st2.view.settingsReset, null);
 });
 
-test('one bridge per AddOns folder: another live NeverQuestAlone refuses the start with a plain message', async (t) => {
+test('one bridge per AddOns folder: another live Voxwarden refuses the start with a plain message', async (t) => {
   const w = wowFolder();
   const lockDir = tmpDir('bones-locks-');
   // Another live process of this account on this computer (our parent) holds the folder's lock.
-  const lock = path.join(w.addonsDir, 'NeverQuestAlone', 'sig', 'bridge.lock');
+  const lock = path.join(w.addonsDir, 'Voxwarden', 'sig', 'bridge.lock');
   fs.mkdirSync(path.dirname(lock), { recursive: true });
   const holder = { pid: process.ppid, host: os.hostname(), ...(process.getuid ? { uid: process.getuid() } : {}), at: new Date().toISOString(), by: 'nqa', hb: 30 };
   fs.writeFileSync(lock, JSON.stringify(holder));
-  await assert.rejects(boot(t, { flavorDir: w.flavorDir, lockDir }), e => e.code === 'BRIDGE_RUNNING' && /Another copy of NeverQuestAlone is already serving this World of Warcraft folder \(pid \d+\)\. Only one copy can at a time: quit that one first\./.test(e.message));
+  await assert.rejects(boot(t, { flavorDir: w.flavorDir, lockDir }), e => e.code === 'BRIDGE_RUNNING' && /Another copy of Voxwarden is already serving this World of Warcraft folder \(pid \d+\)\. Only one copy can at a time: quit that one first\./.test(e.message));
   assert.equal(socketHooks(), false, 'a refused start leaves nothing installed');
   assert.equal(fs.existsSync(lockFileFor(lockDir, w.addonsDir)), false, 'and takes no lock of its own');
   // A lock from a crashed run (a pid that's gone) is taken over.
@@ -380,7 +380,7 @@ test('one bridge per AddOns folder whatever HOME it runs under: the lock inside 
   const w = wowFolder();
   const first = await boot(t, { flavorDir: w.flavorDir });
   assert.ok(first.b.bridge);
-  const lock = path.join(w.addonsDir, 'NeverQuestAlone', 'sig', 'bridge.lock');
+  const lock = path.join(w.addonsDir, 'Voxwarden', 'sig', 'bridge.lock');
   const held = JSON.parse(fs.readFileSync(lock, 'utf8'));
   assert.equal(held.pid, process.pid);
   assert.equal(held.by, 'nqa');
@@ -389,7 +389,7 @@ test('one bridge per AddOns folder whatever HOME it runs under: the lock inside 
   fs.writeFileSync(lock, JSON.stringify({ pid: process.ppid, uid: 4242, host: held.host, at: new Date().toISOString(), by: 'nqa' }));
   // Windows has no uid (process.getuid is undefined), so a lock there can't tell accounts apart.
   const account = process.platform === 'win32' ? '' : ', under another account on this computer';
-  await assert.rejects(boot(t, { flavorDir: w.flavorDir }), e => e.code === 'BRIDGE_RUNNING' && new RegExp(`Another copy of NeverQuestAlone is already serving this World of Warcraft folder \\(pid \\d+${account}\\)`).test(e.message));
+  await assert.rejects(boot(t, { flavorDir: w.flavorDir }), e => e.code === 'BRIDGE_RUNNING' && new RegExp(`Another copy of Voxwarden is already serving this World of Warcraft folder \\(pid \\d+${account}\\)`).test(e.message));
   fs.writeFileSync(lock, JSON.stringify(held));
   await first.b.stop();
   assert.equal(fs.existsSync(lock), false, 'stop releases it');
@@ -540,7 +540,7 @@ test('fix-102: after stop, setup\'s test and Test key say the app needs a restar
   // Your AI's Test key: the window's words and its Quit and reopen.
   const saved = await b.api.testKey('anthropic');
   assert.deepEqual([saved.ok, saved.error, saved.action], [false, 'egress_blocked', 'restart']);
-  assert.equal(saved.headline, 'NeverQuestAlone needs a restart.');
+  assert.equal(saved.headline, 'Voxwarden needs a restart.');
   assert.equal(saved.detail, 'Click Quit and reopen.');
   assert.doesNotMatch(JSON.stringify([staged, reuse, saved]), /internet|Can.t reach|Connections/i);
   assert.equal(mock.requests.length, sent, 'nothing was sent after the stop');
@@ -870,8 +870,8 @@ function writeSavedVariables(flavorDir, wires, { token = '3fa9c2d1' } = {}) {
   const dir = path.join(flavorDir, 'WTF', 'Account', 'TESTACCOUNT', 'SavedVariables');
   fs.mkdirSync(dir, { recursive: true });
   const entries = wires.map((wire, i) => `\t\t{\n\t\t\t["key"] = "k${i}",\n\t\t\t["hex"] = "${Buffer.from(wire, 'utf8').toString('hex')}",\n\t\t},\n`).join('');
-  fs.writeFileSync(path.join(dir, 'NeverQuestAlone.lua'), `NQADB = {\n\t["token"] = "${token}",\n\t["outbox"] = {\n${entries}\t},\n}\n`);
-  return path.join(dir, 'NeverQuestAlone.lua');
+  fs.writeFileSync(path.join(dir, 'Voxwarden.lua'), `NQADB = {\n\t["token"] = "${token}",\n\t["outbox"] = {\n${entries}\t},\n}\n`);
+  return path.join(dir, 'Voxwarden.lua');
 }
 
 // The probe's T3 (display audit): the 00:23Z incident's signature (connected, permission, frames, nothing
@@ -930,7 +930,7 @@ test('capture (PF-07): a data folder too deep for a socket puts capture.sock in 
   const createCapture = (o) => { made.push(o); return { start() {}, stop() {}, status: () => ({ kind: 'mac-app', connected: false }) }; };
   const w = wowFolder();
   const tmp = tmpDir('bones-t-');
-  const deep = path.join(tmpDir('bones-deep-'), 'd'.repeat(70), 'NeverQuestAlone');
+  const deep = path.join(tmpDir('bones-deep-'), 'd'.repeat(70), 'Voxwarden');
   const { b } = await boot(t, { flavorDir: w.flavorDir, capture: true, createCapture, env: { TMPDIR: tmp }, paths: { userData: deep } });
   const sock = made[0].mac.socketPath;
   assert.ok(Buffer.byteLength(path.join(deep, 'bridge', 'capture.sock')) > SOCKET_PATH_MAX, 'too long in the state folder');
@@ -1211,11 +1211,11 @@ test('uninstall: keys, the app\'s data and (asked) the addon go; the app quittin
   assert.deepEqual(r, { ok: true, removed: ['keys', 'data', 'addon', 'slots', 'doorbells'] });
   assert.deepEqual(await keystore.list(), []);
   assert.deepEqual(fs.readdirSync(ud), [], 'the data folder is empty (the desktop shell removes it at quit)');
-  assert.deepEqual(fs.readdirSync(w.addonsDir).filter(n => n.startsWith('NeverQuestAlone')), []);
+  assert.deepEqual(fs.readdirSync(w.addonsDir).filter(n => n.startsWith('Voxwarden')), []);
   assert.equal(b.bridge, null, 'stopped through boot, so its stop() has nothing left to write');
   await b.stop();
   assert.deepEqual(fs.readdirSync(ud), [], 'nothing made again at quit');
-  assert.deepEqual(fs.readdirSync(w.addonsDir).filter(n => n.startsWith('NeverQuestAlone')), []);
+  assert.deepEqual(fs.readdirSync(w.addonsDir).filter(n => n.startsWith('Voxwarden')), []);
   // One lock (code health BR-27): the AddOns folder's, gone with the addon; none of its own anywhere.
   const locks = path.join(root, 'locks');
   assert.equal(fs.existsSync(locks) ? fs.readdirSync(locks).length : 0, 0, 'no lock left');

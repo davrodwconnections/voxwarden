@@ -2,7 +2,7 @@
 // daily cap were the retired build's (the owner, 2026-09-25/26), and went with it: the product has no
 // daily, zone or typed limits (the owner, 2026-09-26), only the runaway fuse
 // (tests/byok/bridge_byok_e2e_test.mjs, tests/byok/usage_fuse_test.mjs). What stays is shown here:
-// every first visit takes its turn, the visit reaches NeverQuestAlone as the state's pending milestone, and the
+// every first visit takes its turn, the visit reaches Voxwarden as the state's pending milestone, and the
 // day's count of automatic turns survives a restart and starts over at local midnight.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -73,14 +73,14 @@ async function withBridge({ companion, now }, fn, env = setup()) {
   }
 }
 
-test('zone visits: every first visit takes its turn, with no zone or daily limit and no error line; its milestone still reaches NeverQuestAlone with the next typed turn; a level-up gets its turn', async () => {
+test('zone visits: every first visit takes its turn, with no zone or daily limit and no error line; its milestone still reaches Voxwarden with the next typed turn; a level-up gets its turn', async () => {
   await withBridge({ companion: { enabled: true } }, async ({ bridge, be, env }) => {
     for (const z of ['Mulgore', 'Thunder Bluff', 'The Barrens', 'Stonetalon Mountains']) bridge.handlePayload(zone(z));
     await waitFor(() => turns(be) === 4, 3000, 'four zone turns');
     assert.equal(bridge.status().companion.today, 4);
     assert.ok(!readSlot(env).records.some(r => r.t === 'error'), 'no error line');
 
-    // The visit reaches NeverQuestAlone as the pending milestone of the next typed turn, with nothing riding along.
+    // The visit reaches Voxwarden as the pending milestone of the next typed turn, with nothing riding along.
     const st = { v: 1, sid: SID, seq: 5, t: 1, char: { name: 'Tavi', realm: 'Testrealm', level: 12 }, quests: [], pending: [{ kind: 'zone', zone: 'Stonetalon Mountains', t: 1 }], omitted: [] };
     bridge.handlePayload(encodeRecord({ token: TOKEN, key: nonce, type: 'state', chat: '', args: { cur: 0, sid: SID, seq: 5 }, body: JSON.stringify(st) }));
     bridge.handlePayload(encodeRecord({ token: TOKEN, key: key(), type: 'msg', chat: CHAT, args: { cur: 0, agent: 'main', name: 'Route', ctx: 0, q: 'followup', st: 5 }, text: 'where next?' }));

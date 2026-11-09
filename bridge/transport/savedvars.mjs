@@ -1,14 +1,14 @@
-// The reload path's file (PROTOCOL §5, systems plan Batch 2, SY-04): which NeverQuestAlone.lua the game
+// The reload path's file (PROTOCOL §5, systems plan Batch 2, SY-04): which Voxwarden.lua the game
 // wrote last. A player may have two WoW accounts on one Battle.net login, a folder left from an old
 // account, or none yet (never logged in): the game writes WTF/Account/<account>/SavedVariables/
-// NeverQuestAlone.lua for whichever account played, so the newest one is the one to read, looked up at each
+// Voxwarden.lua for whichever account played, so the newest one is the one to read, looked up at each
 // poll rather than once at start.
 import fs from 'node:fs';
 import path from 'node:path';
 
-const FILE = 'NeverQuestAlone.lua';
+const FILE = 'Voxwarden.lua';
 
-/** The newest WTF/Account/<account>/SavedVariables/NeverQuestAlone.lua under wtfDir, or null. */
+/** The newest WTF/Account/<account>/SavedVariables/Voxwarden.lua under wtfDir, or null. */
 export function newestSavedVariables(wtfDir) {
   const root = path.join(wtfDir, 'Account');
   let names;

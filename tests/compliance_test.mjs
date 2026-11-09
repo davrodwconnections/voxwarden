@@ -1,4 +1,4 @@
-// What NeverQuestAlone promises players and Blizzard's UI Add-On Development Policy, held in code
+// What Voxwarden promises players and Blizzard's UI Add-On Development Policy, held in code
 // (the trust and compliance plan, item 8; the owner, 2026-10-03). Each test reads the source the
 // release builds from, so a change that breaks a promise fails CI before it can ship:
 // - the addon never acts for the player: no chat or addon messages, no casting, targeting, movement,
@@ -26,7 +26,7 @@ const luaCode = s => s.replace(/--\[(=*)\[[\s\S]*?\]\1\]/g, ' ').replace(/--[^\n
 /** C, Swift and JavaScript without their comments. */
 const cCode = s => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:"'\\])\/\/[^\n]*/g, '$1 ');
 
-const ADDON = 'addon/NeverQuestAlone';
+const ADDON = 'addon/Voxwarden';
 const addonFiles = () => list(ADDON, /\.lua$/);
 
 test('the addon never acts for the player: no chat or addon messages, casting, targeting, movement, bindings, macros or loaded code', { skip: !exists(ADDON) && 'no addon in this tree' }, () => {
@@ -58,7 +58,7 @@ test('the addon asks for no money: no ads, donations or paid features (Blizzard\
   assert.deepEqual(hits, []);
 });
 
-test('nothing NeverQuestAlone runs presses a key or moves the mouse, and the capture helpers have no network code', () => {
+test('nothing Voxwarden runs presses a key or moves the mouse, and the capture helpers have no network code', () => {
   const INPUT = /\b(CGEventPost|CGEventCreateKeyboardEvent|CGEventCreateMouseEvent|CGEventCreateScrollWheelEvent|AXUIElementPerformAction|SendInput|keybd_event|mouse_event|SetCursorPos|sendInputEvent|XTestFake\w*|xdotool|robotjs|nut-tree|nutjs)\b/;
   const files = [
     ...list('app/desktop', /\.(mjs|cjs|js)$/).filter(f => !f.includes(`${path.sep}dist${path.sep}`) && !f.includes(`${path.sep}scripts${path.sep}`)),

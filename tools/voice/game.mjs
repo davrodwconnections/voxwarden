@@ -1,5 +1,5 @@
 // The voice companion's view of the game (odd/tasks/nqa-voice.md T1, T4): the latest game state the
-// NeverQuestAlone app keeps (<bridge state>/companion.json, written by bridge/service.mjs onState for
+// Voxwarden app keeps (<bridge state>/companion.json, written by bridge/service.mjs onState for
 // every state the addon sends, with or without a typed message), cleaned the way the app cleans it
 // for a turn (sanitizeState), the character's own name, realm and guild left out unless the player
 // opted in (byok.privacy.identity), and nothing at all when game data is off (byok.privacy.gameContext).
@@ -32,12 +32,12 @@ const MAP_KINDS = new Set(['ore', 'herb', 'quest', 'turnin', 'kill', 'loot', 'ob
 
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-/** The desktop app's data folder (Electron userData: %APPDATA%\NeverQuestAlone on Windows). */
+/** The desktop app's data folder (Electron userData: %APPDATA%\Voxwarden on Windows). */
 export function appDataDir({ platform = process.platform, env = process.env, home = os.homedir() } = {}) {
   if (env.NQA_APP_DATA) return env.NQA_APP_DATA;
-  if (platform === 'win32') return path.win32.join(env.APPDATA || path.win32.join(home, 'AppData', 'Roaming'), 'NeverQuestAlone');
-  if (platform === 'darwin') return path.posix.join(home, 'Library', 'Application Support', 'NeverQuestAlone');
-  return path.posix.join(env.XDG_CONFIG_HOME || path.posix.join(home, '.config'), 'NeverQuestAlone');
+  if (platform === 'win32') return path.win32.join(env.APPDATA || path.win32.join(home, 'AppData', 'Roaming'), 'Voxwarden');
+  if (platform === 'darwin') return path.posix.join(home, 'Library', 'Application Support', 'Voxwarden');
+  return path.posix.join(env.XDG_CONFIG_HOME || path.posix.join(home, '.config'), 'Voxwarden');
 }
 
 function readJson(file) {
@@ -98,7 +98,7 @@ const PICK = {
 export function gameSections(game, sections) {
   if (!game?.ok) {
     const why = {
-      game_data_off: 'Game data is turned off in the NeverQuestAlone app (Your data). Answer without it and say so.',
+      game_data_off: 'Game data is turned off in the Voxwarden app (Your data). Answer without it and say so.',
       no_state: 'No game data yet: the game, the addon and the app have to be running, and the addon sends its state when the player sends a message or has /nqa live on.',
     }[game?.reason] || 'Game data is not available.';
     return { available: false, note: why };

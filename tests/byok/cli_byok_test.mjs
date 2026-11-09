@@ -45,11 +45,11 @@ test('install: the product\'s addon, its slot folders and the doorbells into the
   const r = run(sb, ['install', '--wow', sb.flavorDir, '--data', sb.data]);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /New addon files only load after a full restart of World of Warcraft/);
-  const toc = fs.readFileSync(path.join(sb.addonsDir, 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8');
-  assert.match(toc, /^## Title: NeverQuestAlone$/m, 'the app\'s TOC: the product\'s Title');
+  const toc = fs.readFileSync(path.join(sb.addonsDir, 'Voxwarden', 'Voxwarden.toc'), 'utf8');
+  assert.match(toc, /^## Title: Voxwarden$/m, 'the app\'s TOC: the product\'s Title');
   assert.doesNotMatch(toc, /X-Backend/, 'and no build\'s mark');
   assert.equal(fs.readdirSync(sb.addonsDir).filter(n => /^NQA_S\d{3}$/.test(n)).length, 200);
-  assert.ok(fs.existsSync(path.join(sb.addonsDir, 'NeverQuestAlone', 'sig', 'ctl', 'present.wav')), 'the doorbells');
+  assert.ok(fs.existsSync(path.join(sb.addonsDir, 'Voxwarden', 'sig', 'ctl', 'present.wav')), 'the doorbells');
 });
 
 test('start: the service headless on the BYOK backend: it publishes, holds the folder\'s lock (its one lock: code health BR-27), writes its status, and lets go of it on SIGTERM; the key from NQA_API_KEY reaches neither the log nor the status', { skip: process.platform === 'win32' ? 'SIGTERM is a kill on Windows' : false }, async (t) => {
@@ -68,7 +68,7 @@ test('start: the service headless on the BYOK backend: it publishes, holds the f
   const pub = publicPaths({ platform: process.platform, env: sb.env, home: sb.home });
   try {
     const inbox = path.join(sb.addonsDir, 'NQA_S001', 'Inbox.lua');
-    await waitFor(() => fs.existsSync(inbox) && /Written by the NeverQuestAlone app/.test(fs.readFileSync(inbox, 'utf8')), 15000, `the first publish (${out})`);
+    await waitFor(() => fs.existsSync(inbox) && /Written by the Voxwarden app/.test(fs.readFileSync(inbox, 'utf8')), 15000, `the first publish (${out})`);
     assert.match(fs.readFileSync(inbox, 'utf8'), /backend = "byok"/, 'the slot names the BYOK backend');
     assert.equal(JSON.parse(fs.readFileSync(folderLockFile(sb.addonsDir), 'utf8')).pid, child.pid, 'the folder\'s lock is its');
     assert.equal(fs.existsSync(lockFileFor(pub.state, sb.addonsDir)), false, 'and its state folder holds none');
@@ -96,7 +96,7 @@ test('the verbs the app owns aren\'t here: key, login, usage and connections pri
       const r = run(sb, verb);
       assert.equal(r.code, 0, `${verb[0]}: ${r.out}`);
       assert.match(r.out, /node bridge\/nqa\.mjs start --wow/, verb[0]);
-      assert.doesNotMatch(r.out, /control pipe|Start NeverQuestAlone first/i, verb[0]);
+      assert.doesNotMatch(r.out, /control pipe|Start Voxwarden first/i, verb[0]);
     }
     const help = run(sb, ['help']).out;
     for (const gone of ['key set', 'login openrouter', 'connections', 'pair', 'service install', 'tunnel', 'gateway']) assert.ok(!help.includes(gone), gone);

@@ -32,7 +32,7 @@ test('OpenAI request: store:false, system as the first input item, max_output_to
   assert.equal(b.store, false, 'store:false even if something asks otherwise');
   assert.equal(b.stream, true);
   assert.equal(b.max_output_tokens, 900);
-  assert.deepEqual(b.input[0], { role: 'system', content: 'You are NeverQuestAlone, a skeleton guide.\n\nGame data: level 12 warrior in Elwynn.' });
+  assert.deepEqual(b.input[0], { role: 'system', content: 'You are Voxwarden, a skeleton guide.\n\nGame data: level 12 warrior in Elwynn.' });
   assert.deepEqual(b.input[1], { role: 'user', content: 'Where do I go next?' });
   assert.equal(b.safety_identifier, '6f1c2a0e-1111-4222-8333-944455556666');
 });

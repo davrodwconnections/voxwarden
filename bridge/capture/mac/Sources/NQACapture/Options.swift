@@ -8,7 +8,7 @@ import StripDecoder
 ///   --interval-ms 250       capture interval
 ///   --cell-px 4             expected cell size (a hint only; the pitch is measured)
 ///   --cells 200, --rows 48  strip layout
-///   --magic C71A            strip magic bytes, hex (C71A = upstream WoWAI, C72C = NeverQuestAlone strip v2)
+///   --magic C71A            strip magic bytes, hex (C71A = upstream WoWAI, C72C = Voxwarden strip v2)
 ///   --socket <path>         stream JSON lines to the bridge's Unix socket (else stdout)
 ///   --probe <png>           capture once, save what the capture sees, report, exit
 ///   --test-image <png>      decode a PNG once and exit (tests; touches no capture API)
@@ -29,7 +29,7 @@ import StripDecoder
 ///   --stats-sec 30          how often to report capture statistics
 ///   --region-pt WxH         the capture region in points (default: 300 pt tall, a whole strip wide; a stream
 ///                           narrows it to the strip's own area once the strip is measured)
-/// NeverQuestAlone's build (NQA_PUBLIC_ID) refuses --process, --bundle-id, --window-name, --region-pt
+/// Voxwarden's build (NQA_PUBLIC_ID) refuses --process, --bundle-id, --window-name, --region-pt
 /// and --probe (code health BR-01): main.swift exits on them before anything else.
 struct Options {
     var process = "World of Warcraft"
@@ -77,7 +77,7 @@ struct Options {
         while i < argv.count {
             let a = argv[i]
             #if NQA_PUBLIC_ID
-            // Whoever launches NeverQuestAlone's helper can't aim its Screen Recording grant at another
+            // Whoever launches Voxwarden's helper can't aim its Screen Recording grant at another
             // window, region or file (code health BR-01, the old audit LS-01): the build decides, never argv.
             if Options.aiming.contains(a) {
                 o.refused.append(a)

@@ -118,7 +118,7 @@ test('the bundle id has one source, read by capture.mjs, build-app.sh, Info.plis
   assert.match(build, /PRIVATE_ID="\$\(readid "\$HERE\/BUNDLE_ID"\)"/);
   assert.match(build, /id="\$\(tr -d '\[:space:\]' < "\$1"\)"/);
   assert.match(build, /s\/__BUNDLE_ID__\/\$BUNDLE_ID\/g/);
-  // NeverQuestAlone's helper (--public): its own id, from the file the packaged app carries, its
+  // Voxwarden's helper (--public): its own id, from the file the packaged app carries, its
   // own output and Swift build folders (final review L3-4).
   const publicId = fs.readFileSync(path.join(MAC, '..', '..', '..', 'app', 'desktop', 'build', 'bridge', 'capture', 'mac', 'BUNDLE_ID'), 'utf8').trim();
   assert.notEqual(publicId, id);
@@ -193,7 +193,7 @@ test('checkCaptureApp: the launcher\'s check', () => {
   if (fs.existsSync(cliFile)) {
     const cli = fs.readFileSync(cliFile, 'utf8');
     assert.match(cli, /import\('\.\/byok\/boot\.mjs'\)/);
-    assert.doesNotMatch(cli, /Authority=NeverQuestAlone Local Code Signing|codesign/);
+    assert.doesNotMatch(cli, /Authority=Voxwarden Local Code Signing|codesign/);
   }
 });
 
@@ -275,7 +275,7 @@ test('codesign parses every requirement we build, and enforces it on a real (ad 
 // ---------------------------------------------------------------- macOS launcher
 
 function macApp(name) {
-  const app = path.join(TMP, name, 'NeverQuestAlone Capture.app');
+  const app = path.join(TMP, name, 'Voxwarden Capture.app');
   fs.mkdirSync(app, { recursive: true });
   return app;
 }
@@ -444,7 +444,7 @@ test('macOS (display DR-03): restart() drops the connected helper, which is rela
 });
 
 test('macOS (display DR-03): a missing app and a refused signature are tried again on the backoff, and launched once they\'re fixed; retryNow() tries at once', { skip: unixOnly }, async () => {
-  const app = path.join(TMP, 'mac-later', 'NeverQuestAlone Capture.app');
+  const app = path.join(TMP, 'mac-later', 'Voxwarden Capture.app');
   const socketPath = path.join(TMP, 'mac-later', 'capture.sock');
   let accept = false;
   const opens = [];
@@ -463,7 +463,7 @@ test('macOS (display DR-03): a missing app and a refused signature are tried aga
     assert.equal(ev.errors.length, 2);
   } finally { cap.stop(); }
   // The Restart button: at once, whatever the backoff says.
-  const app2 = path.join(TMP, 'mac-now', 'NeverQuestAlone Capture.app');
+  const app2 = path.join(TMP, 'mac-now', 'Voxwarden Capture.app');
   const opens2 = [];
   const r2 = recorder();
   const cap2 = createCapture({ app: app2, socketPath: path.join(TMP, 'mac-now', 'capture.sock'), run: fakeRun().run, spawnOpen: a => opens2.push(a), retryMs: [60_000], ...r2.cbs });
@@ -661,16 +661,16 @@ function peerStandIn(name) {
     '#!/bin/sh',
     'printf \'%s\\n\' "$@" > "$0.args"',
     '[ "$1" = --check-peer ] || exit 9',
-    '[ -S /dev/fd/3 ] || { echo "NeverQuestAlone Capture: refused: the program that connected can\'t be named (errno 38)" >&2; exit 6; }',
+    '[ -S /dev/fd/3 ] || { echo "Voxwarden Capture: refused: the program that connected can\'t be named (errno 38)" >&2; exit 6; }',
     'case "$2" in',
     '  *ALLOW*) exit 0 ;;',
     '  *HANG*) exec sleep 30 ;;',
-    '  *) echo "NeverQuestAlone Capture: refused: the program that connected isn\'t NeverQuestAlone\'s capture helper (-67050)" >&2; exit 6 ;;',
+    '  *) echo "Voxwarden Capture: refused: the program that connected isn\'t Voxwarden\'s capture helper (-67050)" >&2; exit 6 ;;',
     'esac', ''].join('\n'));
   fs.chmodSync(exe, 0o755);
   return { app, exe };
 }
-const NOT_HELPER = 'the program that connected isn\'t NeverQuestAlone\'s capture helper (-67050)';
+const NOT_HELPER = 'the program that connected isn\'t Voxwarden\'s capture helper (-67050)';
 
 test('code health LS-03 / peer check: checkPeer runs the helper\'s executable with --check-peer and the connection as its fd 3; exit 0 is the only yes (its refusal line, a hang killed at its time, no executable, one that can\'t start); the connection is left as it was', { skip: unixOnly }, async () => {
   assert.equal(PEER_CHECK_MS, 5000);
@@ -1061,7 +1061,7 @@ test('Windows: a real child on stdout (a stand-in helper): its lines arrive, and
 
 // ---------------------------------------------------------------- Linux (X11)
 
-test('Linux: capture_x11.py runs with the NeverQuestAlone magic and pitch search, and relaunches when it exits', async () => {
+test('Linux: capture_x11.py runs with the Voxwarden magic and pitch search, and relaunches when it exits', async () => {
   const spawns = [];
   const { ev, cbs } = recorder();
   const cap = createX11Capture({ relaunchMs: 20, spawnImpl: (cmd, args, opts) => { const c = fakeChild(); spawns.push({ cmd, args, opts, child: c }); return c; }, ...cbs });

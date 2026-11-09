@@ -1,5 +1,5 @@
 // Retries for Windows file-sharing errors on the files the game reads (systems plan Batch 1,
-// SY-08; PRD BW.2): the reply slots, NeverQuestAlone/Inbox.lua and the doorbell .wav files.
+// SY-08; PRD BW.2): the reply slots, Voxwarden/Inbox.lua and the doorbell .wav files.
 //
 // On NTFS a rename over, a delete of, or a create in place of a file fails while another process
 // holds it without the matching share mode: antivirus scanning a file it just saw written (Defender

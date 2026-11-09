@@ -1,6 +1,6 @@
 # Quest lists for Quality of Life
 
-`addon/NeverQuestAlone/QoL.lua` keeps two lists that Auto Accept Quests and Auto Turn In Quests check first:
+`addon/Voxwarden/QoL.lua` keeps two lists that Auto Accept Quests and Auto Turn In Quests check first:
 
 - `STARTS`: quests whose acceptance starts an escort, a fight, a flight, a teleport, an event or a timer. Auto Accept Quests leaves them to the player.
 - `HANDIN`: quests whose hand-in starts a fight, a flight or a teleport. Auto Turn In Quests leaves them to the player.

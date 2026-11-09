@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Runs a packaged NeverQuestAlone's --self-test and checks the one JSON line it prints (systems
+// Runs a packaged Voxwarden's --self-test and checks the one JSON line it prints (systems
 // plan Batches 1 and 5: test.yml's windows-smoke job runs it on the unsigned NSIS build, and it's
 // the check after any local --dir build). The app makes its own temp data folder and removes it;
 // --use-mock-keychain keeps Chromium off the macOS Keychain (it changes nothing elsewhere).
@@ -32,8 +32,8 @@
 // The app can't tell a build whose signing didn't happen from an ad hoc one, so a signed build's job
 // says so: NQA_SELF_TEST_SIGNED=true asks for the app's team and every capture check (signedProblems).
 //
-//   node scripts/self-test.mjs "dist/mac-arm64/NeverQuestAlone.app"
-//   node scripts/self-test.mjs "dist/win-unpacked/NeverQuestAlone.exe"
+//   node scripts/self-test.mjs "dist/mac-arm64/Voxwarden.app"
+//   node scripts/self-test.mjs "dist/win-unpacked/Voxwarden.exe"
 //   exit 0 ok · 1 the app said not ok (every false value and quit problem is named) · 2 usage, or no answer
 import fs from 'node:fs';
 import net from 'node:net';
@@ -59,7 +59,7 @@ export function crashDumpsIn(dir = CRASH_DIR) {
 
 /** The self-test's JSON line in the app's stdout, or null. */
 export function resultLine(stdout) {
-  const line = String(stdout ?? '').split(/\r?\n/).reverse().find(l => l.startsWith('{"selfTest":"neverquestalone"'));
+  const line = String(stdout ?? '').split(/\r?\n/).reverse().find(l => l.startsWith('{"selfTest":"voxwarden"'));
   if (!line) return null;
   try { return JSON.parse(line); } catch { return null; }
 }
@@ -181,7 +181,7 @@ export function startEnvProblems(checks, { ran = false } = {}) {
 }
 
 export function run(argv, { stdout = s => process.stdout.write(`${s}\n`), stderr = s => process.stderr.write(`${s}\n`), spawn = spawnSync, timeoutMs = 60000, crashDir = CRASH_DIR, env = process.env } = {}) {
-  if (argv.length !== 1 || argv[0].startsWith('-')) { stderr('usage: node scripts/self-test.mjs <NeverQuestAlone.app | NeverQuestAlone.exe | neverquestalone>'); return 2; }
+  if (argv.length !== 1 || argv[0].startsWith('-')) { stderr('usage: node scripts/self-test.mjs <Voxwarden.app | Voxwarden.exe | voxwarden>'); return 2; }
   const bin = appBinary(argv[0]);
   if (!fs.existsSync(bin)) { stderr(`self-test: no app at ${bin}`); return 2; }
   const signedMac = env.NQA_SELF_TEST_SIGNED === 'true' && /\.app[\\/]*$/.test(argv[0]);

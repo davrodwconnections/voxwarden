@@ -10,7 +10,7 @@ Personal use only. Your subscription's own terms apply: don't share or host it f
 node tools/subscription-proxy/proxy.mjs --port 8787
 ```
 
-In the NeverQuestAlone app, pick **Other**, then **Connect another AI**:
+In the Voxwarden app, pick **Other**, then **Connect another AI**:
 
 - Base URL: `http://localhost:8787/v1`
 - Key: leave it empty

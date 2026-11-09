@@ -123,8 +123,8 @@ test('byok e2e: a strip record in → a slot file with the reply and its usage; 
     assert.ok(slot.bridge.acked.includes(key));
     assert.deepEqual(slot.bridge.caps, ['state', 'evt', 'think', 'z', 'ctx', 'qlog', 'provider', 'usage', 'ekind', 'model'], 'the backend\'s caps join the bridge\'s');
     assert.equal(slot.bridge.provider.name, 'Anthropic');
-    assert.equal(slot.bridge.provider.companion, 'NeverQuestAlone');
-    assert.equal(slot.bridge.provider.product, 'NeverQuestAlone');
+    assert.equal(slot.bridge.provider.companion, 'Voxwarden');
+    assert.equal(slot.bridge.provider.product, 'Voxwarden');
     assert.equal(slot.bridge.usage.spentMicros, 4800);
     assert.equal(slot.bridge.usage.capMicros, undefined, 'no spend cap unless the player sets one');
     assert.equal(slot.bridge.usage.capTurns, undefined, 'no typed-message cap');
@@ -135,7 +135,7 @@ test('byok e2e: a strip record in → a slot file with the reply and its usage; 
     assert.equal(slot.bridge.ver !== undefined && slot.bridge.nonce, nonce, 'the bridge\'s own fields stay beside the backend\'s');
     assert.deepEqual(slot.rt, { state: 'ready', line: 'Ready', tone: 'ok', action: 'none' });
     assert.equal(slot.gw.state, 'ready');
-    assert.deepEqual(slot.agents.map(a => a.name), ['NeverQuestAlone']);
+    assert.deepEqual(slot.agents.map(a => a.name), ['Voxwarden']);
     const chat = slot.chats.find(c => c.id === CHAT);
     assert.ok(chat, 'the chat is listed');
     assert.equal(chat.key, undefined, 'no session keys (RT-10)');
@@ -165,7 +165,7 @@ test('byok e2e: an event turn: the fixed event line, the event and the state in 
     assert.deepEqual(block.data.game.event, { kind: 'level_up', from: '8', to: '9', sid: SID });
     assert.equal(block.data.game.state.char.level, 9);
     assert.equal(block.data.game.state.char.name, 'your character', 'identity off by default (§13.1)');
-    assert.ok(content.endsWith('\n\n[NeverQuestAlone event] Level-up: 8 → 9. Sent by the addon, not typed by the player.'), content);
+    assert.ok(content.endsWith('\n\n[Voxwarden event] Level-up: 8 → 9. Sent by the addon, not typed by the player.'), content);
     // The logbook ran in the bridge, no model involved (RT-5): the character's facts and quests.
     const mem = path.join(env.data, 'memory', 'Tavi-Testrealm');
     assert.match(fs.readFileSync(path.join(mem, 'character.md'), 'utf8'), /nqa:facts:start[\s\S]*9[\s\S]*nqa:facts:end/);
@@ -397,7 +397,7 @@ test('byok e2e: with no state (the companion off) the context\'s quest ids go wi
 // core runs on a test clock here.
 const compReplies = bridge => records(bridge, 'reply').filter(r => r.chat === COMP);
 const atOf = ms => Math.floor(ms / 1000); // the addon's time(): whole epoch seconds
-const PAUSED_LINE = 'NeverQuestAlone paused check-ins: your next message turns them back on.';
+const PAUSED_LINE = 'Voxwarden paused check-ins: your next message turns them back on.';
 const pausedLogs = bridge => bridge.lines.filter(l => l.kind === 'auto-fuse' && l.paused === true);
 // The ride-along notes (the quest log's count, always first when there's a state, left out).
 const heldNotes = call => stripDatamark((readDataBlock(lastText(call))?.data?.game?.notes ?? []).filter(l => !/^Quest.log/.test(l)).join('\n'));
@@ -414,7 +414,7 @@ async function tripFuse(bridge, env, mock, clock) {
 }
 
 test('byok e2e: the runaway fuse: 10 automatic turns within 60 s by send time go, the 11th and later ride along, acked; one auto_paused line; bridge.usage.autoPaused; it holds across a restart', async () => {
-  assert.equal(autoPausedLine('NeverQuestAlone'), PAUSED_LINE);
+  assert.equal(autoPausedLine('Voxwarden'), PAUSED_LINE);
   const mock = await startMock(() => reply('Noted.\n\nTL;DR: noted.'));
   const env = setup();
   const clock = { t: Date.now() };
@@ -568,7 +568,7 @@ test('byok e2e: normal play never trips the runaway fuse: a session\'s events (1
 test('byok e2e: a backlog that arrives at once never trips the runaway fuse (counted by send time, at= 120 s apart): 2 hours read in one reload-path pass, and 30 minutes released after a capture gap', async () => {
   const mock = await startMock(() => reply('Noted.\n\nTL;DR: noted.'));
   const env = setup();
-  const sv = path.join(env.tmp, 'NeverQuestAlone.lua');
+  const sv = path.join(env.tmp, 'Voxwarden.lua');
   const clock = { t: Date.now() };
   const bridge = makeBridge(env, { url: mock.url, keystore: await canaryKeystore(), deps: { now: () => clock.t, savedVariablesFile: sv } });
   const hex = x => Buffer.from(x, 'latin1').toString('hex');
@@ -669,7 +669,7 @@ test('byok e2e: the runaway fuse keeps its window across a restart: 9 events, a 
 test('byok e2e: the runaway fuse counts a session recap as the automatic turn it is (the 11th in a minute pauses it), and a held recap rides along', async () => {
   const mock = await startMock(() => reply('Noted.\n\nTL;DR: noted.'));
   const env = setup();
-  const sv = path.join(env.tmp, 'NeverQuestAlone.lua');
+  const sv = path.join(env.tmp, 'Voxwarden.lua');
   const clock = { t: Date.now() };
   const bridge = makeBridge(env, { url: mock.url, keystore: await canaryKeystore(), deps: { now: () => clock.t, savedVariablesFile: sv } });
   const doc = { v: 1, kind: 'session', sid: SID, char: { name: 'Tavi', realm: 'Testrealm', class: 'SHAMAN', race: 'Tauren' },
@@ -795,7 +795,7 @@ test('byok e2e (B2.13): a restart mid-request shows "interrupted" with Send agai
     assert.equal(e.chat, CHAT);
     assert.equal(e.kind, 'interrupted');
     assert.equal(e.action, 'send_again');
-    assert.equal(e.text, 'NeverQuestAlone restarted before NeverQuestAlone answered.');
+    assert.equal(e.text, 'Voxwarden restarted before Voxwarden answered.');
     await waitFor(() => b.status().inflight === 0, 3000, 'no run left in flight');
     await sleep(300);
     assert.equal(calls(mock).length, 1, 'no second call');
@@ -829,7 +829,7 @@ test('byok e2e (B2.10): a $0.01 cap with 2 chats at once stops the calls; rt say
     for (const e of refused) {
       assert.equal(e.kind, 'cap_spend');
       assert.equal(e.action, 'desktop');
-      assert.equal(e.text, "You've reached your daily spend limit ($0.01). Raise it or turn it off in the NeverQuestAlone app, or it resets at midnight.");
+      assert.equal(e.text, "You've reached your daily spend limit ($0.01). Raise it or turn it off in the Voxwarden app, or it resets at midnight.");
     }
     assert.equal(calls(mock).length, replies.length, 'a refused turn makes no call');
     // Each reply cost 6000 × $0.1 + 300 × $0.5 per 1M = 750 µ$. A turn is checked against today's spend
@@ -942,13 +942,13 @@ function spyFsync() {
 /** A SavedVariables file with these wire records in its outbox, as the addon writes it. */
 function writeOutbox(file, wires) {
   const items = wires.map((w, i) => `\t\t{\n\t\t\t["hex"] = "${Buffer.from(w, 'utf8').toString('hex')}",\n\t\t}, -- [${i + 1}]`).join('\n');
-  fs.writeFileSync(file, `NeverQuestAloneDB = {\n\t["token"] = "${TOKEN}",\n\t["outbox"] = {\n${items}\n\t},\n}\n`);
+  fs.writeFileSync(file, `VoxwardenDB = {\n\t["token"] = "${TOKEN}",\n\t["outbox"] = {\n${items}\n\t},\n}\n`);
 }
 
 test('byok e2e (code health BR-02): 200 typed records in one SavedVariables write: read 50 a poll with one outbox write each, the 21st trips the typed guard, and nothing past the limit is started or billed', async () => {
   const mock = await startMock(async () => { await sleep(10); return reply('ok.\n\nTL;DR: ok.'); });
   const env = setup();
-  const sv = path.join(env.tmp, 'NeverQuestAlone.lua');
+  const sv = path.join(env.tmp, 'Voxwarden.lua');
   const paused = [];
   // The in-game timers don't poll here: the test reads the file, one poll at a time.
   const bridge = makeBridge(env, { url: mock.url, keystore: await canaryKeystore(), deps: { savedVariablesFile: sv, savedVarsEveryMs: 3_600_000, onSendPause: on => paused.push(on) } });
@@ -999,19 +999,19 @@ test('byok e2e (code health BR-02): 200 typed records in one SavedVariables writ
 const fx = name => fixture('anthropic', name);
 const FAULTS = [
   // [tag, response, kind, action, line]
-  ['f-credit', fx('http-402-billing.json'), 'out_of_credit', 'desktop', 'Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the NeverQuestAlone app.'],
-  ['f-credit400', fx('http-400-credit-low.json'), 'out_of_credit', 'desktop', 'Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the NeverQuestAlone app.'],
+  ['f-credit', fx('http-402-billing.json'), 'out_of_credit', 'desktop', 'Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the Voxwarden app.'],
+  ['f-credit400', fx('http-400-credit-low.json'), 'out_of_credit', 'desktop', 'Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the Voxwarden app.'],
   ['f-spend', fx('http-400-usage-limits.json'), 'spend_limit', 'desktop', "You've reached the spend limit you set at Anthropic. Raise it there, or wait until it resets."],
-  ['f-rate', fx('http-429-rate-limit.json'), 'rate_limited', 'retry', 'Anthropic asked NeverQuestAlone to slow down. Try again in 20 seconds.'],
+  ['f-rate', fx('http-429-rate-limit.json'), 'rate_limited', 'retry', 'Anthropic asked Voxwarden to slow down. Try again in 20 seconds.'],
   ['f-busy', fx('http-529-overloaded.json'), 'overloaded', 'retry', 'Anthropic is busy right now. Still busy. Try again in a minute.'],
   ['f-500', fx('http-500-api-error.json'), 'overloaded', 'retry', 'Anthropic is busy right now. Still busy. Try again in a minute.'],
-  ['f-model', fx('http-404-not-found.json'), 'model_not_found', 'desktop', 'Claude Sonnet 5.5 was retired. Pick another model in the NeverQuestAlone app.'],
+  ['f-model', fx('http-404-not-found.json'), 'model_not_found', 'desktop', 'Claude Sonnet 5.5 was retired. Pick another model in the Voxwarden app.'],
   ['f-long', fx('http-400-prompt-too-long.json'), 'context_too_long', 'none', 'This chat is too long for Claude Sonnet 5.5. Start a new chat.'],
   ['f-refuse', fx('refusal.sse'), 'content_blocked', 'none', 'Claude Sonnet 5.5 declined to answer that. Try asking another way.'],
   ['f-midstream', fx('error-overloaded-midstream.sse'), 'overloaded', 'retry', 'Anthropic is busy right now. Still busy. Try again in a minute.'],
   ['f-drop', { status: 200, headers: { 'content-type': 'text/event-stream' }, body: anthropicHead(), destroyAfterBody: true }, 'network_after_send', 'send_again', 'No answer: the connection dropped.'],
   ['f-stall', { status: 200, headers: { 'content-type': 'text/event-stream' }, body: anthropicHead(), hangAfterBody: true }, 'timeout', 'retry', 'No answer from Anthropic after 2 seconds.'],
-  ['f-bad', fx('http-400-bad-request.json'), 'bad_request', 'desktop', "Anthropic couldn't take that message. See the details in the NeverQuestAlone app."],
+  ['f-bad', fx('http-400-bad-request.json'), 'bad_request', 'desktop', "Anthropic couldn't take that message. See the details in the Voxwarden app."],
 ];
 
 test('byok e2e (B2.11): fault injection: every provider-side §10 kind gives its error record with the kind, the fixed line and the next step', async () => {
@@ -1074,7 +1074,7 @@ test('byok e2e (B2.11): the faults that change the backend: a rejected key, an e
     const a = await oneFault(t, { url: mock.url, keystore: await canaryKeystore() });
     assert.equal(a.e.kind, 'auth_invalid');
     assert.equal(a.e.action, 'desktop');
-    assert.equal(a.e.text, 'Your Anthropic key was rejected. Replace it in the NeverQuestAlone app.');
+    assert.equal(a.e.text, 'Your Anthropic key was rejected. Replace it in the Voxwarden app.');
     await waitFor(() => a.bridge.buildSlot().gw.state === 'key_invalid', 2000, 'key_invalid');
     const s = a.bridge.buildSlot();
     assert.equal(s.rt.state, 'key_invalid');
@@ -1089,7 +1089,7 @@ test('byok e2e (B2.11): the faults that change the backend: a rejected key, an e
 
     const o = await oneFault(t, { url: mock.url, keystore: await canaryKeystore(), byok: { auth: 'oauth' } });
     assert.equal(o.e.kind, 'oauth_expired');
-    assert.equal(o.e.text, 'Your Anthropic sign-in ended. Sign in again in the NeverQuestAlone app.');
+    assert.equal(o.e.text, 'Your Anthropic sign-in ended. Sign in again in the Voxwarden app.');
     assert.equal(o.e.action, 'desktop');
     await o.bridge.stop();
   } finally { await mock.close(); }
@@ -1107,7 +1107,7 @@ test('byok e2e (B2.11): the faults that change the backend: a rejected key, an e
     const e = await waitFor(() => records(bridge, 'error')[0], 5000, 'no_key line');
     assert.equal(e.kind, 'no_key');
     assert.equal(e.action, 'desktop');
-    assert.equal(e.text, 'No Anthropic key is set up. Add one in the NeverQuestAlone app.');
+    assert.equal(e.text, 'No Anthropic key is set up. Add one in the Voxwarden app.');
     assert.equal(calls(ok).length, 0);
     await waitFor(() => bridge.buildSlot().rt.state === 'no_key', 2000, 'rt no_key');
     // A key set in the app: ready again, and a waiting message goes at once (onResume: the core
@@ -1147,7 +1147,7 @@ test('byok e2e (B2.11): network down before the request left, a local server dow
   const local = await oneFault(t, { byok: { provider: 'custom', model: 'qwen3:8b', custom: { baseUrl: `${dead}/v1`, model: 'qwen3:8b' } } });
   assert.equal(local.e.kind, 'local_unreachable');
   assert.equal(local.e.action, 'retry');
-  assert.equal(local.e.text, `NeverQuestAlone can't reach ${host}. Start ${host}, then click Retry.`);
+  assert.equal(local.e.text, `Voxwarden can't reach ${host}. Start ${host}, then click Retry.`);
   assert.equal(local.bridge.buildSlot().rt.state, 'local_down');
   await local.bridge.stop();
 
@@ -1159,7 +1159,7 @@ test('byok e2e (B2.11): network down before the request left, a local server dow
     const keystore = await canaryKeystore(['openai']);
     const region = await oneFault(t, { manifests: manifestsAt(mock.url, ['openai']), keystore, byok: { provider: 'openai' }, text: 'region?' });
     assert.equal(region.e.kind, 'region_blocked');
-    assert.equal(region.e.text, "OpenAI isn't available where you are. Pick another AI in the NeverQuestAlone app.");
+    assert.equal(region.e.text, "OpenAI isn't available where you are. Pick another AI in the Voxwarden app.");
     assert.equal(region.e.action, 'desktop');
     // OpenAI gets the per-install safety identifier (§7.2, §13.1): random, kept in the data folder.
     const safety = JSON.parse(fs.readFileSync(path.join(region.env.data, 'byok-chats.json'), 'utf8')).safetyId;
@@ -1169,7 +1169,7 @@ test('byok e2e (B2.11): network down before the request left, a local server dow
     await region.bridge.stop();
     const ident = await oneFault(t, { manifests: manifestsAt(mock.url, ['openai']), keystore, byok: { provider: 'openai' }, text: 'who?' });
     assert.equal(ident.e.kind, 'identifier_blocked');
-    assert.equal(ident.e.text, 'OpenAI has blocked this install. See the details in the NeverQuestAlone app.');
+    assert.equal(ident.e.text, 'OpenAI has blocked this install. See the details in the Voxwarden app.');
     await ident.bridge.stop();
   } finally { await mock.close(); }
 });
@@ -1600,7 +1600,7 @@ test('byok e2e (PV-3): a model gone at start is switched, and the chat of the ne
     assert.deepEqual(recs.map(x => x.t), ['error', 'reply'], 'the line, then the reply');
     assert.equal(recs[0].kind, 'model_not_found');
     assert.equal(recs[0].action, 'desktop');
-    assert.equal(recs[0].text, "Claude Sonnet 5 isn't available on your Anthropic account. Switched to Claude Haiku 4.5 for now. Change it in the NeverQuestAlone app.");
+    assert.equal(recs[0].text, "Claude Sonnet 5 isn't available on your Anthropic account. Switched to Claude Haiku 4.5 for now. Change it in the Voxwarden app.");
     await waitFor(() => bridge.status().inflight === 0, 2000, 'the run is over');
     bridge.handlePayload(msg('again'));
     await waitFor(() => records(bridge, 'reply').length === 2, 5000, 'the second reply');

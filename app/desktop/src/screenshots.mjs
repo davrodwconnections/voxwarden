@@ -101,7 +101,7 @@ export const STATE_CARDS = Object.freeze([
   ['provider-down', 'The AI isn’t answering: Test key, Pick another AI', { ...READY_STATE(), rt: { state: 'provider_down' } }, 'isn’t answering'],
   ['local-down', 'The server on this Mac stopped (Other at localhost): Check again', { ...CUSTOM_LOCAL, rt: { state: 'local_down' } }, 'Can’t reach localhost:11434'],
   ['model-retired', 'Pick another model (a retired model): no Okay while it holds', { ...READY_STATE(), choice: { provider: 'anthropic', model: 'claude-sonnet-5', effort: 'low' }, notice: { kind: 'model_retired', model: 'claude-sonnet-5', at: Date.UTC(2026, 8, 26, 9) } }, 'was retired'],
-  ['paused', 'Paused: NeverQuestAlone is paused, Resume; no card', { ...READY_STATE(), paused: true }, 'is paused'],
+  ['paused', 'Paused: Voxwarden is paused, Resume; no card', { ...READY_STATE(), paused: true }, 'is paused'],
   ['region-blocked', 'Last message failed (region blocked, no rt state; from the backend’s last failure): Pick another AI', { ...OPENAI_STATE(), lastError: { kind: 'region_blocked', at: Date.UTC(2026, 8, 26, 9) } }, 'One thing needs you'],
   ['identifier-blocked', 'Last message failed (OpenAI blocked this install): why, Pick another AI, Open Diagnostics', { ...OPENAI_STATE(), lastError: { kind: 'identifier_blocked', at: Date.UTC(2026, 8, 26, 9) } }, 'One thing needs you'],
   ['spend-limit', 'Last message failed (the spend limit set at Anthropic): Open Anthropic’s limits page, Test key (a pass clears it)', { ...READY_STATE(), lastError: { kind: 'spend_limit', at: Date.UTC(2026, 8, 26, 9) } }, 'One thing needs you'],
@@ -179,7 +179,7 @@ export function setupScenes() {
   const list = [];
   // Step 2: "Connect your AI".
   list.push(
-    { id: 'setup-welcome', caption: 'The welcome (a first run): Meet NeverQuestAlone, what he does for your questing, his window in WoW with a priority route, Set up NeverQuestAlone', state: {}, run: toWelcome },
+    { id: 'setup-welcome', caption: 'The welcome (a first run): Meet Voxwarden, what he does for your questing, his window in WoW with a priority route, Set up Voxwarden', state: {}, run: toWelcome },
     { id: 'setup-welcome-narrow', caption: 'The welcome at 760×540', size: [760, 540], state: {}, run: toWelcome },
     { id: 'setup-s2-no-key', caption: 'Step 2, No key yet? open: the picked AI’s key in four numbered steps', state: {}, run: async (d) => { await toStep2(d); await d.clickFk('no-key'); await d.waitText('Come back to this window'); } },
     { id: 'setup-s2-fresh', caption: 'Step 2 Connect your AI: the tracker, five rows (Claude picked), Paste Anthropic key ⌘V, Open Anthropic’s key page, Show details', state: {}, run: toStep2 },
@@ -198,7 +198,7 @@ export function setupScenes() {
     { id: 'setup-s2-other', caption: 'Step 2 with Other picked: Price varies, Set up Other', state: {}, run: d => pick(d, 'custom') },
     { id: 'setup-s2-windows', platform: 'win32', caption: 'Step 2 on Windows: Ctrl+V', state: {}, run: toStep2 },
     { id: 'setup-s2-windows-details', platform: 'win32', info: { workPc: true }, caption: 'Step 2’s sheet on Windows, a work PC: Windows Credential Manager and the roaming line', state: {}, run: async d => { await toStep2(d); await details(d); } },
-    { id: 'setup-s2-move', caption: 'Step 2 with Move NeverQuestAlone to Applications above the title (the app runs from Downloads)', state: {}, info: { inApplications: false }, run: toStep2 },
+    { id: 'setup-s2-move', caption: 'Step 2 with Move Voxwarden to Applications above the title (the app runs from Downloads)', state: {}, info: { inApplications: false }, run: toStep2 },
     { id: 'setup-s2-engine-error', caption: 'Step 2 when another copy is open: the banner above, Quit this copy', state: {}, apiMode: 'error', run: async (d) => { await d.load('setup'); await d.waitText('Quit this copy'); } },
     { id: 'setup-s2-saved-key', caption: 'Step 2 returning with a key saved: the row’s Key saved, Use saved key, Paste new key', state: { keys: SAVED_ANTHROPIC, terms: { anthropic: 1 } }, run: toStep2 },
     { id: 'setup-s2-returning', caption: 'Step 2 returning, Claude in use: Use saved key first, Paste new key second', state: { keys: SAVED_ANTHROPIC, terms: { anthropic: 1 }, choice: HAIKU_CHOSEN }, appState: AT_AI, run: toStep2 },
@@ -260,10 +260,10 @@ export function setupScenes() {
   list.push(
     dialog('connect', 'Connect Claude with this key? (first key, from the clipboard)', {}, async (d) => { await toStep2(d); d.setClipboard(FAKE_KEY); await d.clickFk('paste-key'); }),
     dialog('replace', 'Replace your Anthropic key?', { keys: SAVED_ANTHROPIC, terms: { anthropic: 1 }, choice: HAIKU_CHOSEN }, async (d) => { await toStep2(d); d.setClipboard(FAKE_KEY); await d.clickFk('paste-key'); }, AT_AI),
-    dialog('switch', 'Switch NeverQuestAlone to ChatGPT with this key? (Claude in use)', { keys: SAVED_ANTHROPIC, terms: { anthropic: 1 }, choice: HAIKU_CHOSEN }, async (d) => { await pick(d, 'openai'); d.setClipboard(FAKE_OPENAI_KEY); await d.clickFk('paste-key'); }, AT_AI),
+    dialog('switch', 'Switch Voxwarden to ChatGPT with this key? (Claude in use)', { keys: SAVED_ANTHROPIC, terms: { anthropic: 1 }, choice: HAIKU_CHOSEN }, async (d) => { await pick(d, 'openai'); d.setClipboard(FAKE_OPENAI_KEY); await d.clickFk('paste-key'); }, AT_AI),
     dialog('use-saved', 'Use your saved Anthropic key? (no terms recorded)', { keys: SAVED_ANTHROPIC, terms: {} }, async (d) => { await toStep2(d); await d.clickFk('use-saved'); }),
-    dialog('custom', 'Connect NeverQuestAlone to openrouter.ai? (Other, with a key)', {}, async (d) => { await toCustom(d); await fillCustom(d, 'https://openrouter.ai/api/v1', 'openai/gpt-5-mini', FAKE_OPENROUTER_KEY); await d.clickFk('custom-go'); }),
-    dialog('custom-local', 'Connect NeverQuestAlone to localhost:11434? (Other, a server on this Mac)', {}, async (d) => { await toCustom(d); await fillCustom(d, 'http://localhost:11434/v1', 'qwen3:8b'); await d.clickFk('custom-go'); }),
+    dialog('custom', 'Connect Voxwarden to openrouter.ai? (Other, with a key)', {}, async (d) => { await toCustom(d); await fillCustom(d, 'https://openrouter.ai/api/v1', 'openai/gpt-5-mini', FAKE_OPENROUTER_KEY); await d.clickFk('custom-go'); }),
+    dialog('custom-local', 'Connect Voxwarden to localhost:11434? (Other, a server on this Mac)', {}, async (d) => { await toCustom(d); await fillCustom(d, 'http://localhost:11434/v1', 'qwen3:8b'); await d.clickFk('custom-go'); }),
   );
   // 6.1.2 Other: any OpenAI-compatible service at its own address.
   const custom = (id, caption, url, model, key, wait, state = {}) => ({ id: `setup-custom-${id}`, caption: `Connect another AI: ${caption}`, state, run: async (d) => { await toCustom(d); await fillCustom(d, url, model, key); await d.clickFk('custom-go'); await d.waitText(wait); } });
@@ -305,7 +305,7 @@ export function setupScenes() {
     wow('armed-granted', 'armed with Screen Recording on: the install stays the current row, row 3 its title alone (ON-22)', { ...RUNNING, armed: '/Applications/World of Warcraft/_forever_', permission: 'granted' }, 'Installs when you quit WoW'),
     wow('windows-armed', 'on Windows, armed: the install the current row, row 3 says Start WoW again once it closes (ON-22)', { ...RUNNING, armed: 'C:\\Program Files (x86)\\World of Warcraft\\_forever_' }, 'once it closes', { platform: 'win32' }),
     wow('windows-waiting', 'on Windows, the addon in, WoW running: the reading row its title alone (ON-21)', { ...INSTALLED, ...RUNNING }, 'Waiting for the addon', { platform: 'win32' }),
-    wow('armed-asked', 'armed and Screen Recording asked: Open System Settings is the one primary', { ...RUNNING, armed: '/Applications/World of Warcraft/_forever_', permission: 'asked' }, 'then turn on NeverQuestAlone'),
+    wow('armed-asked', 'armed and Screen Recording asked: Open System Settings is the one primary', { ...RUNNING, armed: '/Applications/World of Warcraft/_forever_', permission: 'asked' }, 'then turn on Voxwarden'),
     wow('installing', 'installing', { addonState: 'installing' }, 'Installing…'),
     wow('installed', 'the addon in; Allow is the current row', INSTALLED, 'Never keeps or sends pictures'),
     wow('installed-narrow', 'the addon in at 760×540: Allow’s line (what screen reading reads) fits', INSTALLED, 'Never keeps or sends pictures', { size: [760, 540] }),
@@ -322,7 +322,7 @@ export function setupScenes() {
     wow('disk-full', 'no free space for the addon: Install again', { addonState: 'disk_full' }, 'No free space'),
     wow('install-failed', 'the install failed: Install again, Copy diagnostics', { addonState: 'failed' }, 'didn’t install'),
     wow('others-can-write', 'installed, other accounts can change WoW’s addons (Open Diagnostics)', { ...INSTALLED, setup: { addon: { othersCanWrite: true } } }, 'Other accounts can change'),
-    wow('permission-asked', 'Screen Recording asked: Open System Settings', { ...INSTALLED, permission: 'asked' }, 'then turn on NeverQuestAlone'),
+    wow('permission-asked', 'Screen Recording asked: Open System Settings', { ...INSTALLED, permission: 'asked' }, 'then turn on Voxwarden'),
     wow('permission-denied', 'Screen Recording denied', { ...INSTALLED, permission: 'denied' }, 'Screen Recording is off.'),
     wow('permission-denied-mac14', 'Screen Recording denied on macOS 14 (the pane’s path in Show details)', { ...INSTALLED, permission: 'denied' }, null, { info: { osRelease: '23.6.0' }, extraRun: details }),
     wow('no-reading-open', 'Skip screen reading? open (after macOS said no): Turn off screen reading, one click', { ...INSTALLED, permission: 'denied' }, 'messages then wait', { extraRun: d => d.clickFk('no-reading') }),
@@ -338,7 +338,7 @@ export function setupScenes() {
     list.push(wow(`why-${cause}`, `Still waiting? open: ${cause.replace(/-/g, ' ')}`, { ...INSTALLED, ...RUNNING, ...facts }, wait, { extraRun: d => d.clickFk('still-waiting'), platform: onlyOn ?? null }));
   }
   list.push(
-    wow('hello', 'the hello came: You’re set (NeverQuestAlone is in your game)', { ...INSTALLED, permission: 'granted', ...RUNNING, setup: { game: { hello: HELLO } } }, 'is in your game'),
+    wow('hello', 'the hello came: You’re set (Voxwarden is in your game)', { ...INSTALLED, permission: 'granted', ...RUNNING, setup: { game: { hello: HELLO } } }, 'is in your game'),
     wow('iface-mismatch', 'WoW updated and the addon needs one too: the banner, its fix', { ...INSTALLED, permission: 'granted', ...RUNNING, setup: { game: { ifaceMismatch: true } } }, 'out of date'),
     wow('damaged', 'a file damaged or unsigned: the banner, Open download page', { ...INSTALLED, permission: 'granted', setup: { captureState: 'damaged' } }, 'is damaged'),
     wow('no-credit', 'the key saved with no credit: the banner above the list (Add credit, Test again), the tracker says it', { ...INSTALLED, keyState: { anthropic: 'no_credit' } }, 'No credit at'),
@@ -388,17 +388,17 @@ export function setupScenes() {
     wow('done-no-credit', 'The hello with no credit: Almost set up, the card above it with Add credit the primary, Open Home quiet, the skull dark', { ...NOCREDIT, ...done }, 'Almost set up'),
     wow('done-replied', 'You’re set after a first reply: ask for a route (Say Hi is gone)', doneReplied, 'for a route', { info: { loginItem: { supported: true, openAtLogin: true, status: 'enabled' } } }),
     wow('done-home', 'Open Home from You’re set (the hello alone): Home, no Finish setup in the nav', done, 'is in game', { info: { loginItem: { supported: true, openAtLogin: true, status: 'enabled' } }, extraRun: d => d.clickFk('home') }),
-    wow('done', 'You’re set: in game, Say Hi, then ask for a route; NeverQuestAlone stays in your menu bar, Open Home', done, 'You’re set', { info: { loginItem: { supported: true, openAtLogin: true, status: 'enabled' } } }),
+    wow('done', 'You’re set: in game, Say Hi, then ask for a route; Voxwarden stays in your menu bar, Open Home', done, 'You’re set', { info: { loginItem: { supported: true, openAtLogin: true, status: 'enabled' } } }),
     wow('done-narrow', 'You’re set at 760×540', done, 'You’re set', { size: [760, 540], info: { loginItem: { supported: true, openAtLogin: true, status: 'enabled' } } }),
     wow('done-no-quote', 'You’re set after a restart (no first words kept): the same screen', { ...doneReplied, setup: { ...doneReplied.setup, firstWords: null } }, 'You’re set', { info: { loginItem: { supported: true, openAtLogin: true, status: 'enabled' } } }),
-    wow('done-no-login', 'You’re set with start at login off: start it yourself when you play', done, 'Start NeverQuestAlone yourself', { info: { loginItem: { supported: true, openAtLogin: false } } }),
+    wow('done-no-login', 'You’re set with start at login off: start it yourself when you play', done, 'Start Voxwarden yourself', { info: { loginItem: { supported: true, openAtLogin: false } } }),
     wow('done-windows', 'You’re set on Windows: the system tray line', done, 'system tray', { platform: 'win32', info: { loginItem: { supported: true, openAtLogin: true } } }),
   );
   // Home after Finish later.
   list.push(
-    { id: 'home-finish-no-ai', caption: 'Home after Finish later with no AI: Finish setup, NeverQuestAlone can’t answer yet', state: {}, appState: { onboarded: true, setup: { v: 2, screen: 'ai', path: 'key', provider: null } }, run: async (d) => { await d.load('home'); await d.waitText('can’t answer yet'); } },
+    { id: 'home-finish-no-ai', caption: 'Home after Finish later with no AI: Finish setup, Voxwarden can’t answer yet', state: {}, appState: { onboarded: true, setup: { v: 2, screen: 'ai', path: 'key', provider: null } }, run: async (d) => { await d.load('home'); await d.waitText('can’t answer yet'); } },
     { id: 'home-finish-no-addon', caption: 'Home after Finish later with the AI connected, no addon: The addon isn’t in WoW yet, Finish setup', state: { ...AT_WOW }, appState: { ...WOW_APP, onboarded: true }, run: async (d) => { await d.load('home'); await d.waitText('isn’t in WoW yet'); } },
-    { id: 'home-finish-no-screen', caption: 'Home after Finish later, no Screen Recording: NeverQuestAlone can’t see the game yet', state: { ...AT_WOW, ...INSTALLED }, appState: { ...WOW_APP, onboarded: true }, run: async (d) => { await d.load('home'); await d.waitText('can’t see the game yet'); } },
+    { id: 'home-finish-no-screen', caption: 'Home after Finish later, no Screen Recording: Voxwarden can’t see the game yet', state: { ...AT_WOW, ...INSTALLED }, appState: { ...WOW_APP, onboarded: true }, run: async (d) => { await d.load('home'); await d.waitText('can’t see the game yet'); } },
   );
   return list;
 }
@@ -417,14 +417,14 @@ export function scenes({ lineFor = null } = {}) {
   const list = [
     ...setupScenes(),
 
-    // Home (spec §6.2): NeverQuestAlone's condition as the title.
-    { id: 'home-in-game', caption: 'Home, in game and all good: NeverQuestAlone is in game, Pause, the route’s next stop (live), the AI and today’s spend', state: IN_GAME, run: async d => { await d.load('home'); await d.waitText('is in game'); } },
+    // Home (spec §6.2): Voxwarden's condition as the title.
+    { id: 'home-in-game', caption: 'Home, in game and all good: Voxwarden is in game, Pause, the route’s next stop (live), the AI and today’s spend', state: IN_GAME, run: async d => { await d.load('home'); await d.waitText('is in game'); } },
     { id: 'home-in-game-narrow', caption: 'Home in game at 760×540', size: [760, 540], state: IN_GAME, run: async d => { await d.load('home'); await d.waitText('is in game'); } },
-    { id: 'home-in-game-no-route', caption: 'Home in game before NeverQuestAlone has drawn a route: NeverQuestAlone is in game, Pause, the AI row', state: { ...READY, ...RUNNING }, run: async d => { await d.load('home'); await d.waitText('is in game'); } },
-    { id: 'home-wow-closed', caption: 'Home with WoW closed: WoW is closed, Open Battle.net; NeverQuestAlone’s eye dark', state: READY, run: async d => { await d.load('home'); await d.waitText('WoW is closed'); } },
+    { id: 'home-in-game-no-route', caption: 'Home in game before Voxwarden has drawn a route: Voxwarden is in game, Pause, the AI row', state: { ...READY, ...RUNNING }, run: async d => { await d.load('home'); await d.waitText('is in game'); } },
+    { id: 'home-wow-closed', caption: 'Home with WoW closed: WoW is closed, Open Battle.net; Voxwarden’s eye dark', state: READY, run: async d => { await d.load('home'); await d.waitText('WoW is closed'); } },
     { id: 'home-limit', caption: 'Home with a daily limit the player set: the spend’s XP bar, of $1.00', state: { ...IN_GAME, ...LIMIT, spentMicros: 420_000 }, run: async d => { await d.load('home'); await d.waitText('is in game'); } },
-    { id: 'home-paused', caption: 'Home paused: NeverQuestAlone is paused, Resume is the one primary; NeverQuestAlone’s eye dark', state: { ...READY, paused: true }, run: async d => { await d.load('home'); await d.waitText('is paused'); } },
-    { id: 'home-connecting', caption: 'Home while WoW starts and the app looks for what the addon draws at the top of WoW’s window: NeverQuestAlone is joining the game', state: { ...IN_GAME, capture: { state: 'waiting', mode: 'capture', signals: 'unknown', steps: { game: true, strip: false, message: false, reply: false } } }, run: async d => { await d.load('home'); await d.waitText('is joining the game'); } },
+    { id: 'home-paused', caption: 'Home paused: Voxwarden is paused, Resume is the one primary; Voxwarden’s eye dark', state: { ...READY, paused: true }, run: async d => { await d.load('home'); await d.waitText('is paused'); } },
+    { id: 'home-connecting', caption: 'Home while WoW starts and the app looks for what the addon draws at the top of WoW’s window: Voxwarden is joining the game', state: { ...IN_GAME, capture: { state: 'waiting', mode: 'capture', signals: 'unknown', steps: { game: true, strip: false, message: false, reply: false } } }, run: async d => { await d.load('home'); await d.waitText('is joining the game'); } },
     { id: 'home-no-ai', caption: 'Home with no AI and no setup saved', state: {}, run: async d => { await d.load('home'); } },
 
     { id: 'diagnostics-permissions-fixed', caption: 'Diagnostics: Fix permissions while WoW is open (no reinstall): only your account can change the addon folder now', state: { ...READY, wow: { found: true, running: true }, permissions: LOOSE }, run: async d => { await d.load('diagnostics'); await d.click('Fix permissions'); await d.waitText('Only your account can change the addon folder now'); } },
@@ -515,7 +515,7 @@ export function scenes({ lineFor = null } = {}) {
     { id: 'diagnostics-copied', caption: 'Diagnostics: after Copy diagnostics (one line; what was copied one click away)', state: READY, run: async d => { await d.load('diagnostics'); await d.click('Copy diagnostics'); await d.waitText('Show what was copied'); } },
     { id: 'about', caption: 'About in a development run: updates work in the installed app; the panel foot shows the version alone', state: READY, updater: { ...UPDATER, supported: false, state: 'off', error: 'not_packaged' }, run: async d => { await d.load('about'); await d.waitText('Show legal and credits'); } },
     // An installed app's About (CL-design-58, CL-words-79): the update line, its one action, the Update checks switch.
-    { id: 'about-installed', caption: 'About, installed and up to date: Check for updates, Update checks on', state: READY, updater: UPDATER, info: { releases: true }, run: async d => { await d.load('about'); await d.waitText('NeverQuestAlone is up to date.'); } },
+    { id: 'about-installed', caption: 'About, installed and up to date: Check for updates, Update checks on', state: READY, updater: UPDATER, info: { releases: true }, run: async d => { await d.load('about'); await d.waitText('Voxwarden is up to date.'); } },
     { id: 'about-available', caption: 'About, installed, a new version found: Download (the one primary)', state: READY, updater: { ...UPDATER, state: 'available', available: { version: '1.2.1', date: null } }, info: { releases: true }, run: async d => { await d.load('about'); await d.waitText('is available'); } },
     { id: 'about-ready', caption: 'About, installed, the update downloaded, WoW closed: Restart to update', state: READY, updater: { ...UPDATER, state: 'ready', available: { version: '1.2.1', date: null }, progress: 100 }, info: { releases: true }, run: async d => { await d.load('about'); await d.waitText('Restart to update'); } },
     { id: 'about-checks-off', caption: 'About, installed, Update checks off: Update checks are off, Open download page (quiet)', state: READY, updater: { ...UPDATER, mode: 'never', state: 'idle' }, info: { releases: true }, run: async d => { await d.load('about'); await d.waitText('Update checks are off'); } },
@@ -523,11 +523,11 @@ export function scenes({ lineFor = null } = {}) {
     { id: 'foot-available', caption: 'The panel foot with an update found: Download v1.3.1 (gold)', state: IN_GAME, updater: { ...UPDATER, state: 'available', available: { version: '1.3.1', date: null } }, run: async d => { await d.load('home'); await d.waitText('Download v1.3.1'); } },
     { id: 'foot-ready', caption: 'The panel foot with an update downloaded and WoW closed: Restart to update (gold)', state: READY, updater: { ...UPDATER, state: 'ready', available: { version: '1.3.1', date: null }, progress: 100 }, run: async d => { await d.load('home'); await d.waitText('Restart to update'); } },
     { id: 'foot-ready-in-game', caption: 'The panel foot with an update downloaded while WoW runs: Update ready (Restart to update once WoW is closed)', state: IN_GAME, updater: { ...UPDATER, state: 'ready', available: { version: '1.3.1', date: null }, progress: 100 }, run: async d => { await d.load('home'); await d.waitText('Update ready'); } },
-    { id: 'status-hover', caption: 'The pointer over NeverQuestAlone: his state in a word beside the portrait (In game)', state: IN_GAME, run: async d => { await d.load('home'); await d.hover('#bones-btn'); } },
-    { id: 'status-hover-closed', caption: 'The pointer over NeverQuestAlone with WoW closed: WoW closed', state: READY, run: async d => { await d.load('home'); await d.hover('#bones-btn'); } },
-    { id: 'status-hover-needs', caption: 'The pointer over NeverQuestAlone on Settings while a card waits on Home: Needs you, and the Home dot', state: { ...IN_GAME, keys: { anthropic: { masked: 'sk-ant-…xxxx', state: 'invalid' } } }, run: async d => { await d.load('settings'); await d.hover('#bones-btn'); } },
+    { id: 'status-hover', caption: 'The pointer over Voxwarden: his state in a word beside the portrait (In game)', state: IN_GAME, run: async d => { await d.load('home'); await d.hover('#bones-btn'); } },
+    { id: 'status-hover-closed', caption: 'The pointer over Voxwarden with WoW closed: WoW closed', state: READY, run: async d => { await d.load('home'); await d.hover('#bones-btn'); } },
+    { id: 'status-hover-needs', caption: 'The pointer over Voxwarden on Settings while a card waits on Home: Needs you, and the Home dot', state: { ...IN_GAME, keys: { anthropic: { masked: 'sk-ant-…xxxx', state: 'invalid' } } }, run: async d => { await d.load('settings'); await d.hover('#bones-btn'); } },
     { id: 'about-legal', caption: 'About, Legal and credits open: disclaimers, credits, license, notices', state: READY, run: async d => { await d.load('about'); await d.clickFk('legal'); await d.waitText('wow-ai'); } },
-    { id: 'uninstall', caption: 'Uninstall: what it removes, the addon switch, Uninstall (main confirms first)', state: READY, run: async d => { await d.load('uninstall'); await d.waitText('Removes NeverQuestAlone'); } },
+    { id: 'uninstall', caption: 'Uninstall: what it removes, the addon switch, Uninstall (main confirms first)', state: READY, run: async d => { await d.load('uninstall'); await d.waitText('Removes Voxwarden'); } },
 
     // Notices (spec §4.14): one line with Okay.
     { id: 'notice-model-switched', caption: 'Notice: the old model isn’t offered, so an equal or cheaper one (Okay puts it away for good)', state: { ...READY, notice: { kind: 'model_switched', from: 'claude-sonnet-5', to: 'claude-haiku-4-5', at: Date.UTC(2026, 8, 26, 9) } }, run: async d => { await d.load('home'); await d.waitText('same price or less'); } },
@@ -577,7 +577,7 @@ export function scenes({ lineFor = null } = {}) {
 /**
  * What each scene is measured against (spec §8.1): its screen, by the page the window shows. The
  * word budgets count the visible words (the panel's too) and leave out data (JSON, hosts, key
- * masks, NeverQuestAlone's quoted first words, stat values). On app pages the nav's fixed labels and the
+ * masks, Voxwarden's quoted first words, stat values). On app pages the nav's fixed labels and the
  * wordmark are left out: they're the same on every page, and the spec's Last request budget (20)
  * can't hold them with its title and line.
  */
@@ -643,7 +643,7 @@ export function judge(scene, check) {
 export function indexText(shots, { when = new Date(), note = '' } = {}) {
   const w = Math.max(...shots.map(s => s.file.length), 10);
   return [
-    `NeverQuestAlone desktop app: window states (${shots.length} PNGs, ${when.toISOString()})`,
+    `Voxwarden desktop app: window states (${shots.length} PNGs, ${when.toISOString()})`,
     'Rendered by `electron . --screenshots <dir>` against the mock API (src/mock-api.mjs), in a hidden window grown to each page’s height.',
     note,
     '',
@@ -754,7 +754,7 @@ export async function screenshots(hooks) {
     mock.control.usePlayerText(Object.fromEntries(loadManifests().map(m => [m.id, playerCard(m)])));
     lineFor = (kind, names = {}, extra = {}) => desktopLine(
       { kind, provider: names.provider ?? 'Anthropic', retryAfterMs: 18_000, resetAt: Date.now() + 5 * 3600e3, ...extra },
-      { provider: 'Anthropic', model: 'Claude Haiku 4.5', companion: 'NeverQuestAlone', product: 'NeverQuestAlone', platform: process.platform, capMicros: 1_000_000, ...names },
+      { provider: 'Anthropic', model: 'Claude Haiku 4.5', companion: 'Voxwarden', product: 'Voxwarden', platform: process.platform, capMicros: 1_000_000, ...names },
     );
   } catch (e) { log(`screenshots: no §10 lines (${e?.message ?? e})`); }
 
@@ -931,7 +931,7 @@ export async function screenshots(hooks) {
         }
         fs.writeFileSync(path.join(outDir, file.replace(/\.png$/, '.json')), JSON.stringify(probed, null, 1));
       }
-      // The acceptance checks (spec §8): words, fit, contrast, primaries and NeverQuestAlone, at the scene's size;
+      // The acceptance checks (spec §8): words, fit, contrast, primaries and Voxwarden, at the scene's size;
       // a setup screen's fit at the other size too (1000×720 and 760×540).
       const check = { at: await js(CHECK_JS) };
       if (/^setup-/.test(scene?.id ?? '') && String(check.at?.screen ?? '').match(/^(step2|other|step3|done)$/)) {

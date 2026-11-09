@@ -1,12 +1,12 @@
 ---
 title: Security model
-description: How NeverQuestAlone protects keys, the network, spending and updates, what its addon can’t do, and your part in a build of your own.
+description: How Voxwarden protects keys, the network, spending and updates, what its addon can’t do, and your part in a build of your own.
 status: ready
 ---
 
 # Security model
 
-Players trust NeverQuestAlone with an API key that can spend their money, and with a game account they care about. This page says what protects each, what doesn’t, and what’s up to you in a build of your own.
+Players trust Voxwarden with an API key that can spend their money, and with a game account they care about. This page says what protects each, what doesn’t, and what’s up to you in a build of your own.
 
 ## The addon
 
@@ -19,14 +19,14 @@ The addon runs inside World of Warcraft, under the game’s own rules for addons
 ## Keys
 
 - Keys go into the app, never into the game. They’re saved where the system keeps passwords: the macOS Keychain, Windows Credential Manager, or the Secret Service on Linux.
-- Windows Credential Manager and Linux’s Secret Service don’t keep apps apart, so `keychainService` in `identity.json` is all that keeps two apps built from this code from reading each other’s keys. Never reuse NeverQuestAlone’s.
+- Windows Credential Manager and Linux’s Secret Service don’t keep apps apart, so `keychainService` in `identity.json` is all that keeps two apps built from this code from reading each other’s keys. Never reuse Voxwarden’s.
 - A key is sent only to its own AI company, and taken out of logs and diagnostics.
 
 ## The network
 
 - The app connects only to the AI company the player picked, GitHub for updates, and a model on the same computer or the home network if they use one. A list of allowed addresses is checked before any request goes out, and anything else is refused.
 - **Connections** lists every address the app talked to, and **Last request** shows exactly what was sent, with the key hidden.
-- There’s no NeverQuestAlone server: no account, no telemetry, nothing sent to the people who make it.
+- There’s no Voxwarden server: no account, no telemetry, nothing sent to the people who make it.
 
 ## Game text and replies
 
@@ -45,7 +45,7 @@ A small separate program, the capture helper, reads the top of World of Warcraft
 - The update feed comes from `releases` in `identity.json`. A build without one never updates itself, and neither does a run from source.
 - On a Mac, an update must carry the app’s own signature. On Windows, an installer from any other publisher than the one the build pinned is refused, and so is any update that isn’t newer than the app that’s running.
 - An update never restarts the app while the game runs.
-- NeverQuestAlone’s release workflow runs only when its maintainers start it, never on a pull request. Its secrets sit in a protected environment, and every GitHub Action it uses is pinned to a commit SHA. The tests run on every push and pull request, with no secrets.
+- Voxwarden’s release workflow runs only when its maintainers start it, never on a pull request. Its secrets sit in a protected environment, and every GitHub Action it uses is pinned to a commit SHA. The tests run on every push and pull request, with no secrets.
 
 ## Your part, in a build of your own
 
@@ -57,4 +57,4 @@ A small separate program, the capture helper, reads the top of World of Warcraft
 
 ## Report a problem
 
-Found a security problem in NeverQuestAlone’s code? [Report it privately on GitHub](https://github.com/tommygeoco/neverquestalone/security/advisories/new), never in a public issue. Problems in your own build go to you.
+Found a security problem in Voxwarden’s code? [Report it privately on GitHub](https://github.com/davrodwconnections/voxwarden/security/advisories/new), never in a public issue. Problems in your own build go to you.

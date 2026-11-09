@@ -33,7 +33,7 @@
 // call the module lacks answers { ok: false, error: 'unsupported' }.
 //
 // Capture (fork PRD §9.10, public PRD §11.1): boot starts the capture helper
-// itself once there's a WoW folder with the addon; on macOS that's "NeverQuestAlone
+// itself once there's a WoW folder with the addon; on macOS that's "Voxwarden
 // Capture.app", launched through LaunchServices so the Screen Recording grant
 // belongs to it. A packaged app ships each OS's helper beside app.asar, in
 // Resources (captureHelperPaths), since nothing can be run from inside an asar
@@ -435,7 +435,7 @@ export async function loadApi({
   if (!packaged && !selfTest && (forceMock || env.NQA_MOCK_API === '1')) return { api: await mockApi(), mode: 'mock', reason: forceMock ? 'asked' : 'NQA_MOCK_API=1' };
   const root = bridgeRoots(appDir, { packaged }).find(r => exists(path.join(r, ...BRIDGE_FILES.boot.split('/'))));
   if (!root && packaged) {
-    const reason = 'this build of NeverQuestAlone is missing its bridge (bridge/byok/boot.mjs)';
+    const reason = 'this build of Voxwarden is missing its bridge (bridge/byok/boot.mjs)';
     log(reason);
     return { api: unavailableApi(reason), mode: 'error', reason };
   }

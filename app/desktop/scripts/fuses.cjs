@@ -45,8 +45,8 @@ const FUSE_PLAN = Object.freeze({
 
 /** Each OS's capture helper in Resources (src/api-loader.mjs CAPTURE_HELPERS; a test checks they agree). */
 const CAPTURE_HELPERS = Object.freeze({
-  darwin: 'NeverQuestAlone Capture.app/Contents/MacOS/NQACapture',
-  mas: 'NeverQuestAlone Capture.app/Contents/MacOS/NQACapture',
+  darwin: 'Voxwarden Capture.app/Contents/MacOS/NQACapture',
+  mas: 'Voxwarden Capture.app/Contents/MacOS/NQACapture',
   win32: 'capture/nqa-capture.exe',
   linux: 'capture/capture_x11.py',
 });
@@ -76,18 +76,18 @@ function checkCaptureHelper(platform, resources, exists = require('node:fs').exi
  */
 function checkMacIcon(platform, resources, fs = require('node:fs')) {
   if (platform !== 'darwin' && platform !== 'mas') return null;
-  if (!fs.existsSync(path.join(resources, 'Assets.car'))) return new Error('the icon\'s asset catalog is missing from this build (Contents/Resources/Assets.car): electron-builder.yml mac.extraResources copies it from build/Assets.car (scripts/make-icons.mjs).');
   let info = '';
   try { info = fs.readFileSync(path.join(resources, '..', 'Info.plist'), 'utf8'); } catch { /* read below */ }
-  if (!/<key>CFBundleIconName<\/key>\s*<string>AppIcon<\/string>/.test(info)) return new Error('Info.plist has no CFBundleIconName = AppIcon (electron-builder.yml mac.extendInfo), so macOS 26+ would plate the icon.');
+  const icon = info.match(/<key>CFBundleIconFile<\/key>\s*<string>([^<]+)<\/string>/)?.[1];
+  if (!icon || !fs.existsSync(path.join(resources, icon.endsWith('.icns') ? icon : `${icon}.icns`))) return new Error('the original Voxwarden ICNS named by Info.plist is missing from this build.');
   return null;
 }
 
 /**
- * NeverQuestAlone's Mac capture app, where build-app.sh --public leaves it and electron-builder.yml
+ * Voxwarden's Mac capture app, where build-app.sh --public leaves it and electron-builder.yml
  * takes it from: its own bundle id and folder, never a checkout's build/ (final review L3-4).
  */
-const MAC_CAPTURE_APP = path.join(__dirname, '..', '..', '..', 'bridge', 'capture', 'mac', 'build-public', 'NeverQuestAlone Capture.app');
+const MAC_CAPTURE_APP = path.join(__dirname, '..', '..', '..', 'bridge', 'capture', 'mac', 'build-public', 'Voxwarden Capture.app');
 
 /**
  * scripts/dist.mjs: whether this build targets macOS (--mac/-m, or no platform flag on a Mac) and the
@@ -173,16 +173,16 @@ function universalHalf(context) {
 async function afterPack(context) {
   const platform = context.electronPlatformName;
   const plan = signingPlan(platform);
-  console.log(`  • NeverQuestAlone signing: ${signingLine(platform, plan)}`);
+  console.log(`  • Voxwarden signing: ${signingLine(platform, plan)}`);
   if ((platform === 'darwin' || platform === 'mas') && !plan.signed) process.env.CSC_IDENTITY_AUTO_DISCOVERY = 'false';
 
   const resources = resourcesDir(platform, context.appOutDir, context.packager.appInfo.productFilename);
   const noHelper = checkCaptureHelper(platform, resources);
   if (noHelper) throw noHelper;
-  console.log('  • NeverQuestAlone capture helper: in Resources');
+  console.log('  • Voxwarden capture helper: in Resources');
   const noIcon = checkMacIcon(platform, resources);
   if (noIcon) throw noIcon;
-  if (platform === 'darwin' || platform === 'mas') console.log('  • NeverQuestAlone icon: Assets.car in Resources, CFBundleIconName AppIcon');
+  if (platform === 'darwin' || platform === 'mas') console.log('  • Voxwarden icon: original ICNS verified');
 
   // Both halves of a universal build and the merged app alike, so the halves stay identical.
   if (dropDefaultApp(resources)) console.log(`  • Electron's ${DEFAULT_APP}: removed from Resources`);
@@ -194,11 +194,11 @@ async function afterPack(context) {
     const { checkMacBinaries } = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', '..', '..', 'tools', 'check-release.mjs')).href);
     const problems = checkMacBinaries(path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`), { buildRoot: path.resolve(__dirname, '..', '..', '..') });
     if (problems.length) throw new Error(`debug maps or build paths in this build's Mach-O files: ${problems.join('; ')}. Rebuild the capture helper with bridge/capture/mac/build-app.sh, which strips it.`);
-    console.log('  • NeverQuestAlone binaries: no debug stabs or build paths');
+    console.log('  • Voxwarden binaries: no debug stabs or build paths');
   }
 
   if (universalHalf(context)) {
-    console.log('  • NeverQuestAlone fuses: not on this half of a universal build; flipped on the merged app');
+    console.log('  • Voxwarden fuses: not on this half of a universal build; flipped on the merged app');
     return;
   }
   const ext = { darwin: '.app', mas: '.app', win32: '.exe', linux: '' }[platform];
@@ -208,7 +208,7 @@ async function afterPack(context) {
   const { config, applied, missing } = fuseConfig(FuseV1Options, FuseVersion, platform);
   await flipFuses(target, config);
   const words = Object.entries(applied).map(([k, v]) => `${k}=${v ? 'on' : 'off'}`).join(', ');
-  console.log(`  • NeverQuestAlone fuses: ${words}${missing.length ? ` (not in this Electron: ${missing.join(', ')})` : ''}`);
+  console.log(`  • Voxwarden fuses: ${words}${missing.length ? ` (not in this Electron: ${missing.join(', ')})` : ''}`);
 }
 
 module.exports = afterPack;

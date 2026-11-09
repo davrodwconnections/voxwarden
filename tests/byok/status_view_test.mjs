@@ -44,7 +44,7 @@ test('the typed guard\'s card and the check-ins line: whole sentences with the n
   assert.deepEqual(sendingLines({ turns: 20, windowMs: 60_000 }), { headline: 'Sending is paused.', detail: 'More than 20 messages went in a minute, which normal play doesn’t do.', action: 'resume_sending' });
   assert.equal(sendingLines(null), null);
   assert.deepEqual(checkInsLine({ turns: 60, windowMs: 3_600_000 }, 'Nova'), { line: 'Nova paused check-ins: more than 60 came in an hour, which normal play doesn’t do. Your next message turns them back on.' });
-  assert.equal(checkInsLine({ turns: 10, windowMs: 60_000 }).line.startsWith('NeverQuestAlone paused check-ins: more than 10 came in a minute'), true);
+  assert.equal(checkInsLine({ turns: 10, windowMs: 60_000 }).line.startsWith('Voxwarden paused check-ins: more than 10 came in a minute'), true);
   const v = statusView(st({ state: 'ready' }, { usage: { autoPaused: true, fuse: { turns: 60, windowMs: 3_600_000 } }, provider: { companion: 'Nova' } }));
   assert.match(v.checkIns.line, /^Nova paused check-ins/);
   assert.equal(v.needsPlayer, false, 'check-ins pausing needs nothing from the player: their next message ends it');
@@ -61,7 +61,7 @@ test('screen reading: one headline and at most one next step per state; no scree
   assert.equal(s('no_permission').action, 'screen_recording');
   assert.equal(s('no_permission', 'capture', 'win32').detail, 'Keep the top of WoW’s window on screen.', 'no Screen Recording on Windows');
   for (const k of ['window_not_found', 'access_lost', 'capture_blocked_by_app', 'something_new']) {
-    assert.deepEqual([s(k).headline, s(k).detail, s(k).ok], ['NeverQuestAlone can’t see the game.', 'Keep the top of WoW’s window on screen.', false], k);
+    assert.deepEqual([s(k).headline, s(k).detail, s(k).ok], ['Voxwarden can’t see the game.', 'Keep the top of WoW’s window on screen.', false], k);
   }
   // No screen reading is the addon's Screen Reading switch (stream mode), in setup's words.
   assert.equal(s('capture_unsupported').detail, 'Turn off screen reading to play without it: your messages then wait for a /reload.');
@@ -76,7 +76,7 @@ test('screen reading: one headline and at most one next step per state; no scree
   // (SY-24: never "keep the corner on screen"), damaged is a helper to download again.
   for (const platform of ['darwin', 'win32']) {
     const u = s('unsupported', 'capture', platform);
-    assert.deepEqual([u.headline, u.action, u.ok], ['NeverQuestAlone can’t read this screen.', 'no_screen_reading', false], platform);
+    assert.deepEqual([u.headline, u.action, u.ok], ['Voxwarden can’t read this screen.', 'no_screen_reading', false], platform);
     assert.equal(u.detail, 'Turn off screen reading to play without it: your messages then wait for a /reload.', 'no screen reading in setup’s words');
   }
   assert.deepEqual([s('damaged').detail, s('damaged').action], [`Download ${APP} again.`, 'download']);
@@ -100,8 +100,8 @@ test('screen reading: one headline and at most one next step per state; no scree
 // app's own. One headline and at most one next step each; a minimized WoW and "watching" are no alarm.
 test('screen reading (DR-06): no_signal\'s one action is Restart screen reading, its words the corner on Windows and the button on a Mac; blocked names what to close; watching and a minimized WoW are said without an alarm', () => {
   const s = (state, platform = 'darwin') => screenView({ state, mode: 'capture' }, { platform });
-  assert.deepEqual(s('no_signal', 'win32'), { state: 'no_signal', mode: 'screen', ok: false, headline: 'NeverQuestAlone can’t see the game.', detail: 'Keep the top of WoW’s window on screen.', action: 'restart_capture' });
-  assert.deepEqual(s('no_signal', 'darwin'), { state: 'no_signal', mode: 'screen', ok: false, headline: 'NeverQuestAlone can’t see the game.', detail: 'Click Restart screen reading.', action: 'restart_capture' });
+  assert.deepEqual(s('no_signal', 'win32'), { state: 'no_signal', mode: 'screen', ok: false, headline: 'Voxwarden can’t see the game.', detail: 'Keep the top of WoW’s window on screen.', action: 'restart_capture' });
+  assert.deepEqual(s('no_signal', 'darwin'), { state: 'no_signal', mode: 'screen', ok: false, headline: 'Voxwarden can’t see the game.', detail: 'Click Restart screen reading.', action: 'restart_capture' });
   assert.deepEqual([s('blocked').detail, s('blocked').action, s('blocked').ok], ['Close what blocks screen reading.', undefined, false]);
   assert.deepEqual(s('watching'), { state: 'watching', mode: 'screen', ok: true, headline: 'Screen reading is on.' });
   const min = s('window_minimized', 'win32');
@@ -135,7 +135,7 @@ test('chats that can’t be saved (code health BR-11): a write the disk refused 
   const v = statusView(st({ state: 'ready' }, {}, { store: { writeError: we(true) } }));
   assert.deepEqual(v.saving, savingLines(we(true)));
   assert.equal(v.needsPlayer, true, 'only the player can make room: the tray asks');
-  assert.deepEqual([v.key, v.words], ['ready', 'Ready'], 'never a state of its own: NeverQuestAlone still answers');
+  assert.deepEqual([v.key, v.words], ['ready', 'Ready'], 'never a state of its own: Voxwarden still answers');
   for (const s of [st({ state: 'ready' }), st({ state: 'ready' }, {}, { store: { writeError: null } })]) {
     assert.deepEqual([statusView(s).saving, statusView(s).needsPlayer], [null, false]);
   }

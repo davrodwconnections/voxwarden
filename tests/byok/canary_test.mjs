@@ -55,7 +55,7 @@ test('canary: the scan finds whole, truncated, base64 and URL-encoded canaries, 
   const cut = w('deep/a/b/slot.lua', `NQA_SlotData = { x = "${CANARY_KEYS.xai.slice(0, 30)}…" }`);
   const b64 = w('diag/export.txt', Buffer.from(CANARY_KEYS.google).toString('base64'));
   const url = w('state/last-request.json', `https://x.test/?key=${encodeURIComponent(CANARY_KEYS.googleAuth)}`);
-  const bin = w('SavedVariables/NeverQuestAlone.bin', Buffer.concat([Buffer.from([0, 1, 2, 255]), Buffer.from(CANARY_KEYS.openrouter), Buffer.from([0])]));
+  const bin = w('SavedVariables/Voxwarden.bin', Buffer.concat([Buffer.from([0, 1, 2, 255]), Buffer.from(CANARY_KEYS.openrouter), Buffer.from([0])]));
   const hits = scanDirForCanaries(dir);
   const got = hits.map(h => [path.relative(dir, h.file), h.provider, h.form]).sort();
   assert.deepEqual(got, [

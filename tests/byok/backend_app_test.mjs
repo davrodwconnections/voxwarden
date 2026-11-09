@@ -300,7 +300,7 @@ test('the model check (PV-3): a model gone is switched to the nearest no dearer,
     assert.equal(notice[0].errorKind, 'model_not_found');
     assert.equal(notice[0].action, 'desktop');
     assert.equal(notice[0].answers, 'none', 'it answers no message (final review L4-2)');
-    assert.equal(notice[0].errorMessage, "Claude Sonnet 5 isn't available on your Anthropic account. Switched to Claude Haiku 4.5 for now. Change it in the NeverQuestAlone app.");
+    assert.equal(notice[0].errorMessage, "Claude Sonnet 5 isn't available on your Anthropic account. Switched to Claude Haiku 4.5 for now. Change it in the Voxwarden app.");
     assert.ok(env.events.findIndex(e => e.payload.state === 'error') < env.events.findIndex(e => e.payload.state === 'final'), 'before the reply');
     assert.equal(chatCalls(mock)[0].body.model, 'claude-haiku-4-5');
     await env.backend.send(sendParams(CHAT2, 'm_2', 'again'));
@@ -370,7 +370,7 @@ test('the model check runs again on a model or key change, and a model_not_found
     await env.backend.send(sendParams(CHAT, 'm_4', 'hi'));
     const e = await waitFor(() => env.chats('error')[0], 5000, 'the line');
     assert.equal(e.errorKind, 'model_not_found');
-    assert.equal(e.errorMessage, "Claude Sonnet 5 isn't available on your Anthropic account. Switched to Claude Haiku 4.5 for now. Change it in the NeverQuestAlone app.");
+    assert.equal(e.errorMessage, "Claude Sonnet 5 isn't available on your Anthropic account. Switched to Claude Haiku 4.5 for now. Change it in the Voxwarden app.");
     assert.equal(e.runId, 'nqa:3fa9c2d1:m_4', 'the turn\'s own error, not a separate notice');
     assert.equal(env.backend.status().provider.model, 'claude-haiku-4-5');
     await env.backend.send(sendParams(CHAT, 'm_5', 'again'));

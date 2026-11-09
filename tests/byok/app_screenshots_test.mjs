@@ -208,7 +208,7 @@ test('runScenes: each scene in each theme, reset first, captured, cleaned up; a 
   assert.deepEqual(log.slice(0, 5), ['theme light', 'reset a', 'run a', 'capture 001-a-light.png', 'after']);
   assert.equal(log.filter(l => l === 'after').length, 4, 'cleanup after every scene, failed or not');
   const idx = indexText(shots, { when: new Date(0), note: 'note' });
-  assert.match(idx, /^NeverQuestAlone desktop app: window states \(4 PNGs, 1970-01-01T00:00:00\.000Z\)/);
+  assert.match(idx, /^Voxwarden desktop app: window states \(4 PNGs, 1970-01-01T00:00:00\.000Z\)/);
   assert.match(idx, /001-a-light\.png\s+A \(light\)/);
   assert.match(idx, /002-b-light\.png\s+B \(light\)\s+\[FAILED: no button "X" to click\]/);
 });

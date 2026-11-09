@@ -341,7 +341,7 @@ test('armInstall: never while WoW runs; installs once the first time it doesn’
   const w = wowFixture();
   let running = true;
   const installs = [];
-  const install = (o) => { installs.push(o.flavorDir); fs.mkdirSync(path.join(o.flavorDir, 'Interface', 'AddOns', 'NeverQuestAlone'), { recursive: true }); fs.writeFileSync(path.join(o.flavorDir, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), '## Version: 0.0.1\n'); return { ok: true, steps: [{ name: 'Addon folder', ok: true }], permissions: { ok: true } }; };
+  const install = (o) => { installs.push(o.flavorDir); fs.mkdirSync(path.join(o.flavorDir, 'Interface', 'AddOns', 'Voxwarden'), { recursive: true }); fs.writeFileSync(path.join(o.flavorDir, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), '## Version: 0.0.1\n'); return { ok: true, steps: [{ name: 'Addon folder', ok: true }], permissions: { ok: true } }; };
   const r = await api(t, { wow: { find: w.find, running: async () => ({ running }), install, addonSource: ADDON_SOURCE } });
   const armed = await r.api.armInstall({});
   assert.deepEqual([armed.ok, armed.armed, armed.path], [true, true, w.flavor]);
@@ -359,9 +359,9 @@ test('armInstall: never while WoW runs; installs once the first time it doesn’
   assert.equal(installs.length, 1, 'not again');
   assert.equal((await r.api.status()).setup.addon.state, 'older', 'installed: an addon older than the one this app ships says so');
   // Older, never just different: a newer copy (a store's, a test build's) is current, so nothing downgrades it (2026-10-05).
-  fs.writeFileSync(path.join(installs[0], 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), '## Version: 9.9.9\n');
+  fs.writeFileSync(path.join(installs[0], 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), '## Version: 9.9.9\n');
   assert.equal((await r.api.status()).setup.addon.state, 'current', 'a newer addon is never called older');
-  fs.writeFileSync(path.join(installs[0], 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), '## Version: 0.0.1\n');
+  fs.writeFileSync(path.join(installs[0], 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), '## Version: 0.0.1\n');
   // Cancel disarms.
   running = true;
   const again = await api(t, { wow: { find: wowFixture().find, running: async () => ({ running }), install } });
@@ -402,8 +402,8 @@ test('setup’s install: EPERM carries the administrator’s command on Windows 
   // "The addon didn’t update." with Update again (onboarding strings, failed.headlineUpdate).
   assert.equal((await full.api.status()).setup.addon.update, false);
   const old = wowFixture();
-  fs.mkdirSync(path.join(old.flavor, 'Interface', 'AddOns', 'NeverQuestAlone'), { recursive: true });
-  fs.writeFileSync(path.join(old.flavor, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), '## Version: 0.0.1\n');
+  fs.mkdirSync(path.join(old.flavor, 'Interface', 'AddOns', 'Voxwarden'), { recursive: true });
+  fs.writeFileSync(path.join(old.flavor, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), '## Version: 0.0.1\n');
   const upd = await api(t, { wow: { find: old.find, running: async () => ({ running: false }), install: () => ({ ok: false, error: 'install_failed', steps: [{ ok: false, error: 'EIO' }] }) } });
   await upd.api.setupInstall({});
   const ua = (await upd.api.status()).setup.addon;

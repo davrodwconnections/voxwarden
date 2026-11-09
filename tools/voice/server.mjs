@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// The NeverQuestAlone voice companion (odd/tasks/nqa-voice.md T2-T4, T7, T13): talk with the
+// The Voxwarden voice companion (odd/tasks/nqa-voice.md T2-T4, T7, T13): talk with the
 // companion like ChatGPT's voice mode while you play. A small local server holds the OpenAI key,
 // hands the browser page a short-lived Realtime client secret (the key never reaches the page),
-// answers the model's read-only tool calls from the game state the NeverQuestAlone app keeps, and
+// answers the model's read-only tool calls from the game state the Voxwarden app keeps, and
 // passes what was said (and any map pins) to the app's voice inbox, which the bridge publishes into
 // the addon's Companion chat.
 //
@@ -76,7 +76,7 @@ export const PERSONAS = Object.freeze({
 export const personaOf = name => PERSONAS[name] || PERSONAS.skeleton;
 
 /** The model's instructions: the spoken prompt with its blanks filled. */
-export function instructions({ lang = DEFAULTS.lang, web = false, name = 'NeverQuestAlone', persona = DEFAULTS.persona, brain = false } = {}) {
+export function instructions({ lang = DEFAULTS.lang, web = false, name = 'Voxwarden', persona = DEFAULTS.persona, brain = false } = {}) {
   // With the brain (odd/tasks/nqa-brain.md B7), the voice only listens and speaks; the brain answers.
   if (brain) return fs.readFileSync(path.join(HERE, 'voice-brain-prompt.md'), 'utf8').replace('{{persona}}', personaOf(persona).text).replace(/\{\{name\}\}/g, name).replace(/\{\{language\}\}/g, lang);
   const t = fs.readFileSync(path.join(HERE, 'voice-prompt.md'), 'utf8').replace('{{persona}}', personaOf(persona).text);
@@ -98,7 +98,7 @@ export function tools({ web = false, brain = false } = {}) {
   const list = [
     {
       type: 'function', name: 'get_game_state',
-      description: 'Read the player\'s current game data from the NeverQuestAlone app: only the sections needed. Read-only. Asking for "bags", "gear", "durability", "rewards", "talents" or "hearth" fetches them fresh from the game (a few seconds: say you are checking); bags and gear come with item names, quality and vendor price (copper). A *AgeSeconds field means that part is from an earlier look.',
+      description: 'Read the player\'s current game data from the Voxwarden app: only the sections needed. Read-only. Asking for "bags", "gear", "durability", "rewards", "talents" or "hearth" fetches them fresh from the game (a few seconds: say you are checking); bags and gear come with item names, quality and vendor price (copper). A *AgeSeconds field means that part is from an earlier look.',
       parameters: { type: 'object', properties: { sections: { type: 'array', items: { type: 'string', enum: [...SECTIONS] },
         description: 'gear = what they have equipped (equipo, lo que llevo puesto, armadura, arma); bags = what they carry (bolsas, inventario, objetos); durability = repairs (reparar, durabilidad); rewards = quest reward items (recompensas); talents = talent points (talentos); hearth = hearthstone (piedra de hogar); character = level, XP, money, rested XP; quests = quest log; location = where they are.' } }, required: ['sections'], additionalProperties: false },
     },
@@ -309,7 +309,7 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
       if (b.error) return { error: b.error };
       const text = `Pins on your map: ${String(args.title || 'voice pins').slice(0, 40)}.\n\n${b.block}`;
       const r = appendVoiceInbox(dir, { kind: 'pins', text });
-      return r.ok ? { ok: true, drawn: b.points, note: 'The pins reach the map within seconds while the game and the NeverQuestAlone app run.' } : { error: r.reason === 'no_app' ? 'The NeverQuestAlone app was not found on this computer.' : 'The app has not read the earlier voice notes yet.' };
+      return r.ok ? { ok: true, drawn: b.points, note: 'The pins reach the map within seconds while the game and the Voxwarden app run.' } : { error: r.reason === 'no_app' ? 'The Voxwarden app was not found on this computer.' : 'The app has not read the earlier voice notes yet.' };
     }
     if (name === 'lookup_wowhead') {
       if (!o.web) return { error: 'Web lookups are off.' };

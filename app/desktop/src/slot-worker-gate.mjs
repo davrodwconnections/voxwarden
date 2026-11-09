@@ -29,7 +29,7 @@ export async function slotWorkerGate({ root, importer, dir, waitMs = GATE_WAIT_M
     const { installSlots, SLOT_COUNT, SLOT_JOB } = await importer(path.join(root, ...SLOTS_FILE.split('/')));
     const addons = path.join(gateDir, 'AddOns');
     installSlots(addons, { count: SLOT_COUNT });
-    fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true });
+    fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true });
     // waitMs 1: a drain (below, when no answer came) gives up at once instead of holding the main thread.
     writer = createSlotWorker({ log: (kind, data) => { if (kind === 'slot-worker-failed') failed.push(String(data?.why ?? 'failed')); }, waitMs: 1, ...(url ? { url } : {}) });
     writer.use(SLOT_JOB); // the plugin's runner for its slot tables, which the worker loads from inside the app

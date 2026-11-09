@@ -108,7 +108,7 @@ test('a slot with none of the new caps (no provider, usage, ekind or model: its 
   const vm = confirmHello(newVM({ db: 'NQADB = { hudIntro = true, firstReply = true }' }).login());
   vm.slash('');
   const id = activeId(vm);
-  assert.match(light(vm)[1], /^Connected to your AI\. Last heard from the NeverQuestAlone app \d+ seconds? ago\.$/);
+  assert.match(light(vm)[1], /^Connected to your AI\. Last heard from the Voxwarden app \d+ seconds? ago\.$/);
   assert.equal(vm.evaluate('NS.UI.ui.header.text'), 'No model yet');
   assert.equal(vm.evaluate('NS.UI.ui.usage'), null, 'no usage line');
   assert.equal(vm.evaluate('NS.UI.ui.thinkArrow.shown'), 'false', 'no model: no Thinking menu');
@@ -125,7 +125,7 @@ test('a slot with none of the new caps (no provider, usage, ekind or model: its 
   assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Click for the details.');
   assert.equal(vm.evaluate('NS.HUD.h.statusBtn.shown'), 'true', 'main\'s 0.4.9: the lines are a click away');
   // The commands: usage and model answer that the app hasn't, and the old roadmap's words are messages.
-  const NOT_YET = 'The NeverQuestAlone app hasn\'t answered yet. Is it running?';
+  const NOT_YET = 'The Voxwarden app hasn\'t answered yet. Is it running?';
   vm.slash('');
   vm.slash('usage');
   assert.equal(notice(vm), NOT_YET);
@@ -139,7 +139,7 @@ test('a slot with none of the new caps (no provider, usage, ekind or model: its 
   assert.ok(notice(vm).includes('/nqa usage|r  Show today\'s spend and messages\n'));
   // The empty chat: the setup checklist, until the app names your AI.
   vm.slash('new Fresh');
-  assert.match(vm.evaluate('NS.UI.ui.bubbles[1].body.text'), /^Setting up NeverQuestAlone:\n[\s\S]*Connect your AI in the app\./);
+  assert.match(vm.evaluate('NS.UI.ui.bubbles[1].body.text'), /^Setting up Voxwarden:\n[\s\S]*Connect your AI in the app\./);
 });
 
 // ---------------------------------------------------------------- UX-1
@@ -149,16 +149,16 @@ test('UX-1: the light, the HUD and the header speak the provider\'s words for ea
   vm.run('NS.HUD.Render()');
   let [state, tip] = light(vm);
   assert.equal(state, 'green');
-  assert.match(tip, /^Connected to Anthropic \(Haiku 4\.5\)\. Last heard from the NeverQuestAlone app \d+ seconds? ago\.$/);
+  assert.match(tip, /^Connected to Anthropic \(Haiku 4\.5\)\. Last heard from the Voxwarden app \d+ seconds? ago\.$/);
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Ready');
   const cases = [
-    ['no_key', 'grey', 'No key yet', 'Add your Anthropic key in the NeverQuestAlone app.'],
-    ['key_invalid', 'red', 'Your Anthropic key was rejected', 'Replace it in the NeverQuestAlone app.'],
-    ['slowed', 'yellow', 'Anthropic asked NeverQuestAlone to slow down', 'Trying again in 18 seconds.'],
-    ['out_of_credit', 'red', 'Your Anthropic account is out of credit', 'Add credit at Anthropic, or pick another AI in the NeverQuestAlone app.'],
-    ['cap', 'yellow', 'You\'ve reached your daily spend limit ($1.00)', 'Raise it in the NeverQuestAlone app, or it resets at midnight.'],
+    ['no_key', 'grey', 'No key yet', 'Add your Anthropic key in the Voxwarden app.'],
+    ['key_invalid', 'red', 'Your Anthropic key was rejected', 'Replace it in the Voxwarden app.'],
+    ['slowed', 'yellow', 'Anthropic asked Voxwarden to slow down', 'Trying again in 18 seconds.'],
+    ['out_of_credit', 'red', 'Your Anthropic account is out of credit', 'Add credit at Anthropic, or pick another AI in the Voxwarden app.'],
+    ['cap', 'yellow', 'You\'ve reached your daily spend limit ($1.00)', 'Raise it in the Voxwarden app, or it resets at midnight.'],
     ['provider_down', 'yellow', 'Anthropic is busy right now', 'Trying again…'],
-    ['paused', 'grey', 'NeverQuestAlone is paused', 'Messages wait until you resume it in the app.'],
+    ['paused', 'grey', 'Voxwarden is paused', 'Messages wait until you resume it in the app.'],
   ];
   vm.slash('');
   const tips = [];
@@ -180,13 +180,13 @@ test('UX-1: the light, the HUD and the header speak the provider\'s words for ea
   // The retry counts down from the slot.
   apply(vm, byokSlot({ rt: '{ state = "slowed", retryIn = 18 }' }));
   vm.advance(5);
-  assert.ok(light(vm)[1].startsWith('Anthropic asked NeverQuestAlone to slow down. Trying again in 13 seconds.'));
+  assert.ok(light(vm)[1].startsWith('Anthropic asked Voxwarden to slow down. Trying again in 13 seconds.'));
   // A local model that isn't running: the companion names it; the failed message waits for Retry on its bubble (C-12, PRD §10).
   apply(vm, byokSlot({ p: provider({ id: 'ollama', name: 'Ollama', auth: 'local', privacy: 'local', modelName: 'qwen3:8b', model: 'qwen3:8b' }), rt: '{ state = "local_down" }' }));
   assert.deepEqual(light(vm).map(String).slice(0, 1), ['red']);
-  assert.ok(light(vm)[1].startsWith('NeverQuestAlone can\'t reach Ollama. Start Ollama, then click Retry on your message.'), light(vm)[1]);
+  assert.ok(light(vm)[1].startsWith('Voxwarden can\'t reach Ollama. Start Ollama, then click Retry on your message.'), light(vm)[1]);
   apply(vm, byokSlot({ p: provider({ id: 'lmstudio', name: 'LM Studio', auth: 'local', privacy: 'local', modelName: 'qwen3-8b', model: 'qwen3-8b' }), rt: '{ state = "local_down" }' }));
-  assert.ok(light(vm)[1].startsWith('NeverQuestAlone can\'t reach LM Studio. Start LM Studio, then click Retry on your message.'), light(vm)[1]);
+  assert.ok(light(vm)[1].startsWith('Voxwarden can\'t reach LM Studio. Start LM Studio, then click Retry on your message.'), light(vm)[1]);
   // Slower replies, from the addon's own self-test: game sound off (no "slow mode" in the player's words).
   apply(vm, byokSlot());
   vm.run('STUB.cvars.Sound_EnableAllSound = "0"; STUB.sounds = {}; NS.Transport.SelfTest()');
@@ -201,28 +201,28 @@ test('UX-1: the light, the HUD and the header speak the provider\'s words for ea
   });
 });
 
-test('UX-1: a silent BYOK bridge is "NeverQuestAlone", before and after a reload; the gw fallback names the provider', () => {
+test('UX-1: a silent BYOK bridge is "Voxwarden", before and after a reload; the gw fallback names the provider', () => {
   const vm = byok();
   assert.equal(vm.evaluate('NQADB.backend'), null, 'nothing kept of which build a slot came from: there is one');
   vm.advance(200);
   const [state, tip] = light(vm);
   assert.equal(state, 'red');
-  assert.match(tip, /^No word from the NeverQuestAlone app for 3 minutes\. Is it running\?/);
+  assert.match(tip, /^No word from the Voxwarden app for 3 minutes\. Is it running\?/);
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the NeverQuestAlone app');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the Voxwarden app');
   // After a reload, before any slot: what the last one said.
   const vm2 = reloadVM(vm).login();
   assert.equal(vm2.evaluate('SLASH_BONES1'), '/nqa', '/nqa from load');
-  assert.match(light(vm2)[1], /^Waiting to hear from the NeverQuestAlone app…$/);
+  assert.match(light(vm2)[1], /^Waiting to hear from the Voxwarden app…$/);
   // A BYOK slot without rt: the gw words name the provider.
   confirmHello(vm2);
   apply(vm2, byokSlot({ rt: 'nil' }).replace('gw = { state = "ready"', 'gw = { state = "connecting"'));
-  assert.equal(light(vm2)[1].split('\n')[0], 'The NeverQuestAlone app is running but can\'t reach Anthropic: connecting.');
+  assert.equal(light(vm2)[1].split('\n')[0], 'The Voxwarden app is running but can\'t reach Anthropic: connecting.');
 });
 
 // ---------------------------------------------------------------- UX-2
 
-test('UX-2: error kinds: Okay on every error, Retry resends (the fix first: Retry, Okay, Show Details), "the NeverQuestAlone app" says where, Retry after an interruption; details a click away', () => {
+test('UX-2: error kinds: Okay on every error, Retry resends (the fix first: Retry, Okay, Show Details), "the Voxwarden app" says where, Retry after an interruption; details a click away', () => {
   const vm = byok();
   vm.slash('');
   const id = activeId(vm);
@@ -253,7 +253,7 @@ test('UX-2: error kinds: Okay on every error, Retry resends (the fix first: Retr
   // In the app: a line that says so, Retry for after the fix (C-09), Okay and Show Details.
   apply(vm, byokSlot({ records: [errorRec(2, id, 'region_blocked', 'desktop', 'Anthropic isn\'t available where you are.')] }));
   i = errBubble(vm);
-  assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.text`), 'Fix it in the NeverQuestAlone app.');
+  assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.text`), 'Fix it in the Voxwarden app.');
   assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.shown`), 'true');
   assert.deepEqual(acts(vm, i), ['Retry', 'Okay', 'Show Details']);
   // Okay: the buttons and the line go; the bubble stays in the chat.
@@ -266,7 +266,7 @@ test('UX-2: error kinds: Okay on every error, Retry resends (the fix first: Retr
   assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.shown`), 'false');
   // Interrupted by a restart: Retry, whatever the action says (one resend label).
   type(vm, 'plan my evening');
-  apply(vm, byokSlot({ records: [errorRec(3, id, 'interrupted', 'none', 'NeverQuestAlone restarted before NeverQuestAlone answered.')] }));
+  apply(vm, byokSlot({ records: [errorRec(3, id, 'interrupted', 'none', 'Voxwarden restarted before Voxwarden answered.')] }));
   i = errBubble(vm);
   assert.equal(vm.lastHistory().action, 'send_again');
   assert.deepEqual(acts(vm, i), ['Retry', 'Okay', 'Show Details']);
@@ -283,7 +283,7 @@ test('UX-2: error kinds: Okay on every error, Retry resends (the fix first: Retr
   i = errBubble(vm);
   assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.shown`), 'false', 'said once');
   assert.deepEqual(acts(vm, i), ['Okay', 'Show Details']);
-  apply(vm, byokSlot({ records: [errorRec(6, id, 'auth_invalid', 'desktop', 'Your Anthropic key was rejected. Replace it in the NeverQuestAlone app.')] }));
+  apply(vm, byokSlot({ records: [errorRec(6, id, 'auth_invalid', 'desktop', 'Your Anthropic key was rejected. Replace it in the Voxwarden app.')] }));
   i = errBubble(vm);
   assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${i}].hint.shown`), 'false', 'one next step, not two (UX-W21)');
 });
@@ -303,7 +303,7 @@ test('UX-2: the light\'s reasons and a warning\'s details are a click away (cap 
   apply(vm, byokSlot({ rt: '{ state = "key_invalid" }' }));
   vm.run('NS.Refresh("status")');
   vm.run('local l = NS.UI.ui.light; l.scripts.OnMouseUp(l, "LeftButton")');
-  assert.match(notice(vm), /^Your Anthropic key was rejected\. Replace it in the NeverQuestAlone app\. Last heard from the NeverQuestAlone app /);
+  assert.match(notice(vm), /^Your Anthropic key was rejected\. Replace it in the Voxwarden app\. Last heard from the Voxwarden app /);
   // Its tooltip says where the click goes (UX-W23, STYLE §4's action line).
   vm.run('STUB.tip = {}; function GameTooltip:AddLine(t) table.insert(STUB.tip, t) end; local l = NS.UI.ui.light; l.scripts.OnEnter(l)');
   assert.ok(vm.list('STUB.tip').includes('<Click to see this in the window>'), vm.list('STUB.tip').join('|'));
@@ -394,7 +394,7 @@ test('UX-3: a click on the usage line opens a small panel (provider, model, toda
   // The companion off in the app: said, with no count.
   apply(vm, byokSlot({ u: usage({ autoOn: false }) }));
   vm.run('NS.Refresh("status")');
-  assert.ok(body().includes('\nCheck-ins: off in the NeverQuestAlone app\n'), body());
+  assert.ok(body().includes('\nCheck-ins: off in the Voxwarden app\n'), body());
   // A daily limit the player set: spend against it, and when it resets; near it, then at it.
   apply(vm, byokSlot({ u: capped({ autoOn: true, spentMicros: 820000, needs: 'near_cap' }) }));
   vm.run('NS.Refresh("status")');
@@ -412,7 +412,7 @@ test('UX-3: a click on the usage line opens a small panel (provider, model, toda
   // Slowed: the panel says by whom and for how long.
   apply(vm, byokSlot({ rt: '{ state = "slowed", retryIn = 18 }', u: usage({ needs: 'slowed' }) }));
   vm.run('NS.Refresh("status")');
-  assert.ok(body().includes('Anthropic asked NeverQuestAlone to slow down: trying again in 18 seconds.'), body());
+  assert.ok(body().includes('Anthropic asked Voxwarden to slow down: trying again in 18 seconds.'), body());
   click(vm, 'NQAUsage.okay');
   assert.equal(vm.evaluate('NQAUsage.shown'), 'false');
   // /nqa usage says the same lines.
@@ -444,7 +444,7 @@ test('UX-3: the HUD says nothing about spend while all is well; one spend line w
   vm.run('NS.HUD.Render()');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'You\'ve reached your daily spend limit ($1.00)');
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [1, 0.13, 0.13]);
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Raise it in the NeverQuestAlone app, or it resets at midnight.');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Raise it in the Voxwarden app, or it resets at midnight.');
   assert.equal(vm.evaluate('NS.HUD.h.dot.shown'), 'true', 'the red dot');
   assert.equal(vm.evaluate('NS.HUD.h.spend.shown'), 'false', 'said once');
   assert.equal(vm.evaluate('NS.HUD.h.spendOk.shown'), 'false', 'no Okay for a state: it stays until it changes');
@@ -454,13 +454,13 @@ test('UX-3: the HUD says nothing about spend while all is well; one spend line w
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'You\'ve used today\'s 50 free requests');
   assert.equal(vm.evaluate('NS.HUD.h.spend.shown'), 'false');
   // The provider's day isn't ours: no midnight guess. With the backend's countdown, its clock time.
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Pick another model in the NeverQuestAlone app, or wait until it resets.');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Pick another model in the Voxwarden app, or wait until it resets.');
   apply(vm, byokSlot({ u: usage({ day: '2026-09-27', freeUsed: 50, freeLimit: 50, needs: 'cap', spentMicros: 0 }), rt: '{ state = "cap", retryIn = 3600 }' }));
   vm.run('NS.HUD.Render()');
   assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'It resets at 12:00.', 'the stub\'s date() says 12:00');
   // Out of credit and a bad key, in red; the free tier's own words.
-  for (const [needs, text] of [['out_of_credit', 'Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the NeverQuestAlone app.'],
-    ['key_invalid', 'Your Anthropic key was rejected. Replace it in the NeverQuestAlone app.']]) {
+  for (const [needs, text] of [['out_of_credit', 'Your Anthropic account is out of credit. Add credit at Anthropic, or pick another AI in the Voxwarden app.'],
+    ['key_invalid', 'Your Anthropic key was rejected. Replace it in the Voxwarden app.']]) {
     apply(vm, byokSlot({ u: usage({ needs }) }));
     vm.run('NS.HUD.Render()');
     assert.equal(vm.evaluate('NS.HUD.h.spend.text'), text);
@@ -538,7 +538,7 @@ test('UX-6: /nqa model <id> (a patch with model=) and /nqa usage are commands; t
   assert.equal(vm.evaluate('NS.UI.ui.header.text'), 'Haiku 4.5 · Low |cff9d9d9d(asked for claude-sonnet-4-5)|r');
   assert.equal(vm.evaluate(`NS.Chats.Find("${id}").model`), null, 'not the chat\'s model until the bridge says so');
   vm.slash('model');
-  assert.match(notice(vm), /^Model: Haiku 4\.5\. You asked for claude-sonnet-4-5: it starts with your next message, if your AI company offers it\. \/nqa model <id> changes it for this chat \(\/nqa model default goes back\); the NeverQuestAlone app lists the IDs\.$/);
+  assert.match(notice(vm), /^Model: Haiku 4\.5\. You asked for claude-sonnet-4-5: it starts with your next message, if your AI company offers it\. \/nqa model <id> changes it for this chat \(\/nqa model default goes back\); the Voxwarden app lists the IDs\.$/);
   // A reply from that model (its usage.model) says it took.
   apply(vm, byokSlot({ records: [replyRec(1, id, 'Hi.', ', usage = { ["in"] = 10, out = 2, micros = 100, model = "claude-sonnet-4-5", exact = true }')] }));
   vm.run('NS.Refresh("status")');
@@ -588,7 +588,7 @@ test('UX-7: /nqa diag hides the install token; /nqa diag full shows it; the back
   const early = confirmHello(newVM().login());
   early.slash('diag');
   const ed = early.evaluate('(NS.R.notices[NQADB.activeChat] or {}).text');
-  assert.match(ed, /\nProvider: no report from NeverQuestAlone yet\n/);
+  assert.match(ed, /\nProvider: no report from Voxwarden yet\n/);
   assert.doesNotMatch(ed, /Gateway:|bridge/);
 });
 
@@ -602,14 +602,14 @@ test('UX-8: the setup checklist, filled from the slots, in an empty chat and at 
   const READY = '|A:UI-LFG-ReadyMark:14:14|a', TODO = '|A:UI-LFG-PendingMark:14:14|a';
   // STYLE §1's order and words (UX-W01): the app, your AI, then the game read.
   assert.equal(body(), [
-    'Setting up NeverQuestAlone:',
+    'Setting up Voxwarden:',
     `${READY} The addon is loaded (${VERSION}).`,
-    `${READY} The NeverQuestAlone app is running.`,
+    `${READY} The Voxwarden app is running.`,
     `${TODO} Add your Anthropic key in the app.`,
     `${READY} The app can see WoW.`,
     `${TODO} Say hi once the steps above are done.`,
   ].join('\n'));
-  assert.ok(vm.evaluate('NS.UI.StatusText()').includes('No key yet. Add your Anthropic key in the NeverQuestAlone app.'), 'the status line and the list say the same');
+  assert.ok(vm.evaluate('NS.UI.StatusText()').includes('No key yet. Add your Anthropic key in the Voxwarden app.'), 'the status line and the list say the same');
   assert.doesNotMatch(body(), /enter|paste|type your key/i, 'nothing asks for a key in game');
   // Say hi is offered once it can work (C-26): not before a key.
   const chip = () => vm.evaluate('NS.UI.ui.bubbles[1].chips[1] and NS.UI.ui.bubbles[1].chips[1].shown and NS.UI.ui.bubbles[1].chips[1].label.text or nil');
@@ -631,9 +631,9 @@ test('UX-8: the setup checklist, filled from the slots, in an empty chat and at 
   assert.ok(body().endsWith('|cffffd100Replies are slow with game sound off: keep Enable Sound on in WoW\'s sound settings (the volume can be 0).|r'), body());
   // /nqa setup: the same rows.
   vm.slash('setup');
-  assert.match(notice(vm), /^Setting up NeverQuestAlone:\n/);
+  assert.match(notice(vm), /^Setting up Voxwarden:\n/);
   // A first reply, everything works: the empty chat's usual hint.
-  vm.run('STUB.cvars.Sound_EnableAllSound = "1"; STUB.sounds["Interface\\\\AddOns\\\\NeverQuestAlone\\\\sig\\\\ctl\\\\present.wav"] = true; NS.Transport.SelfTest()');
+  vm.run('STUB.cvars.Sound_EnableAllSound = "1"; STUB.sounds["Interface\\\\AddOns\\\\Voxwarden\\\\sig\\\\ctl\\\\present.wav"] = true; NS.Transport.SelfTest()');
   apply(vm, byokSlot());
   vm.run('NQADB.firstReply = true');
   vm.slash('new Fresh');
@@ -710,7 +710,7 @@ test('UX-4, C-16: the header in main\'s Thinking control stops short of the Game
   assert.equal(n('NS.UI.ui.header:GetWidth()'), Math.ceil(n('NS.UI.ui.header:GetStringWidth()')) + 1);
 });
 
-test('UX-3: the Settings page has a "Usage Today" row with NeverQuestAlone, one click from today\'s usage in the chat frame; no search tags', () => {
+test('UX-3: the Settings page has a "Usage Today" row with Voxwarden, one click from today\'s usage in the chat frame; no search tags', () => {
   const SETTINGS = `
 STUB.inits = {}
 Settings = {
@@ -729,15 +729,15 @@ function CreateSettingsButtonInitializer(name, text, click, tip, tags) return { 
   const headers = v => v.list('(function() local o = {} for _, i in ipairs(STUB.inits) do if i.header then o[#o + 1] = i.header end end return o end)()');
   // An app install: the page is made at its first slot (C-18).
   const vm = byokFirst({ u: capped({ spentMicros: 1000000, needs: 'cap' }) }, { extra: SETTINGS });
-  assert.equal(vm.evaluate('STUB.category.name'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('STUB.category.name'), 'Voxwarden');
   assert.deepEqual(row(vm), { button: 'Show Usage', tags: false,
-    tip: 'Shows today\'s spend and messages in your chat frame; you can set a daily spend limit in the NeverQuestAlone app.' });
+    tip: 'Shows today\'s spend and messages in your chat frame; you can set a daily spend limit in the Voxwarden app.' });
   assert.deepEqual(headers(vm).slice(-2), ['Usage', 'Keys and Places'], 'its own header, before main\'s last one');
   vm.run('for _, i in ipairs(STUB.inits) do if i.name == "Usage Today" then i.click() end end');
   assert.ok(vm.chatLines().some(l => l.endsWith('Today: $1.00 of $1.00 · 23 messages')), vm.chatLines().join('|'));
 });
 
-test('UX-2 and UX-1: BYOK lines point at the click (cap ekind), and slow mode is named on the header and the HUD in the public build\'s words; the bridge\'s warnings are NeverQuestAlone\'s', () => {
+test('UX-2 and UX-1: BYOK lines point at the click (cap ekind), and slow mode is named on the header and the HUD in the public build\'s words; the bridge\'s warnings are Voxwarden\'s', () => {
   const vm = byok({ vm: { db: 'NQADB = { hudIntro = true, firstReply = true }' } });
   // A backend that can't reach its provider (no rt): the details are a click on the line.
   apply(vm, byokSlot({ rt: 'nil' }).replace('gw = { state = "ready"', 'gw = { state = "unreachable"'));
@@ -758,8 +758,8 @@ test('UX-2 and UX-1: BYOK lines point at the click (cap ekind), and slow mode is
   assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Replies are slow with game sound off.');
   // The bridge's warning, a note from the app by its name.
   apply(vm, byokSlot().replace('bridge = { ver = "1.4.0",', 'bridge = { ver = "1.4.0", warn = "the model list is old",'));
-  assert.equal(notice(vm), 'A note from the NeverQuestAlone app: the model list is old');
-  assert.match(vm.evaluate('NS.UI.ui.light.tip'), /\nA note from the NeverQuestAlone app: the model list is old$/);
+  assert.equal(notice(vm), 'A note from the Voxwarden app: the model list is old');
+  assert.match(vm.evaluate('NS.UI.ui.light.tip'), /\nA note from the Voxwarden app: the model list is old$/);
   vm.run('NS.Transport.Warn("t2", "Something.")');
   vm.run('NS.HUD.Render()');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'A note from the app');
@@ -770,7 +770,7 @@ test('UX-2 and UX-1: BYOK lines point at the click (cap ekind), and slow mode is
 });
 
 test('patch day (SY-29): the app couldn\'t update the addon for a new World of Warcraft (bridge.patch "failed"): the addon\'s own line, once a session, names the one fix; nothing while the app could', () => {
-  const LINE = "The NeverQuestAlone app couldn't update the addon for the new version of World of Warcraft. See the fix in the app.";
+  const LINE = "The Voxwarden app couldn't update the addon for the new version of World of Warcraft. See the fix in the app.";
   const failed = () => byokSlot().replace('backend = "byok",', 'backend = "byok", patch = "failed",');
   const vm = byok();
   assert.equal(notice(vm), null, 'no line while the app could');
@@ -790,8 +790,8 @@ test('SY-27: /nqa perf says the addon\'s memory and frame time in two lines: the
   vm.run(`
     STUB.memUpdates = 0
     function UpdateAddOnMemoryUsage() STUB.memUpdates = STUB.memUpdates + 1 end
-    function GetAddOnMemoryUsage(name) if name == "NeverQuestAlone" then return 1843.2 end return 1.5 end
-    C_AddOnProfiler = { IsEnabled = function() return true end, GetAddOnMetric = function(name, m) if name ~= "NeverQuestAlone" then return 99 end return m == 1 and 0.043 or 0.61 end }
+    function GetAddOnMemoryUsage(name) if name == "Voxwarden" then return 1843.2 end return 1.5 end
+    C_AddOnProfiler = { IsEnabled = function() return true end, GetAddOnMetric = function(name, m) if name ~= "Voxwarden" then return 99 end return m == 1 and 0.043 or 0.61 end }
     Enum.AddOnProfilerMetric = { SessionAverageTime = 0, RecentAverageTime = 1, EncounterAverageTime = 2, LastTime = 3, PeakTime = 4 }
   `);
   vm.slash('perf');
@@ -802,7 +802,7 @@ test('SY-27: /nqa perf says the addon\'s memory and frame time in two lines: the
   const own = byok();
   own.run(`
     function UpdateAddOnMemoryUsage() end
-    function GetAddOnMemoryUsage(name) if name == "NeverQuestAlone" then return 512 end return 0 end
+    function GetAddOnMemoryUsage(name) if name == "Voxwarden" then return 512 end return 0 end
     STUB.clockCalls = 0
     function debugprofilestop() STUB.clockCalls = STUB.clockCalls + 1; return STUB.clockCalls * 0.05 end
   `);
@@ -870,7 +870,7 @@ test('UX-3: a $0 daily limit the player set (free models only) is a limit like a
   // The HUD's spend line, when the state line isn't already saying it.
   apply(vm, byokSlot({ u: zero({ needs: 'cap' }) }));
   const spend = vm.evaluate('(NS.HUD.SpendLine and NS.HUD.SpendLine()) or "nil"');
-  assert.equal(spend, 'You\'ve reached your daily spend limit ($0). Raise it in the NeverQuestAlone app, or it resets at midnight.');
+  assert.equal(spend, 'You\'ve reached your daily spend limit ($0). Raise it in the Voxwarden app, or it resets at midnight.');
   // Without a limit (capMicros left out) none of it: spend as information.
   apply(vm, byokSlot({ u: usage({ spentMicros: 0, needs: 'cap' }) }));
   vm.run('NS.Refresh("status")');
@@ -886,9 +886,9 @@ test('C-01: a fresh install (no slot yet) has the app\'s words from load, the ch
   // The checklist in the empty chat: the addon's row done, then the app, your AI and the game read, and Say hi (STYLE §1).
   const READY = '|A:UI-LFG-ReadyMark:14:14|a', TODO = '|A:UI-LFG-PendingMark:14:14|a';
   assert.equal(vm.evaluate('NS.UI.ui.bubbles[1].body.text'), [
-    'Setting up NeverQuestAlone:',
+    'Setting up Voxwarden:',
     `${READY} The addon is loaded (${VERSION}).`,
-    `${TODO} Looking for the NeverQuestAlone app…`,
+    `${TODO} Looking for the Voxwarden app…`,
     `${TODO} Checking your AI…`,
     `${TODO} Checking the app can see WoW…`,
     `${TODO} Say hi once the steps above are done.`,
@@ -899,7 +899,7 @@ test('C-01: a fresh install (no slot yet) has the app\'s words from load, the ch
   assert.equal(vm.evaluate('NS.UI.ui.header.text'), 'No model yet');
   assert.equal(vm.evaluate('NS.UI.ui.thinkBtn.shown'), 'false');
   // The commands answer, and nothing goes out as a message.
-  const NOT_YET = 'The NeverQuestAlone app hasn\'t answered yet. Is it running?';
+  const NOT_YET = 'The Voxwarden app hasn\'t answered yet. Is it running?';
   vm.slash('usage');
   assert.equal(notice(vm), NOT_YET);
   vm.slash('model claude-sonnet-4-5');
@@ -907,19 +907,19 @@ test('C-01: a fresh install (no slot yet) has the app\'s words from load, the ch
   vm.slash('cost on');
   assert.equal(notice(vm), `Reply Cost: on. /nqa cost on||off changes it. ${NOT_YET}`);
   vm.slash('setup');
-  assert.match(notice(vm), /^Setting up NeverQuestAlone:\n.*The addon is loaded.*\n.*Looking for the NeverQuestAlone app…/);
+  assert.match(notice(vm), /^Setting up Voxwarden:\n.*The addon is loaded.*\n.*Looking for the Voxwarden app…/);
   assert.equal(vm.outboxWires().length, 0, 'no message was sent for a command word');
   assert.deepEqual(vm.history(), []);
   // Two minutes of silence: the light, the window's status line and the HUD say so, in the app's name.
   vm.advance(130);
   vm.run('NS.Refresh("status"); NS.HUD.Render()');
   assert.equal(light(vm)[0], 'red');
-  assert.equal(vm.evaluate('NS.UI.ui.status.text'), '|cffff5555No word from the NeverQuestAlone app for 2 minutes. Is it running?|r');
+  assert.equal(vm.evaluate('NS.UI.ui.status.text'), '|cffff5555No word from the Voxwarden app for 2 minutes. Is it running?|r');
   // Saved data from 0.5.3, which kept which of its two builds the last slot came from: the same
   // words from load, and the key goes.
   const was = newVM({ db: 'NQADB = { backend = "legacy" }' }).login();
   assert.equal(was.evaluate('NQADB.backend'), null, 'dropped at load');
-  assert.equal(light(was)[1], 'Waiting to hear from the NeverQuestAlone app…');
+  assert.equal(light(was)[1], 'Waiting to hear from the Voxwarden app…');
   was.slash('');
   was.slash('usage');
   assert.equal(notice(was), NOT_YET, 'a command, never a paid message');
@@ -934,7 +934,7 @@ test('C-01, C-05: command routing: usage|cost|setup|model are commands with or w
   assert.equal(isCmd('attach', 'x'), 'false', 'the roadmap words are words');
   const fresh = appVM();
   for (const [c, r] of [['usage', ''], ['cost', 'off'], ['setup', ''], ['model', 'x']]) assert.equal(fresh.evaluate(`NS.IsCommand("${c}", "${r}")`), 'true', `fresh ${c}`);
-  for (const c of ['steer', 'reset', 'agent', 'main', 'attach', 'detach', 'inbox', 'watch', 'quiet', 'more', 'rhook']) assert.equal(isCmd(c, ''), 'false', `${c}: a word for NeverQuestAlone`);
+  for (const c of ['steer', 'reset', 'agent', 'main', 'attach', 'detach', 'inbox', 'watch', 'quiet', 'more', 'rhook']) assert.equal(isCmd(c, ''), 'false', `${c}: a word for Voxwarden`);
   // The help (PUI-22): "Getting around", then main's short list (commands-ux: the Screen Reading switch,
   // then /nqa mode reload); /nqa help all is the every-command list (HELP_ALL): thinking, the app's
   // commands, no daily limit on check-ins, no diagnostics but /nqa diag and no updates from the game. As the window shows it: || is one |, the commands' gold gone.
@@ -977,7 +977,7 @@ test('the public build\'s help lines each fit one drawn line of the notice at th
     assert.ok(lines.length > 4, which);
     for (const l of lines) measured.push([strip(l), width(l)]);
   }
-  assert.ok(measured.some(([l]) => l === '/nqa app  Show the link to download the NeverQuestAlone app'), 'main\'s Copy and Paste lines, in the public build\'s help too');
+  assert.ok(measured.some(([l]) => l === '/nqa app  Show the link to download the Voxwarden app'), 'main\'s Copy and Paste lines, in the public build\'s help too');
   assert.ok(measured.some(([l]) => l === '/nqa replies auto|paste  Pick how replies come'));
   assert.ok(measured.some(([l]) => l === '/nqa paste  Open Copy and Paste again'));
   const wide = measured.filter(([, w]) => w > BODY).map(([l, w]) => `${Math.round(w)}: ${l}`);
@@ -1100,7 +1100,7 @@ test('C-03: slowed while working says so, with the countdown; no spend line and 
   vm.run('for k in pairs(NS.R.out) do NS.Transport.Acked(k, "slot") end');
   apply(vm, byokSlot({ rt: '{ state = "slowed", retryIn = 18 }', u: usage({ needs: 'slowed' }) }));
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Anthropic asked NeverQuestAlone to slow down');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Anthropic asked Voxwarden to slow down');
   assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Trying again in 18 seconds.');
   assert.equal(vm.evaluate('NS.HUD.h.spend.shown'), 'false');
   assert.equal(vm.evaluate('NS.HUD.h.stopBtn.shown'), 'true', 'still working: Stop');
@@ -1116,7 +1116,7 @@ test('C-05: the companion is off until the app says it\'s on (bridge.usage.autoO
   assert.equal(vm.evaluate(COMPANION_ON), 'false');
   assert.equal(vm.evaluate('NS.Companion.Active("evt")'), 'false', 'no events go while it\'s off on the desktop');
   vm.slash('companion');
-  assert.match(notice(vm), /^Check-ins are off in the NeverQuestAlone app: turn them on there, and they come to your Check-ins chat\.\n/);
+  assert.match(notice(vm), /^Check-ins are off in the Voxwarden app: turn them on there, and they come to your Check-ins chat\.\n/);
   // The Settings switch is this addon's own and stays as you set it (C-25); its tooltip says the app's is off, while it is.
   const sw = 'NS.Settings.SWITCHES[6]';
   assert.equal(vm.evaluate(`${sw}[2]`), 'Check-Ins');
@@ -1125,13 +1125,13 @@ test('C-05: the companion is off until the app says it\'s on (bridge.usage.autoO
   assert.equal(vm.evaluate(`${sw}[3]()`), 'false');
   vm.run(`${sw}[4](true)`);
   assert.equal(vm.evaluate(`${sw}[3]()`), 'true', 'stays ticked after the click although the app\'s is off');
-  assert.match(vm.chatLines().at(-1), /Check-ins are also off in the NeverQuestAlone app: turn them on there too\.$/);
-  assert.equal(vm.evaluate(`${sw}[5]()`), 'NeverQuestAlone checks in on level-ups, finished routes, quests no route covers and first visits to a zone. They\'re off in the NeverQuestAlone app right now; turn them on there too.');
+  assert.match(vm.chatLines().at(-1), /Check-ins are also off in the Voxwarden app: turn them on there too\.$/);
+  assert.equal(vm.evaluate(`${sw}[5]()`), 'Voxwarden checks in on level-ups, finished routes, quests no route covers and first visits to a zone. They\'re off in the Voxwarden app right now; turn them on there too.');
   apply(vm, byokSlot({ u: usage({ autoOn: true }) }));
-  assert.equal(vm.evaluate(`${sw}[5]()`), 'NeverQuestAlone checks in on level-ups, finished routes, quests no route covers and first visits to a zone.', 'read when shown: on there now');
+  assert.equal(vm.evaluate(`${sw}[5]()`), 'Voxwarden checks in on level-ups, finished routes, quests no route covers and first visits to a zone.', 'read when shown: on there now');
   assert.equal(vm.evaluate(COMPANION_ON), 'true');
   vm.slash('companion');
-  assert.match(notice(vm), /^Check-Ins: On\. NeverQuestAlone checks in on level-ups, finished routes, quests no route covers and first visits to a zone \(\d+ today\)\. Settings has it too\.\n  level-ups: on/);
+  assert.match(notice(vm), /^Check-Ins: On\. Voxwarden checks in on level-ups, finished routes, quests no route covers and first visits to a zone \(\d+ today\)\. Settings has it too\.\n  level-ups: on/);
   assert.doesNotMatch(notice(vm), /a day|left today|allow|limit/, 'no daily limit of ours');
   // A bridge that says nothing of the app's switch (no usage cap): off, as the app hasn't said it's on.
   const quiet = confirmHello(newVM().login());
@@ -1156,7 +1156,7 @@ test('the state a typed message carries: Game Data with Messages decides, and th
   assert.deepEqual(['gear', 'poi', 'prof', 'pending'].filter(k => k in off), [], 'no gear, points, professions or milestones');
   assert.deepEqual([off.questCount, off.questMax, off.omitted], [40, 40, []], 'nothing named as left out to fit');
   assert.ok(off.char && off.loc, 'the character and the place');
-  assert.match(vm.evaluate('NS.Settings.SWITCHES[5][5]()'), /^Sends your character, where you are and your quests, so NeverQuestAlone knows what you know\. Your gear and quest objectives go too once check-ins are on in the app\.$/, 'the switch says what goes');
+  assert.match(vm.evaluate('NS.Settings.SWITCHES[5][5]()'), /^Sends your character, where you are and your quests, so Voxwarden knows what you know\. Your gear and quest objectives go too once check-ins are on in the app\.$/, 'the switch says what goes');
   const box = () => { vm.run('NS.UI.Toggle(true); NS.UI.RenderContext()'); return vm.list('NS.UI.ui.ctx.lines')[0]; };
   assert.match(box(), / · 40 quests$/, 'the Game Data box: no gear');
   apply(vm, byokSlot({ caps, u: usage({ autoOn: true }) }));
@@ -1165,7 +1165,7 @@ test('the state a typed message carries: Game Data with Messages decides, and th
   const on = state();
   assert.deepEqual(on.quests.map(q => q.id), ids);
   assert.ok(on.quests.some(q => Array.isArray(q.obj) && q.obj.length) && on.quests.every(q => 'level' in q), 'on: objectives and levels too');
-  assert.equal(vm.evaluate('NS.Settings.SWITCHES[5][5]()'), 'Sends your character, where you are, your quests and gear, so NeverQuestAlone knows what you know.');
+  assert.equal(vm.evaluate('NS.Settings.SWITCHES[5][5]()'), 'Sends your character, where you are, your quests and gear, so Voxwarden knows what you know.');
   vm.slash('companion off');
   assert.deepEqual([may(true), may(false)], ['true', 'false'], 'Check-Ins off: no events or state on its own; a message still carries its state');
   vm.slash('context off');
@@ -1331,24 +1331,24 @@ test('C-13, C-19: with cap ekind a warning stays as a state line with Okay; the 
 test('BR-09: a limit held because today\'s spend couldn\'t be read is never "reached" in game: the light, the HUD, the header, the usage line, its panel, /nqa usage and the small bar say so, in the companion\'s name; with the app gone quiet, the HUD\'s spend line too', () => {
   const vm = byok({ vm: { db: 'NQADB = { hudIntro = true, firstReply = true }' } });
   vm.slash('');
-  const held = (companion = 'NeverQuestAlone') => byokSlot({ p: provider({ companion }), companion, rt: '{ state = "cap", reason = "load_error" }', u: capped({ spentMicros: 1000000, needs: 'cap', held: 'load_error' }) });
+  const held = (companion = 'Voxwarden') => byokSlot({ p: provider({ companion }), companion, rt: '{ state = "cap", reason = "load_error" }', u: capped({ spentMicros: 1000000, needs: 'cap', held: 'load_error' }) });
   apply(vm, held());
   const [state, tip] = light(vm);
   assert.equal(state, 'yellow', 'the cap\'s light');
-  assert.ok(tip.startsWith('Today\'s spend couldn\'t be read, so NeverQuestAlone rests. Set your limit again in the NeverQuestAlone app.'), tip);
+  assert.ok(tip.startsWith('Today\'s spend couldn\'t be read, so Voxwarden rests. Set your limit again in the Voxwarden app.'), tip);
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Today\'s spend couldn\'t be read, so NeverQuestAlone rests');
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Set your limit again in the NeverQuestAlone app.');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Today\'s spend couldn\'t be read, so Voxwarden rests');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Set your limit again in the Voxwarden app.');
   assert.equal(vm.evaluate('NS.HUD.h.spend.shown'), 'false', 'said once: the spend line leaves it to the status line');
   vm.run('NS.Refresh("status")');
-  assert.ok(vm.evaluate('NS.UI.ui.status.text').includes('Today\'s spend couldn\'t be read, so NeverQuestAlone rests. Set your limit again in the NeverQuestAlone app.'), 'the header');
+  assert.ok(vm.evaluate('NS.UI.ui.status.text').includes('Today\'s spend couldn\'t be read, so Voxwarden rests. Set your limit again in the Voxwarden app.'), 'the header');
   apply(vm, held('Nyx'));
   vm.run('NS.HUD.Render()');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Today\'s spend couldn\'t be read, so Nyx rests', 'the companion\'s own name (STYLE §11)');
   // The window's usage line, its panel and /nqa usage: the spend is unknown, never "~$1.00 of $1.00" (UX-W05).
   apply(vm, held());
   vm.run('NS.Refresh("status")');
-  assert.equal(vm.evaluate('NS.UI.ui.usage.label.text'), '|cffff5555Today\'s spend unknown|r', 'red, as the cap is: NeverQuestAlone rests');
+  assert.equal(vm.evaluate('NS.UI.ui.usage.label.text'), '|cffff5555Today\'s spend unknown|r', 'red, as the cap is: Voxwarden rests');
   click(vm, 'NS.UI.ui.usage');
   assert.ok(vm.evaluate('NQAUsage.body.text').includes('\nToday: spend unknown · 23 messages\n'), vm.evaluate('NQAUsage.body.text'));
   click(vm, 'NQAUsage.okay');
@@ -1369,8 +1369,8 @@ test('BR-09: a limit held because today\'s spend couldn\'t be read is never "rea
   apply(vm, held());
   vm.advance(200);
   vm.run('NS.UI.Close(); NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the NeverQuestAlone app');
-  assert.equal(vm.evaluate('NS.HUD.h.spend.text'), 'Today\'s spend couldn\'t be read, so NeverQuestAlone rests. Set your limit again in the NeverQuestAlone app.');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the Voxwarden app');
+  assert.equal(vm.evaluate('NS.HUD.h.spend.text'), 'Today\'s spend couldn\'t be read, so Voxwarden rests. Set your limit again in the Voxwarden app.');
   assert.deepEqual(vm.json('NS.HUD.h.spend.textColor'), [1, 0.13, 0.13]);
 });
 
@@ -1403,7 +1403,7 @@ test('C-17: a local model is named once (the header), and no model means no effo
   vm.run('NS.Refresh("status"); NS.HUD.Render()');
   assert.equal(vm.evaluate('NS.UI.ui.header.text'), 'No model yet');
   assert.equal(vm.evaluate('NS.UI.ui.thinkBtn.shown'), 'false');
-  assert.equal(vm.evaluate('NS.UI.ui.status.text'), '|cffffd100No key yet. Connect your AI in the NeverQuestAlone app.|r', 'no key for a provider nobody chose');
+  assert.equal(vm.evaluate('NS.UI.ui.status.text'), '|cffffd100No key yet. Connect your AI in the Voxwarden app.|r', 'no key for a provider nobody chose');
   assert.equal(vm.evaluate('NS.ProviderName(true)'), 'Your AI');
 });
 
@@ -1436,7 +1436,7 @@ test('C-31: an error record that answers no message (map_block after a reply) po
   assert.equal(pending(), 1, 'the reply answered the first; the map line answered nothing');
   assert.equal(vm.evaluate(`NS.Chats.IsBusy(NS.Chats.Find("${id}"))`), 'true', 'the second still waits for its answer');
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says', 'the reply is the news, not the map line');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says', 'the reply is the news, not the map line');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'In Ironforge.');
   assert.equal(vm.num(`NS.Chats.Find("${id}").unread`), 1, 'one new: the reply');
 });
@@ -1444,7 +1444,7 @@ test('C-31: an error record that answers no message (map_block after a reply) po
 // ---------------------------------------------------------------- C: no limits (the bridge's contract at 8f9c1c2)
 
 test('C: automatic help paused (the bridge\'s runaway fuse): its one line is held, gold "Waits for your next message", with Okay and no resend, in the Companion chat, the HUD, the bar, the chat frame and the banner; it pops no send; events still go (they ride along); no promise while it holds', () => {
-  const LINE = 'NeverQuestAlone paused check-ins: your next message turns them back on.';
+  const LINE = 'Voxwarden paused check-ins: your next message turns them back on.';
   const GOLD = [1, 0.82, 0];
   const vm = byok({ vm: { db: 'NQADB = { hudIntro = true, firstReply = true }' }, slot: { u: usage({ autoOn: true }) } });
   vm.run('STUB.chat = {}');
@@ -1504,7 +1504,7 @@ test('C: automatic help paused (the bridge\'s runaway fuse): its one line is hel
   assert.ok(vm.list('NS.UI.UsageLines()').includes('Check-ins: paused after a burst of them; your next message turns them back on'));
   vm.slash('diag');
   assert.match(notice(vm), /\nCompanion: paused by the runaway fuse until the next typed message; caps /);
-  // No "NeverQuestAlone is on it." while it holds; an event still goes (the bridge holds it to ride along), with its send time.
+  // No "Voxwarden is on it." while it holds; an event still goes (the bridge holds it to ride along), with its send time.
   vm.run('STUB.FireEvent("PLAYER_LEVEL_UP", 12)');
   assert.equal(vm.evaluate('NS.R.dingQueued'), null, 'no promise');
   vm.run('NS.Companion.Queue("zone_first", { zone = "Duskwood" }, "zone_first:test:Duskwood"); NS.Companion.Flush()');
@@ -1519,7 +1519,7 @@ test('C: automatic help paused (the bridge\'s runaway fuse): its one line is hel
   apply(vm, paused([rec(2)], false));
   assert.deepEqual(vm.json('NS.UI.ui.toastOrder[1].title.textColor'), GOLD, 'a gold title, not an error\'s');
   // Its two lines keep what to do (the whole of it is in the window).
-  assert.equal(vm.evaluate('NS.UI.ui.toastOrder[1].line.text'), 'NeverQuestAlone paused check-ins: your next message turns them back on.');
+  assert.equal(vm.evaluate('NS.UI.ui.toastOrder[1].line.text'), 'Voxwarden paused check-ins: your next message turns them back on.');
   // The player's next typed message ends it (the bridge's word): the promise is back.
   apply(vm, byokSlot({ u: usage({ autoOn: true }) }));
   assert.equal(vm.evaluate('NS.Companion.Call("AutoPaused")'), 'false');
@@ -1560,7 +1560,7 @@ test('C-23: a spend state the HUD names (the cap, out of credit, a rejected key)
   vm.run('NS.HUD.Render()');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'You\'ve reached your daily spend limit ($1.00)');
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [1, 0.13, 0.13]);
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Raise it in the NeverQuestAlone app, or it resets at midnight.');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Raise it in the Voxwarden app, or it resets at midnight.');
   assert.equal(vm.evaluate('NS.HUD.h.stateOk.shown'), 'true');
   assert.equal(vm.num('NS.HUD.h.stateOk.x'), 12, 'at the panel\'s edge (PAD)');
   assert.ok(vm.num('-NS.HUD.h.stateOk.y') >= vm.num('NS.HUD.h.mainY'), 'under the second line');
@@ -1584,7 +1584,7 @@ test('C-23: a spend state the HUD names (the cap, out of credit, a rejected key)
   // The one-line HUD: the state in red with its Okay; Okay puts it away there too.
   vm.run('NQADB.settings.hudMin = true; NS.HUD.Render()');
   assert.equal(vm.evaluate('NQAHUDBar.status.text'), 'Key rejected', 'a few words beside its Okay; the whole line is the tooltip');
-  assert.match(vm.evaluate('NS.HUD.h.tip'), /^Your Anthropic key was rejected\. Replace it in the NeverQuestAlone app\./);
+  assert.match(vm.evaluate('NS.HUD.h.tip'), /^Your Anthropic key was rejected\. Replace it in the Voxwarden app\./);
   assert.deepEqual(vm.json('NQAHUDBar.status.textColor'), [1, 0.13, 0.13]);
   assert.equal(vm.evaluate('NQAHUDBar.okBtn.shown'), 'true');
   vm.advance(1); // main's double-click guard on the bar's Okay (C-109)
@@ -1610,17 +1610,17 @@ test('C-27: a spend state on top of unread news: the news keeps the header and i
   apply(vm, byokSlot({ rt: '{ state = "cap" }', u: capped({ spentMicros: 1000000, needs: 'cap' }), records: [replyRec(1, activeId(vm), REPLY)] }));
   vm.run('NS.HUD.Render()');
   const okays = () => ['okBtn', 'spendOk', 'warnOk', 'stateOk'].filter(b => vm.evaluate(`NS.HUD.h.${b}.shown`) === 'true');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says', 'the news keeps the header');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says', 'the news keeps the header');
   assert.deepEqual(vm.json('NS.HUD.h.status.textColor'), [1, 0.82, 0]);
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), REPLY);
-  assert.equal(vm.evaluate('NS.HUD.h.spend.text'), 'You\'ve reached your daily spend limit ($1.00). Raise it in the NeverQuestAlone app, or it resets at midnight.');
+  assert.equal(vm.evaluate('NS.HUD.h.spend.text'), 'You\'ve reached your daily spend limit ($1.00). Raise it in the Voxwarden app, or it resets at midnight.');
   assert.deepEqual(vm.json('NS.HUD.h.spend.textColor'), [1, 0.13, 0.13]);
   assert.ok(vm.num('-NS.HUD.h.spend.y') > vm.num('-NS.HUD.h.okBtn.y'), 'after the block');
   assert.deepEqual(okays(), ['okBtn'], 'one Okay: the news\'s');
   click(vm, 'NS.HUD.h.okBtn');
   assert.equal(vm.evaluate('NQADB.spendOkay'), null, 'the news\'s Okay is the news\'s only');
   assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'You\'ve reached your daily spend limit ($1.00)');
-  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Raise it in the NeverQuestAlone app, or it resets at midnight.');
+  assert.equal(vm.evaluate('NS.HUD.h.sub.text'), 'Raise it in the Voxwarden app, or it resets at midnight.');
   assert.equal(vm.evaluate('NS.HUD.h.spend.shown'), 'false');
   assert.deepEqual(okays(), ['stateOk'], 'then the state\'s own');
   // A state already said Okay to, under new news: the spend row names it in grey.
@@ -1628,14 +1628,14 @@ test('C-27: a spend state on top of unread news: the news keeps the header and i
   click(vm, 'NS.HUD.h.stateOk');
   apply(vm, byokSlot({ rt: '{ state = "cap" }', u: capped({ spentMicros: 1000000, needs: 'cap' }), records: [replyRec(2, activeId(vm), 'The bank is by the gate.')] }));
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'NeverQuestAlone says');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Voxwarden says');
   assert.equal(vm.evaluate('NS.HUD.h.spend.text'), 'You\'ve reached your daily spend limit ($1.00).');
   assert.deepEqual(vm.json('NS.HUD.h.spend.textColor'), [0.6, 0.6, 0.6]);
   assert.deepEqual(okays(), ['okBtn']);
   // A line that isn't a spend state stays as HUD v4 has it: a silent app still takes the header over the news.
   vm.advance(200);
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the NeverQuestAlone app');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the Voxwarden app');
 
   // The critic's p5 probe: an unread reply, then the key is rejected, on the one-line HUD.
   const b = byok({ vm: { db: 'NQADB = { hudIntro = true, firstReply = true, settings = { hudMin = true } }' } });
@@ -1665,9 +1665,9 @@ test('C-28: states that aren\'t spend states (a local server down, no key, pause
   const ollama = provider({ id: 'ollama', name: 'Ollama', auth: 'local', privacy: 'local', modelName: 'qwen3:8b', model: 'qwen3:8b' });
   const WHITE = [1, 1, 1], RED = [1, 0.13, 0.13];
   const CASES = [
-    [{ rt: '{ state = "local_down" }', p: ollama }, 'NeverQuestAlone can\'t reach Ollama', 'Start Ollama, then click Retry on your message.', RED],
-    [{ rt: '{ state = "no_key" }', p: provider({ keyState: 'missing' }) }, 'No key yet', 'Add your Anthropic key in the NeverQuestAlone app.', WHITE],
-    [{ rt: '{ state = "paused" }' }, 'NeverQuestAlone is paused', 'Messages wait until you resume it in the app.', WHITE],
+    [{ rt: '{ state = "local_down" }', p: ollama }, 'Voxwarden can\'t reach Ollama', 'Start Ollama, then click Retry on your message.', RED],
+    [{ rt: '{ state = "no_key" }', p: provider({ keyState: 'missing' }) }, 'No key yet', 'Add your Anthropic key in the Voxwarden app.', WHITE],
+    [{ rt: '{ state = "paused" }' }, 'Voxwarden is paused', 'Messages wait until you resume it in the app.', WHITE],
     [{ rt: '{ state = "provider_down" }' }, 'Anthropic is busy right now', 'Trying again…', WHITE],
   ];
   for (const [slot, head, sub, color] of CASES) {
@@ -1702,7 +1702,7 @@ test('C-31: a refused /nqa model (answers none) while a message runs is a Note w
     vm.slash('model gpt-9');
     const before = vm.outboxWires().length;
     const text = action === 'none'
-      ? 'gpt-9 isn\'t one of the Anthropic models you can pick. Nothing was changed. See them in the NeverQuestAlone app.'
+      ? 'gpt-9 isn\'t one of the Anthropic models you can pick. Nothing was changed. See them in the Voxwarden app.'
       : 'gpt-9 isn\'t one of the Anthropic models you can pick. Nothing was changed.';
     apply(vm, byokSlot({ records: [`{ seq = 2, t = "error", chat = "${id}", kind = "model_not_found", action = "${action}", answers = "none", text = ${lstr(text)} }`] }));
     assert.equal(vm.evaluate(`NS.Chats.IsBusy(NS.Chats.Find("${id}"))`), 'true', `${action}: the running message still waits for its own answer`);
@@ -1731,7 +1731,7 @@ test('C-31: a refused /nqa model (answers none) while a message runs is a Note w
 const OUT_KEYS = ['money', 'line', 'lines', 'header', 'light', 'check', 'spend', 'details', 'cost', 'keys', 'refused', 'history'];
 const BYOK_SCENARIO = `
 OUT = {}
-STUB.FireEvent("ADDON_LOADED", "NeverQuestAlone")
+STUB.FireEvent("ADDON_LOADED", "Voxwarden")
 STUB.FireEvent("PLAYER_LOGIN")
 STUB.Advance(3.1)
 NS.UI.Toggle(true)
@@ -1773,7 +1773,7 @@ function byokProgram() {
     'math.randomseed(7)',
     ...['present', 'bell_push_a', 'bell_push_b', 'bell_alive_a', 'bell_alive_b', 'bell_act'].map(f => `STUB.sounds[${JSON.stringify(SIG + 'ctl\\' + f + '.wav')}] = true`),
     'NS = {}',
-    ...tocFiles().map(f => `assert(loadstring(${bracket(fs.readFileSync(path.join(ADDON, f), 'utf8'))}, "@NeverQuestAlone/${f}"))("NeverQuestAlone", NS)`),
+    ...tocFiles().map(f => `assert(loadstring(${bracket(fs.readFileSync(path.join(ADDON, f), 'utf8'))}, "@Voxwarden/${f}"))("Voxwarden", NS)`),
     TRAPS,
     BYOK_SCENARIO,
     `for _, k in ipairs({ ${OUT_KEYS.map(k => `"${k}"`).join(', ')} }) do WRITE(k, "\\t", (tostring(OUT[k] or "<nil>"):gsub("\\n", "\\\\n")), "\\n") end`,
@@ -1793,8 +1793,8 @@ test('Lua 5.1 (LuaJIT): the BYOK paths come out byte for byte as in the test VM'
   assert.equal(jit.spend, 'You\'ve used $0.82 of your $1.00 daily spend limit.');
   assert.equal(jit.cost, '~0.4¢');
   assert.equal(jit.keys, '1010');
-  assert.equal(jit.refused, 'key:That looks like an API key, so it wasn\'t sent. Keys go in the NeverQuestAlone app, never in game.');
-  assert.ok(jit.check.startsWith('Setting up NeverQuestAlone:'), jit.check);
+  assert.equal(jit.refused, 'key:That looks like an API key, so it wasn\'t sent. Keys go in the Voxwarden app, never in game.');
+  assert.ok(jit.check.startsWith('Setting up Voxwarden:'), jit.check);
   assert.ok(jit.details.startsWith('What happened: your AI company is busy.'), jit.details);
 });
 

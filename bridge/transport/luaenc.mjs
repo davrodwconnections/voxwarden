@@ -90,7 +90,7 @@ export function fitRecords(records, max = RECORD_BYTES_MAX) {
  */
 export function slotTable(globalName, slot, { includeMap = false, maxBytes = SLOT_BYTES_MAX, recordBytes = RECORD_BYTES_MAX } = {}) {
   const head = [
-    '-- Written by the NeverQuestAlone app. Do not edit.',
+    '-- Written by the Voxwarden app. Do not edit.',
     `${globalName} = {`,
     `\tv = 2, ts = ${luaStr(slot.ts)}, now = ${luaValue(slot.now)}, token = ${luaStr(slot.token || '')},`,
     `\tbridge = ${luaValue(slot.bridge || {})},`,

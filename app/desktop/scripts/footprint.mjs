@@ -7,7 +7,7 @@
 // tray alone after it has closed. test.yml's windows-smoke job runs it on the packaged app; the
 // Mac figures were taken the same way with phys_footprint (the fix pass for SY-11).
 //
-//   node scripts/footprint.mjs "dist/win-unpacked/NeverQuestAlone.exe"
+//   node scripts/footprint.mjs "dist/win-unpacked/Voxwarden.exe"
 //   exit 0 measured · 1 the self-test failed, or a phase has no samples · 2 usage, or not Windows
 import fs from 'node:fs';
 import path from 'node:path';
@@ -78,7 +78,7 @@ export function footprint(ph, list) {
 const line = (what, s) => `footprint: ${what.padEnd(13)} ${s ? `${s.medianMB.toFixed(1)} MB median, ${s.peakMB.toFixed(1)} MB peak (${s.processes} processes, ${s.samples} samples)` : 'no samples'}`;
 
 export async function run(argv, { stdout = s => process.stdout.write(`${s}\n`), stderr = s => process.stderr.write(`${s}\n`), platform = process.platform, env = process.env } = {}) {
-  if (argv.length !== 1 || argv[0].startsWith('-')) { stderr('usage: node scripts/footprint.mjs <NeverQuestAlone.exe>'); return 2; }
+  if (argv.length !== 1 || argv[0].startsWith('-')) { stderr('usage: node scripts/footprint.mjs <Voxwarden.exe>'); return 2; }
   if (platform !== 'win32') { stderr('footprint: Windows only (PrivateMemorySize64 through Get-Process)'); return 2; }
   const exe = path.resolve(argv[0]);
   if (!fs.existsSync(exe)) { stderr(`footprint: no app at ${exe}`); return 2; }

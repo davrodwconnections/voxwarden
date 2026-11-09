@@ -159,7 +159,7 @@ test('installAddon refuses while WoW runs, and says a new addon needs a full res
   const dir = makeInstall(root, '_forever_');
   const r = installAddon({ flavorDir: dir, running: true });
   assert.deepEqual(r, { ok: false, error: 'wow_running', detail: `Quit World of Warcraft completely first (not just log out). ${RESTART_LINE}` });
-  assert.equal(fs.existsSync(path.join(dir, 'Interface', 'AddOns', 'NeverQuestAlone')), false, 'nothing written');
+  assert.equal(fs.existsSync(path.join(dir, 'Interface', 'AddOns', 'Voxwarden')), false, 'nothing written');
   assert.equal(installAddon({ flavorDir: path.join(root, 'nope'), running: false }).error, 'wow_not_found');
   assert.equal(installAddon({ flavorDir: 'relative/_forever_', running: false }).error, 'wow_not_found');
 });
@@ -168,19 +168,19 @@ test('installAddon copies the addon, makes the slot pool and the doorbells, chec
   const root = tmp();
   const dir = makeInstall(root, '_classic_beta_', { buildInfo: BUILD_INFO });
   const addons = path.join(dir, 'Interface', 'AddOns');
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone', 'sig', 'ctl'), { recursive: true });
-  fs.writeFileSync(path.join(addons, 'NeverQuestAlone', 'Inbox.lua'), 'NQA_Inbox = { v = 2 }\n');
-  fs.writeFileSync(path.join(addons, 'NeverQuestAlone', 'sig', 'ctl', 'bell_push_a.wav'), '');
+  fs.mkdirSync(path.join(addons, 'Voxwarden', 'sig', 'ctl'), { recursive: true });
+  fs.writeFileSync(path.join(addons, 'Voxwarden', 'Inbox.lua'), 'NQA_Inbox = { v = 2 }\n');
+  fs.writeFileSync(path.join(addons, 'Voxwarden', 'sig', 'ctl', 'bell_push_a.wav'), '');
   const r = installAddon({ flavorDir: dir, running: false, slots: 7 });
   assert.equal(r.ok, true, JSON.stringify(r.steps));
   assert.deepEqual(r.steps.map(s => [s.name, s.ok]), [['Addon folder', true], ['7 slot folders', true], ['Doorbell folder', true], ['Checked every file', true]]);
   assert.equal(r.restartNeeded, true);
   assert.equal(r.iface, '16001');
-  assert.ok(fs.existsSync(path.join(addons, 'NeverQuestAlone', 'NeverQuestAlone.toc')));
-  assert.equal(fs.readFileSync(path.join(addons, 'NeverQuestAlone', 'Inbox.lua'), 'utf8'), 'NQA_Inbox = { v = 2 }\n', 'the bridge\'s inbox is kept');
-  assert.equal(fs.readFileSync(path.join(addons, 'NeverQuestAlone', 'Chats.lua'), 'utf8'), fs.readFileSync(path.join(ADDON_SOURCE, 'Chats.lua'), 'utf8'));
+  assert.ok(fs.existsSync(path.join(addons, 'Voxwarden', 'Voxwarden.toc')));
+  assert.equal(fs.readFileSync(path.join(addons, 'Voxwarden', 'Inbox.lua'), 'utf8'), 'NQA_Inbox = { v = 2 }\n', 'the bridge\'s inbox is kept');
+  assert.equal(fs.readFileSync(path.join(addons, 'Voxwarden', 'Chats.lua'), 'utf8'), fs.readFileSync(path.join(ADDON_SOURCE, 'Chats.lua'), 'utf8'));
   assert.match(fs.readFileSync(path.join(addons, 'NQA_S007', 'NQA_S007.toc'), 'utf8'), /^## Interface: 16001$/m);
-  for (const f of ['present', 'bell_push_a', 'bell_push_b', 'bell_alive_a', 'bell_alive_b', 'bell_act']) assert.ok(fs.existsSync(path.join(addons, 'NeverQuestAlone', 'sig', 'ctl', `${f}.wav`)), f);
+  for (const f of ['present', 'bell_push_a', 'bell_push_b', 'bell_alive_a', 'bell_alive_b', 'bell_act']) assert.ok(fs.existsSync(path.join(addons, 'Voxwarden', 'sig', 'ctl', `${f}.wav`)), f);
   assert.equal(r.permissions.ok, true);
   // No addon files in this build: say so, write nothing.
   const empty = tmp();
@@ -188,20 +188,20 @@ test('installAddon copies the addon, makes the slot pool and the doorbells, chec
   assert.equal(installAddon({ flavorDir: dir2, running: false, addonSource: empty }).error, 'addon_missing');
 });
 
-test('R3: the installed addon\'s TOC is stamped: the product\'s Title and the AddOns list\'s bullet-list Notes, which are the repo TOC\'s since main 0.5.3, so it is the repo\'s line for line (the addon reads none of it: one build); the slot TOCs are the one slotToc, under one "NeverQuestAlone Parts" row (E-047)', () => {
-  const repoToc = fs.readFileSync(path.join(ADDON_SOURCE, 'NeverQuestAlone.toc'), 'utf8');
+test('R3: the installed addon\'s TOC is stamped: the product\'s Title and the AddOns list\'s bullet-list Notes, which are the repo TOC\'s since main 0.5.3, so it is the repo\'s line for line (the addon reads none of it: one build); the slot TOCs are the one slotToc, under one "Voxwarden Parts" row (E-047)', () => {
+  const repoToc = fs.readFileSync(path.join(ADDON_SOURCE, 'Voxwarden.toc'), 'utf8');
   const field = (t, k) => (t.match(new RegExp(`^## ${k}:[ \\t]*(.*)$`, 'm')) || [])[1];
   // One product name everywhere (C-120, C-124) and the owner's bullet list (main c9599b5): the stamp's
   // Title and Notes are the repo TOC's.
-  assert.equal(PUBLIC_TITLE, 'NeverQuestAlone');
+  assert.equal(PUBLIC_TITLE, 'Voxwarden');
   assert.equal(field(repoToc, 'Title'), PUBLIC_TITLE);
   assert.equal(field(repoToc, 'Notes'), PUBLIC_NOTES);
   assert.match(PUBLIC_NOTES, /^• Ask anything, right in the game\|n• /, 'a short bullet list, a |n between lines');
   assert.doesNotMatch(repoToc, /X-Backend/);
   const dir = makeInstall(tmp(), '_forever_');
   assert.equal(installAddon({ flavorDir: dir, running: false, slots: 2 }).ok, true);
-  const toc = fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8');
-  assert.match(toc, /^## Title: NeverQuestAlone$/m);
+  const toc = fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), 'utf8');
+  assert.match(toc, /^## Title: Voxwarden$/m);
   assert.doesNotMatch(toc, /X-Backend/, 'no build\'s mark (the two-build addon read one until 2026-09-29)');
   assert.equal(field(toc, 'Notes'), PUBLIC_NOTES);
   for (const k of ['Title', 'Notes']) assert.doesNotMatch(field(toc, k), /bridge/, `the list's ${k}: one product name, no plumbing`);
@@ -209,30 +209,30 @@ test('R3: the installed addon\'s TOC is stamped: the product\'s Title and the Ad
   assert.equal(toc, repoToc);
   // The slot addons, 200 rows of the game's AddOns list: slotToc's title and notes, the parts'
   // category, each its own group and the addon's icon, as the addon zip writes them too (E-047), so
-  // the list shows one folded "NeverQuestAlone Parts" row.
+  // the list shows one folded "Voxwarden Parts" row.
   const s2 = fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'NQA_S002', 'NQA_S002.toc'), 'utf8');
   assert.equal(s2, slotToc(2, '16001'));
-  assert.match(s2, /^## Title: NeverQuestAlone Part 002$/m);
-  assert.match(s2, /^## Notes: A part of NeverQuestAlone that brings replies into the game\. Leave it checked\.$/m);
+  assert.match(s2, /^## Title: Voxwarden Part 002$/m);
+  assert.match(s2, /^## Notes: A part of Voxwarden that brings replies into the game\. Leave it checked\.$/m);
   assert.equal(field(s2, 'Category'), SLOT_CATEGORY);
   assert.equal(field(s2, 'Group'), 'NQA_S002');
   assert.equal(field(s2, 'IconTexture'), SLOT_ICON);
   assert.match(s2, /^## LoadOnDemand: 1$/m);
-  assert.match(s2, /^## Dependencies: NeverQuestAlone$/m);
+  assert.match(s2, /^## Dependencies: Voxwarden$/m);
   assert.doesNotMatch(s2, /Reply slot|Load-on-demand/);
   const mainSlots = tmp();
   installSlots(mainSlots, { count: 2, iface: '16001' });
   assert.equal(fs.readFileSync(path.join(mainSlots, 'NQA_S002', 'NQA_S002.toc'), 'utf8'), s2, 'one slotToc for every install');
   // Stamping is idempotent, a TOC without a Title gets one, and older words give way to the product's.
   assert.equal(stampToc(toc), toc);
-  assert.match(stampToc('## Interface: 16001\nCodec.lua\n'), /^## Title: NeverQuestAlone\n## Interface: 16001\n/);
-  assert.equal(stampToc(`## Title: NeverQuestAlone\n## X-Backend: byok\n## Interface: 16001\nCodec.lua\n`), `## Title: ${PUBLIC_TITLE}\n## Interface: 16001\nCodec.lua\n`, 'an earlier build\'s mark goes');
-  const old = stampToc('## Interface: 16001\n## Title: NeverQuestAlone\n## Notes: Talk to your AI from inside the game.\nCodec.lua\n');
+  assert.match(stampToc('## Interface: 16001\nCodec.lua\n'), /^## Title: Voxwarden\n## Interface: 16001\n/);
+  assert.equal(stampToc(`## Title: Voxwarden\n## X-Backend: byok\n## Interface: 16001\nCodec.lua\n`), `## Title: ${PUBLIC_TITLE}\n## Interface: 16001\nCodec.lua\n`, 'an earlier build\'s mark goes');
+  const old = stampToc('## Interface: 16001\n## Title: Voxwarden\n## Notes: Talk to your AI from inside the game.\nCodec.lua\n');
   assert.equal(field(old, 'Title'), PUBLIC_TITLE);
   assert.equal(field(old, 'Notes'), PUBLIC_NOTES);
   // A second install over it (an update) stamps the same.
   assert.equal(installAddon({ flavorDir: dir, running: false, slots: 2 }).ok, true);
-  assert.equal(fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8'), toc);
+  assert.equal(fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), 'utf8'), toc);
 });
 
 test('C-119: installAddon folds the parts\' row in the game\'s AddOns list once per install, as setup does: recorded in the app\'s config, only while the game is closed, and never over a player\'s unfold', () => {
@@ -292,19 +292,19 @@ test('R3 (lane D): one stamp for every copy a player gets: the release zip\'s (t
   const { stampAddonCopy } = await import('../../tools/stamp-toc.mjs');
   const dir = makeInstall(tmp(), '_forever_');
   assert.equal(installAddon({ flavorDir: dir, running: false, slots: 1 }).ok, true);
-  const installed = fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8');
+  const installed = fs.readFileSync(path.join(dir, 'Interface', 'AddOns', 'Voxwarden', 'Voxwarden.toc'), 'utf8');
   // release.yml's Stage step: a plain copy of the repo's addon, then the tool.
-  const stage = path.join(tmp('bones-stage-'), 'NeverQuestAlone');
+  const stage = path.join(tmp('bones-stage-'), 'Voxwarden');
   fs.cpSync(ADDON_SOURCE, stage, { recursive: true });
   const cli = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp-toc.mjs'), stage], { encoding: 'utf8' });
   assert.equal(cli.status, 0, cli.stderr);
-  assert.equal(fs.readFileSync(path.join(stage, 'NeverQuestAlone.toc'), 'utf8'), installed, 'the zip\'s TOC is the install\'s');
+  assert.equal(fs.readFileSync(path.join(stage, 'Voxwarden.toc'), 'utf8'), installed, 'the zip\'s TOC is the install\'s');
   assert.equal(stampAddonCopy(stage), installed, 'and stamping again changes nothing');
   // Never the repo's own folder (the installer stamps each copy).
-  const repoBefore = fs.readFileSync(path.join(ADDON_SOURCE, 'NeverQuestAlone.toc'), 'utf8');
+  const repoBefore = fs.readFileSync(path.join(ADDON_SOURCE, 'Voxwarden.toc'), 'utf8');
   const refused = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp-toc.mjs'), ADDON_SOURCE], { encoding: 'utf8' });
   assert.equal(refused.status, 2);
-  assert.equal(fs.readFileSync(path.join(ADDON_SOURCE, 'NeverQuestAlone.toc'), 'utf8'), repoBefore);
+  assert.equal(fs.readFileSync(path.join(ADDON_SOURCE, 'Voxwarden.toc'), 'utf8'), repoBefore);
   assert.doesNotMatch(repoBefore, /X-Backend/);
   // The addon, reading its metadata from that TOC as the game does at its start, before any slot
   // has loaded (no stand-in that answers "byok" whatever the file says): the one build either way.
@@ -315,7 +315,7 @@ test('R3 (lane D): one stamp for every copy a player gets: the release zip\'s (t
   assert.equal(app.num('#STUB.loads'), 0, 'no slot loaded yet');
   assert.equal(app.evaluate('SLASH_BONES1'), '/nqa');
   assert.equal(app.evaluate('NS.AppInstall'), null, 'nothing reads the stamp');
-  const repo = newVM({ extra: lua(metaOf(fs.readFileSync(path.join(ADDON_SOURCE, 'NeverQuestAlone.toc'), 'utf8'))) }).login();
+  const repo = newVM({ extra: lua(metaOf(fs.readFileSync(path.join(ADDON_SOURCE, 'Voxwarden.toc'), 'utf8'))) }).login();
   assert.equal(repo.evaluate('SLASH_BONES1'), '/nqa', 'the repo\'s TOC, unstamped: the same addon');
   assert.equal(repo.evaluate('select(2, NS.Transport.Light())'), app.evaluate('select(2, NS.Transport.Light())'));
 });
@@ -393,9 +393,9 @@ test('installAddon never writes through a link another account planted in AddOns
   fs.mkdirSync(victim('sigdir'));
   const dir = makeInstall(root, '_forever_');
   const addons = path.join(dir, 'Interface', 'AddOns');
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone'));
-  fs.symlinkSync(victim('zshrc'), path.join(addons, 'NeverQuestAlone', 'NeverQuestAlone.toc'));
-  fs.symlinkSync(victim('sigdir'), path.join(addons, 'NeverQuestAlone', 'sig'));
+  fs.mkdirSync(path.join(addons, 'Voxwarden'));
+  fs.symlinkSync(victim('zshrc'), path.join(addons, 'Voxwarden', 'Voxwarden.toc'));
+  fs.symlinkSync(victim('sigdir'), path.join(addons, 'Voxwarden', 'sig'));
   fs.symlinkSync(victim('slotdir'), path.join(addons, 'NQA_S001'));
   fs.mkdirSync(path.join(addons, 'NQA_S002'));
   fs.symlinkSync(victim('toc2'), path.join(addons, 'NQA_S002', 'NQA_S002.toc'));
@@ -409,14 +409,14 @@ test('installAddon never writes through a link another account planted in AddOns
   assert.deepEqual(fs.readdirSync(victim('sigdir')), [], 'nor a linked doorbell folder');
   assert.equal(fs.existsSync(victim('not-there-yet')), false, 'nor created through a dangling link');
   assert.deepEqual(linksUnder(addons), [], 'no link left');
-  assert.match(fs.readFileSync(path.join(addons, 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8'), /^## Interface: /m);
+  assert.match(fs.readFileSync(path.join(addons, 'Voxwarden', 'Voxwarden.toc'), 'utf8'), /^## Interface: /m);
   assert.match(fs.readFileSync(path.join(addons, 'NQA_S002', 'NQA_S002.toc'), 'utf8'), /^## Interface: /m);
   // The whole addon folder a link to somewhere else: replaced by a real folder.
   const dir2 = makeInstall(tmp(), '_forever_');
   const addons2 = path.join(dir2, 'Interface', 'AddOns');
-  fs.symlinkSync(victim('slotdir'), path.join(addons2, 'NeverQuestAlone'));
+  fs.symlinkSync(victim('slotdir'), path.join(addons2, 'Voxwarden'));
   assert.equal(installAddon({ flavorDir: dir2, running: false, slots: 1 }).ok, true);
-  assert.equal(isLink(path.join(addons2, 'NeverQuestAlone')), false);
+  assert.equal(isLink(path.join(addons2, 'Voxwarden')), false);
   assert.deepEqual(fs.readdirSync(victim('slotdir')), []);
 });
 
@@ -437,7 +437,7 @@ test('the bridge\'s slot and doorbell writes never follow a link planted in thei
   assert.equal(fs.readFileSync(path.join(addons, 'NQA_S001', 'Inbox.lua'), 'utf8'), 'NQA_SlotData = { v = 2 }\n');
   assert.equal(isLink(path.join(addons, 'NQA_S001', 'Inbox.lua')), false);
   // A doorbell put back in place (the bridge's start does it) where a dangling link now sits.
-  const bell = path.join(addons, 'NeverQuestAlone', 'sig', 'ctl', 'bell_act.wav');
+  const bell = path.join(addons, 'Voxwarden', 'sig', 'ctl', 'bell_act.wav');
   fs.rmSync(bell);
   fs.symlinkSync(path.join(outside, 'made-by-the-bell'), bell);
   assert.deepEqual(createSignals(addons).ensure(), ['act']);
@@ -446,7 +446,7 @@ test('the bridge\'s slot and doorbell writes never follow a link planted in thei
   assert.ok(fs.lstatSync(bell).isFile(), 'the bell is back, a plain file');
 });
 
-test('publishing never writes through a slot folder or NeverQuestAlone/ swapped for a link after install, or into a folder another account owns (audit CV-04, TH12)', { skip: PLANTED_LINKS }, async () => {
+test('publishing never writes through a slot folder or Voxwarden/ swapped for a link after install, or into a folder another account owns (audit CV-04, TH12)', { skip: PLANTED_LINKS }, async () => {
   const { writeSlots, installSlots } = await import('../../bridge/transport/slots.mjs');
   const outside = tmp('bones-victim-');
   const mine = path.join(outside, 'mine'), mine2 = path.join(outside, 'mine2');
@@ -455,12 +455,12 @@ test('publishing never writes through a slot folder or NeverQuestAlone/ swapped 
   const addons = path.join(tmp(), 'AddOns');
   fs.mkdirSync(addons);
   installSlots(addons, { count: 3, iface: '16001' });
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true });
-  // While the bridge runs, another account moves S001 and NeverQuestAlone aside and links the names to the player's folders.
+  fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true });
+  // While the bridge runs, another account moves S001 and Voxwarden aside and links the names to the player's folders.
   fs.renameSync(path.join(addons, 'NQA_S001'), path.join(addons, 'moved-S001'));
   fs.symlinkSync(mine, path.join(addons, 'NQA_S001'), 'dir');
-  fs.renameSync(path.join(addons, 'NeverQuestAlone'), path.join(addons, 'moved-NeverQuestAlone'));
-  fs.symlinkSync(mine2, path.join(addons, 'NeverQuestAlone'), 'dir');
+  fs.renameSync(path.join(addons, 'Voxwarden'), path.join(addons, 'moved-Voxwarden'));
+  fs.symlinkSync(mine2, path.join(addons, 'Voxwarden'), 'dir');
   const logs = [];
   const w = writeSlots(addons, 'NQA_SlotData = { v = 3 }\n', 'NQA_Inbox = { v = 3 }\n', { count: 3, log: (k, d) => logs.push([k, d]) });
   assert.equal(fs.readFileSync(path.join(mine, 'Inbox.lua'), 'utf8'), 'the player\'s own file\n', 'the player\'s file is untouched');
@@ -477,7 +477,7 @@ test('publishing never writes through a slot folder or NeverQuestAlone/ swapped 
   installSlots(addons, { count: 3, iface: '16001' });
   assert.equal(isLink(path.join(addons, 'NQA_S001')), false);
   assert.equal(fs.readFileSync(path.join(mine, 'Inbox.lua'), 'utf8'), 'the player\'s own file\n');
-  assert.equal(writeSlots(addons, 'z\n', 'z\n', { count: 3 }).errors, 1, 'only NeverQuestAlone/, which the addon install puts back, is left');
+  assert.equal(writeSlots(addons, 'z\n', 'z\n', { count: 3 }).errors, 1, 'only Voxwarden/, which the addon install puts back, is left');
 });
 
 test('TH12: the flavor folder and the install root count (a loose, non-sticky parent); the addon\'s own files are walked and tightened', { skip: POSIX_MODES }, () => {
@@ -506,7 +506,7 @@ test('TH12: the flavor folder and the install root count (a loose, non-sticky pa
   assert.deepEqual(checkAddonsPermissions(addons, { platform: 'darwin' }).paths, [root]);
   fs.chmodSync(root, 0o755);
   // The addon's files and the slot folders the install wrote.
-  const toc = path.join(addons, 'NeverQuestAlone', 'NeverQuestAlone.toc');
+  const toc = path.join(addons, 'Voxwarden', 'Voxwarden.toc');
   const slotLua = path.join(addons, 'NQA_S002', 'Inbox.lua');
   fs.chmodSync(toc, 0o666);
   fs.chmodSync(path.join(addons, 'NQA_S001'), 0o777);
@@ -520,12 +520,12 @@ test('TH12: the flavor folder and the install root count (a loose, non-sticky pa
   assert.equal(fs.statSync(toc).mode & 0o777, 0o644);
   assert.equal(checkAddonsPermissions(addons, { platform: 'darwin' }).ok, true);
   // Another account's file there, or a link: reported, never "fixed".
-  fs.symlinkSync(os.tmpdir(), path.join(addons, 'NeverQuestAlone', 'Extra.lua'));
+  fs.symlinkSync(os.tmpdir(), path.join(addons, 'Voxwarden', 'Extra.lua'));
   const linked = checkAddonsPermissions(addons, { platform: 'darwin', tighten: true });
   assert.equal(linked.ok, false);
-  assert.deepEqual(linked.links, [path.join(addons, 'NeverQuestAlone', 'Extra.lua')]);
+  assert.deepEqual(linked.links, [path.join(addons, 'Voxwarden', 'Extra.lua')]);
   assert.equal(linked.fixable, false);
-  fs.rmSync(path.join(addons, 'NeverQuestAlone', 'Extra.lua'));
+  fs.rmSync(path.join(addons, 'Voxwarden', 'Extra.lua'));
   const foreign = checkAddonsPermissions(addons, { platform: 'darwin', uid: -5 });
   assert.equal(foreign.ok, false, 'the addon\'s files belong to another account');
   assert.ok(foreign.paths.includes(toc));

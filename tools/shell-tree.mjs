@@ -12,7 +12,7 @@
 //   (b) a plugin file importing a network, process, thread or Electron module, or the shell's key
 //       store, providers, spend (usage/), ledger or run queue;
 //   (c) a shell file naming the game (TERMS: in any case, inside identifiers too, as in findWow), one
-//       line a file with its count. NeverQuestAlone and NQA stay: the open project keeps the name.
+//       line a file with its count. Voxwarden and NQA stay: the open project keeps the name.
 // (a) and (b) read code (.mjs, .cjs, .js); (c) reads every text file but a lockfile, whose hashes hold
 // the words by chance. A test belongs to the part it imports (exempt, then plugin, then shell), so an
 // export can take its tests along. Tests aren't checked: a test may spawn processes, wire both parts
@@ -131,7 +131,7 @@ function main([cmd, ...args]) {
 
 
 // ---------------------------------------------------------------- the export (open-shell PRD lane 5a; the whole product since 2026-10-05)
-// The public repo's tree (tommygeoco/neverquestalone): NeverQuestAlone's source, the whole product, with the
+// The public repo's tree (davrodwconnections/voxwarden): Voxwarden's source, the whole product, with the
 // tests that test it, and the pages players read there. Until 2026-10-05 it was to be the shell alone, without
 // the World of Warcraft plugin; the owner then asked for the codebase to be open source ("It's part of TOS"), so
 // the code that touches the game goes too: the addon, the prompts' source, the game data and quest logic, and
@@ -466,7 +466,7 @@ export function desktopPackage(deskPkg, identity) {
 
 /**
  * The public package.json from this repo's: its own name and author line (LICENSE's two copyright holders),
- * the plugin this repo builds (the whole product: NeverQuestAlone), npm start runs the app, and each script
+ * the plugin this repo builds (the whole product: Voxwarden), npm start runs the app, and each script
  * keeps only the commands whose files the tree holds (npm test without the screenshot experiment's order
  * check; a script left with none goes). capture:build stays this repo's: this computer's screen-reading helper,
  * where a run from source looks for it (bridge/capture/build.mjs; systems critic OS-05).
@@ -488,8 +488,8 @@ export function publicPackage(pkg, files) {
   const filter = s => (s ? s.split('&&').map(keep).filter(Boolean).join(' && ') : '');
   const scripts = Object.fromEntries(Object.entries(pkg.scripts ?? {}).map(([k, v]) => [k, filter(v)]).filter(([, v]) => v));
   const mine = {
-    name: 'neverquestalone',
-    author: 'chelinho139 and The NeverQuestAlone authors',
+    name: pkg.name,
+    author: pkg.author,
     scripts: { start: 'npm --prefix app/desktop start', ...scripts },
   };
   // In the order this repo's has them, without bin (bridge/nqa.mjs runs as node bridge/nqa.mjs) or repository.
@@ -498,7 +498,7 @@ export function publicPackage(pkg, files) {
 }
 
 /** The lockfile with the public name (its dependencies are the same, so npm ci stays in sync). */
-export function publicLock(lock, name = 'neverquestalone') {
+export function publicLock(lock, name = 'voxwarden') {
   const out = { ...lock, name };
   if (out.packages?.['']) {
     const { bin: _bin, ...rootPkg } = out.packages[''];
@@ -589,7 +589,7 @@ export function publicTestYml(text, { tracked, files, scripts }) {
     out.push('');
   }
   const yml = [
-    '# The tests, on every push and pull request: written by tools/shell-tree.mjs from the test.yml NeverQuestAlone',
+    '# The tests, on every push and pull request: written by tools/shell-tree.mjs from the test.yml Voxwarden',
     '# builds with, without its private jobs and without any secret. The token is read-only, and every action is',
     '# pinned to a commit SHA. Change it there, not here: each release rewrites this file.',
     ...section('name'), '',
@@ -650,7 +650,7 @@ export async function writeExport(out, { root = ROOT, live } = {}) {
   put(out, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   // The desktop package carries the exported plugin's name and productName (Electron names an unpackaged run's
   // data folder and single-instance lock after them; 2a critic 2A-03). The export's plugin is this repo's, so
-  // they're NeverQuestAlone's: a run from source shares an installed copy's (docs/build/get-started.md says so).
+  // they're Voxwarden's: a run from source shares an installed copy's (docs/build/get-started.md says so).
   const desk = 'app/desktop/package.json', idFile = pkg.plugin && `plugins/${pkg.plugin}/identity.json`;
   if (idFile && files.includes(desk) && files.includes(idFile)) {
     const id = JSON.parse(fs.readFileSync(path.join(root, idFile), 'utf8'));

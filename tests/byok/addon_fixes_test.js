@@ -66,17 +66,17 @@ test('E-1 (C-30): a pending re-plan over an unread reply: the bar\'s Okay sends 
   assert.equal(vm.outboxWires().length, sent + 1, 'once: the wait\'s own send doesn\'t follow');
 });
 
-test('E-1 (C-29): "Can\'t reach the NeverQuestAlone app" over an unread reply on the bar: no Okay (it would read a reply you haven\'t seen); Show More, and the reply\'s Okay is under its words', () => {
+test('E-1 (C-29): "Can\'t reach the Voxwarden app" over an unread reply on the bar: no Okay (it would read a reply you haven\'t seen); Show More, and the reply\'s Okay is under its words', () => {
   const vm = withReply();
   const id = activeId(vm);
   vm.advance(200);
   vm.run('NS.HUD.Render()');
-  assert.deepEqual(bar(vm), ['Can\'t reach the NeverQuestAlone app', 'false']);
+  assert.deepEqual(bar(vm), ['Can\'t reach the Voxwarden app', 'false']);
   vm.run('NS.HUD.BarOkay()');
   assert.equal(unread(vm, id), 1, 'still unread');
   vm.run('NS.HUD.SetForm("full")');
   assert.equal(vm.evaluate('NQAHUD.shown'), 'true');
-  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the NeverQuestAlone app');
+  assert.equal(vm.evaluate('NS.HUD.h.status.text'), 'Can\'t reach the Voxwarden app');
   assert.equal(vm.evaluate('NS.HUD.h.body.text'), 'In Ironforge: the Great Forge.');
   assert.equal(vm.evaluate('NS.HUD.h.okBtn.shown'), 'true');
   click(vm, 'NS.HUD.h.okBtn');
@@ -94,17 +94,17 @@ test('E-2: the window\'s X says where the reply will show: the HUD while it show
     vm.run('STUB.tipLines = {}; local c = NS.UI.ui.closeBtn; c.scripts.OnEnter(c)');
     return vm.list('STUB.tipLines').at(-1);
   };
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the HUD shows the reply when it lands.', 'the HUD shows news: main\'s words');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the HUD shows the reply when it lands.', 'the HUD shows news: main\'s words');
   vm.slash('hud compass');
   vm.slash('');
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the reply shows at the top of the screen when it lands.', 'the compass: the banner');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the reply shows at the top of the screen when it lands.', 'the compass: the banner');
   vm.slash('hud full');
   vm.run('NS.HUD.Close()');
   vm.slash('');
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the reply shows at the top of the screen when it lands.', 'closed: the banner, never "the small bar"');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the reply shows at the top of the screen when it lands.', 'closed: the banner, never "the small bar"');
   vm.slash('hud off');
   vm.slash('');
-  assert.equal(get(), 'Closes the window. NeverQuestAlone keeps working, and the reply shows at the top of the screen when it lands.', 'off: the small bar badges it, the banner shows it');
+  assert.equal(get(), 'Closes the window. Voxwarden keeps working, and the reply shows at the top of the screen when it lands.', 'off: the small bar badges it, the banner shows it');
 });
 
 test('E-3: a /nqa stop\'s answer ("Nothing was running.", kind stop; "Couldn\'t stop: …", kind gateway after a stop) pops no pending send: the running message stays busy and its own reply answers it', () => {
@@ -144,7 +144,7 @@ test('E-4: the /nqa hud and /nqa text answers print whole words (main\'s command
   vm.slash('text');
   assert.ok(vm.chatLines().at(-1).endsWith('Chat Text Size: Medium. Settings has it too.'), vm.chatLines().at(-1));
   // As the chat frame shows it: no |r or |c escape is left in the words.
-  assert.doesNotMatch(hud.replace(/\|\|/g, '').replace(/^\|cff7ec8ff\[NeverQuestAlone\]\|r /, ''), /\|[rc]/, 'no escape left in the words');
+  assert.doesNotMatch(hud.replace(/\|\|/g, '').replace(/^\|cff7ec8ff\[Voxwarden\]\|r /, ''), /\|[rc]/, 'no escape left in the words');
   // The preview renderer draws it as the game does ("||" in tests/helpers/ui-render.js).
   const { renderTree } = require('../helpers/ui-render');
   const html = renderTree({ id: 1, kind: 'Frame', w: 900, h: 40, children: [{ id: 2, kind: 'FontString', text: hud, w: 880, points: [{ point: 'TOPLEFT', rel: 1, relPoint: 'TOPLEFT', x: 0, y: 0 }] }] });

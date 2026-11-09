@@ -147,7 +147,7 @@ test('a chat\'s own model the provider answers model_not_found: the chat goes ba
     const e = await waitFor(() => env.chats('error')[0], 5000, 'the error');
     assert.equal(e.errorKind, 'model_not_found');
     assert.equal(e.action, 'desktop');
-    assert.equal(e.errorMessage, "Claude Haiku 4.5 isn't available on your Anthropic account. Switched to Claude Sonnet 5 for now. Change it in the NeverQuestAlone app.");
+    assert.equal(e.errorMessage, "Claude Haiku 4.5 isn't available on your Anthropic account. Switched to Claude Sonnet 5 for now. Change it in the Voxwarden app.");
     assert.equal(b.chatSlot(CHAT).model, undefined, 'back on the provider\'s model');
     assert.ok(env.changes.length > changes, 'the core publishes the change');
     assert.equal(b.status().notice, null, 'the provider\'s model isn\'t in question');
@@ -258,7 +258,7 @@ test('core: chats[] carries the backend\'s chatSlot fields (only the contract\'s
     // One the provider doesn't offer: the model_not_found line (the addon ends its "asked for"), nothing changed.
     bridge.handlePayload(patch(CHAT, { model: 'gpt-9' }));
     const e = await waitFor(() => bridge.buildSlot().records.find(r => r.t === 'error'), 2000, 'the refusal');
-    assert.deepEqual({ kind: e.kind, action: e.action, text: e.text }, { kind: 'model_not_found', action: 'none', text: "gpt-9 isn't one of the Anthropic models you can pick. Nothing was changed. See them in the NeverQuestAlone app." });
+    assert.deepEqual({ kind: e.kind, action: e.action, text: e.text }, { kind: 'model_not_found', action: 'none', text: "gpt-9 isn't one of the Anthropic models you can pick. Nothing was changed. See them in the Voxwarden app." });
     assert.equal(bridge.buildSlot().chats.find(x => x.id === CHAT).model, 'claude-haiku-4-5');
     // default: the provider's again; junk and key-shaped ids are never sent to the backend.
     bridge.handlePayload(patch(CHAT, { model: 'DEFAULT' }));

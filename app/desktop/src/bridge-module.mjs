@@ -18,7 +18,7 @@ export const BRIDGE_ROOT = [APP_DIR, ...(IN_ASAR ? [] : [path.resolve(APP_DIR, '
   .find(root => fs.existsSync(path.join(root, MARK))) ?? null;
 
 export function importBridge(rel) {
-  if (!BRIDGE_ROOT) throw new Error('this build of NeverQuestAlone is missing its bridge');
+  if (!BRIDGE_ROOT) throw new Error('this build of Voxwarden is missing its bridge');
   const file = path.resolve(BRIDGE_ROOT, ...String(rel).split('/'));
   const inside = path.relative(BRIDGE_ROOT, file);
   if (!inside || inside.startsWith('..') || path.isAbsolute(inside)) throw new Error('refused bridge code from outside the app');

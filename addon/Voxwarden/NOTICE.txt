@@ -1,0 +1,7 @@
+Voxwarden is an independent distribution maintained by David Rodriguez.
+
+Its code includes MIT-licensed contributions from chelinho139 and The NeverQuestAlone authors. The original copyright and permission notices are retained in LICENSE.txt in the addon distribution. Their code authorship is not reassigned.
+
+The Voxwarden name and the original shield/V/voice artwork in Media are David Rodriguez's brand assets. The MIT code license does not grant permission to use this brand to imply endorsement of another distribution. These images replace the upstream NeverQuestAlone artwork, whose rights were not included in its MIT code license.
+
+World of Warcraft and Blizzard Entertainment are trademarks or registered trademarks of Blizzard Entertainment, Inc. Voxwarden is unofficial and is not affiliated with or endorsed by Blizzard.

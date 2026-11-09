@@ -63,7 +63,7 @@ export function createNotifier({ show, enabled = () => true }) {
   const noticeFor = status => {
     const { provider, usage } = parts(status);
     const named = clip(provider?.name, 24);
-    const v = { co: named || N.someCompany, app: named || N.someApp, name: clip(provider?.companion, 24) || 'NeverQuestAlone' };
+    const v = { co: named || N.someCompany, app: named || N.someApp, name: clip(provider?.companion, 24) || 'Voxwarden' };
     const title = t => fill(named ? t.title : t.titleNoCo, v);
     // Patch day (SY-29): WoW runs without the addon until it restarts, or the app couldn't set the
     // addon up for the new version. The player is likely in the game: this is how the app reaches them.

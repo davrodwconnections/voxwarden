@@ -1,4 +1,4 @@
-// NeverQuestAlone's window: Bones's companion panel on the left, the one decision on the stage
+// Voxwarden's window: Bones's companion panel on the left, the one decision on the stage
 // (the redesign's build spec, "the companion panel", 2026-09-30; BYOK PRD §16 flows, §8.4
 // Connections and Last request, §9.5 usage, §10 errors, §13 privacy, §11.5 updates).
 //
@@ -36,7 +36,7 @@
   if (!B || !F) {
     // The table's line when it loaded; these words when even it didn't.
     var BS = window.BonesStrings;
-    $page.textContent = (BS && BS.errors && BS.errors.windowFailed) || 'NeverQuestAlone couldn’t start this window.';
+    $page.textContent = (BS && BS.errors && BS.errors.windowFailed) || 'Voxwarden couldn’t start this window.';
     return;
   }
 
@@ -516,7 +516,7 @@
   };
 
   function P() { return F.parts(S.status); }
-  function companion() { return F.clean((P().provider && P().provider.companion) || 'NeverQuestAlone', 24); }
+  function companion() { return F.clean((P().provider && P().provider.companion) || 'Voxwarden', 24); }
   function platform() { return (S.info && S.info.platform) || 'darwin'; }
   function store() { return F.storeName(platform()); }
   function isMac() { return platform() === 'darwin'; }
@@ -775,7 +775,7 @@
       portrait.setAttribute('data-state', lit ? 'active' : 'inactive');
     }
     // The landmark's name is the shown name, a renamed companion's too (STYLE §11; index.html's
-    // "NeverQuestAlone" only until status loads).
+    // "Voxwarden" only until status loads).
     var aside = document.getElementById('companion');
     if (aside) aside.setAttribute('aria-label', companion());
     // His state in a word: beside the portrait on hover or focus, and the portrait button's name. The
@@ -1778,7 +1778,7 @@
 
   /**
    * The picture of where your data goes (shown, not told): your computer, straight to the AI company
-   * (or the service you connect); NeverQuestAlone struck out, no account, no tracking; and what's in a
+   * (or the service you connect); Voxwarden struck out, no account, no tracking; and what's in a
    * message. One image to a screen reader, its words the alt. pid: the AI in use or picked.
    */
   /** Where a message goes, in words: the AI company (or the model on this computer, or Other's name), its line under it, and the picture's name. */
@@ -3429,7 +3429,7 @@
   function playerWords(t) { return F.render(F.clean(t, 300), null, platform()); }
   /**
    * Your data's sheet: where it goes first (the picture: your computer, straight to the AI company;
-   * NeverQuestAlone gets nothing; CL-words-75), then what the AI company keeps and whether it trains
+   * Voxwarden gets nothing; CL-words-75), then what the AI company keeps and whether it trains
    * (the manifest's player text), its policy, OpenAI's install ID.
    */
   /**
@@ -3454,7 +3454,7 @@
     on(b, 'click', busy(b, fn));
     return b;
   }
-  /** Where it goes, as rows (every sheet that says it: Your data, an AI's, Other's): the picture, what each message carries, what NeverQuestAlone gets. */
+  /** Where it goes, as rows (every sheet that says it: Your data, an AI's, Other's): the picture, what each message carries, what Voxwarden gets. */
   function whereRows(pid) {
     return [
       sheetFlow(pid),

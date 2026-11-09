@@ -1,4 +1,4 @@
-// NeverQuestAlone's desktop shell (BYOK PRD §11.2 DB10, §11.5 DB12, §16,
+// Voxwarden's desktop shell (BYOK PRD §11.2 DB10, §11.5 DB12, §16,
 // PF-2, PF-4, SC-3, SC-9, KY-8, OB-1..OB-4; BUILD-PLAN "Desktop app").
 //
 // One process: main builds the bridge in-process through bridge/byok/boot.mjs
@@ -254,7 +254,7 @@ function openWindow(page) {
     minWidth: 760,
     minHeight: 540,
     show: false,
-    title: 'NeverQuestAlone',
+    title: 'Voxwarden',
     // Dark only, like a game launcher (the redesign's spec §1): the stage's colour behind the page.
     backgroundColor: '#0f0e12',
     autoHideMenuBar: true,
@@ -339,7 +339,7 @@ async function confirmNative(spec) {
     cancelId: 1,
     noLink: true,
     normalizeAccessKeys: false,
-    title: 'NeverQuestAlone',
+    title: 'Voxwarden',
     message: String(spec.message ?? ''),
     detail: String(spec.detail ?? ''),
   };
@@ -364,7 +364,7 @@ function setLoginItem(open) { return loginItem.set(open); }
 
 // Uninstall (OB-3): after the bridge's own uninstall, the login item and, on
 // macOS, the Screen Recording entries of the app and of the capture helper
-// (its bundle id from the packaged app's bridge/capture/mac/BUNDLE_ID, NeverQuestAlone's own; never a checkout's helper, src/uninstall.mjs);
+// (its bundle id from the packaged app's bridge/capture/mac/BUNDLE_ID, Voxwarden's own; never a checkout's helper, src/uninstall.mjs);
 // the data, logs and update caches go in will-quit (src/uninstall.mjs).
 // The last instruction (drag the app to the Trash, …) is in the confirm and in a final dialog
 // that stays until Okay (D-18); the app quits after it, never on a timer.
@@ -381,7 +381,7 @@ async function uninstallShell(result) {
   removeDataOnQuit = true;
   const finish = finishLine(process.platform);
   if (!HEADLESS) {
-    const opts = { type: 'info', buttons: ['Okay'], defaultId: 0, noLink: true, title: 'NeverQuestAlone', message: 'NeverQuestAlone is uninstalled.', detail: `${finish}\nNeverQuestAlone quits when you click Okay.` };
+    const opts = { type: 'info', buttons: ['Okay'], defaultId: 0, noLink: true, title: 'Voxwarden', message: 'Voxwarden is uninstalled.', detail: `${finish}\nVoxwarden quits when you click Okay.` };
     try { await (win && !win.isDestroyed() ? dialog.showMessageBox(win, opts) : dialog.showMessageBox(opts)); } catch {}
   }
   setImmediate(() => app.quit());
@@ -474,7 +474,7 @@ function appInfo() {
     try { license = fs.readFileSync(p, 'utf8'); break; } catch {}
   }
   return {
-    name: 'NeverQuestAlone',
+    name: 'Voxwarden',
     version: app.getVersion(),
     electron: process.versions.electron,
     chrome: process.versions.chrome,
@@ -483,7 +483,7 @@ function appInfo() {
     arch: process.arch,
     packaged: app.isPackaged,
     apiMode: apiModeShown ?? loaded.mode,
-    apiReason: apiModeShown === 'error' ? 'the bridge failed to start: Another copy of NeverQuestAlone is already running for this World of Warcraft (pid 4242). Quit it first.' : loaded.reason,
+    apiReason: apiModeShown === 'error' ? 'the bridge failed to start: Another copy of Voxwarden is already running for this World of Warcraft (pid 4242). Quit it first.' : loaded.reason,
     store: storeName(process.platform),
     loginItem: getLoginItem(),
     releases: releasesUrl(IDENTITY) != null,
@@ -598,7 +598,7 @@ async function start() {
   nativeTheme.themeSource = 'dark';
   if (IS_MAC && app.dock) app.dock.hide();
   if (!HEADLESS) logFile = path.join(app.getPath('logs'), 'shell.log');
-  log(`NeverQuestAlone ${app.getVersion()} starting (Electron ${process.versions.electron}, Node ${process.versions.node})`);
+  log(`Voxwarden ${app.getVersion()} starting (Electron ${process.versions.electron}, Node ${process.versions.node})`);
   const removedEnv = [...LOADER_FOUND.removed, ...NET_ENV.removed];
   if (removedEnv.length) log(`removed from the environment: ${removedEnv.join(', ')}`);
   // An environment proxy stops the start before the bridge boots: its line in the log, on stderr, and
@@ -608,10 +608,10 @@ async function start() {
     log(line);
     try { fs.writeSync(2, `${line}\n`); } catch {}
     if (HEADLESS) {
-      try { fs.writeSync(1, `${JSON.stringify({ selfTest: 'neverquestalone', ok: false, error: 'env_proxy', variable: NET_ENV.refuse })}\n`); } catch {}
+      try { fs.writeSync(1, `${JSON.stringify({ selfTest: 'voxwarden', ok: false, error: 'env_proxy', variable: NET_ENV.refuse })}\n`); } catch {}
       try { fs.rmSync(selfTestDir, { recursive: true, force: true }); } catch {}
     } else {
-      dialog.showErrorBox('NeverQuestAlone', line);
+      dialog.showErrorBox('Voxwarden', line);
     }
     app.exit(1);
     return;
@@ -736,7 +736,7 @@ async function start() {
     moveToApplications,
     info: appInfo,
     notices: () => (notices ??= collectNotices(HERE)),
-    companion: () => lastStatus?.backend?.provider?.companion ?? 'NeverQuestAlone',
+    companion: () => lastStatus?.backend?.provider?.companion ?? 'Voxwarden',
     releasesUrl: () => releasesUrl(IDENTITY),
     onPaused: p => { paused = p; refreshTray(); },
     onNoticeSeen: () => { if (lastStatus) send(STATUS_CHANNEL, forWindow(lastStatus)); },
@@ -854,7 +854,7 @@ function withHostileRequest(real) {
   return {
     ...real,
     lastRequest: async () => ({
-      chats: [{ id: 'c3f9a1e', title: 'NeverQuestAlone' }], chatId: 'c3f9a1e', at: Date.now() - 60e3, provider: 'anthropic', model: 'claude-haiku-4-5',
+      chats: [{ id: 'c3f9a1e', title: 'Voxwarden' }], chatId: 'c3f9a1e', at: Date.now() - 60e3, provider: 'anthropic', model: 'claude-haiku-4-5',
       request: {
         method: 'POST', url: 'https://api.anthropic.com/v1/messages',
         headers: { 'x-api-key': 'sk-ant-…A1b2 (redacted)', 'content-type': 'application/json' },
@@ -883,7 +883,7 @@ function phase(name) {
 async function selfTest() {
   const t0 = Date.now();
   const result = {
-    selfTest: 'neverquestalone',
+    selfTest: 'voxwarden',
     ok: false,
     run: NO_RELAUNCH ? 'relaunch' : 'full',
     api: loaded.mode,
@@ -1078,14 +1078,14 @@ async function selfTest() {
 
     // The capture helper, and the team boot accepts for it on macOS (the app's own; null for an ad hoc build).
     c.captureHelper = { present: helperPath ? fs.existsSync(helperPath) : null, team };
-    // The Mac helper carries NeverQuestAlone's own bundle id, the one the bridge's code requirement
+    // The Mac helper carries Voxwarden's own bundle id, the one the bridge's code requirement
     // and the uninstall read, never a checkout's (final review L3-4).
     if (IS_MAC && app.isPackaged && helperPath) {
       const idFile = readCaptureBundleId(bridgeRoots(HERE, { packaged: true }));
       let plistId = null;
       try { plistId = (/<key>CFBundleIdentifier<\/key>\s*<string>([^<]+)<\/string>/.exec(fs.readFileSync(path.join(helperPath, 'Contents', 'Info.plist'), 'utf8')) || [])[1] ?? null; } catch {}
       c.captureHelper.bundleId = plistId;
-      c.captureHelper.bundleIdOk = !!plistId && plistId === idFile && /^com\.neverquestalone\.(?!capture\.dev$)/.test(plistId);
+      c.captureHelper.bundleIdOk = !!plistId && plistId === idFile && /^com\.voxwarden\.(?!capture\.dev$)/.test(plistId);
     }
     // Its peer check (BR-01): it serves this app (the handshake: a team or bundle id that doesn't match
     // fails it), refuses another program's socket (exit 6; asked of an app with a team, as an ad hoc
@@ -1135,7 +1135,7 @@ async function selfTest() {
       tray: c.tray, window: SHOW_WINDOW ? c.windowShown : c.windowHidden, fromAppScheme: c.fromAppScheme, origin: p.origin === 'nqa://app', secureContext: p.secureContext === true,
       contextIsolation: wp.contextIsolation, sandbox: wp.sandbox, noNodeIntegration: !wp.nodeIntegration, noSpellcheck: !wp.spellcheck, noWebviewTag: !wp.webviewTag,
       preload: p.preload, methods: p.methods > 30, noNodeGlobals: p.nodeGlobals === 0, csp: cspOk, noInlineScripts: p.inlineScripts === 0, stylesheet: p.stylesheet, brandMark: p.brandMark,
-      state: p.state != null, providers: p.providers > 0, name: p.name === 'NeverQuestAlone', hostileInputRefused: p.hostileInputRefused, validatorsRefuse: p.validatorsRefuse, notAKeyRefused: p.notAKeyRefused, pageFetchRefused: p.pageFetchRefused,
+      state: p.state != null, providers: p.providers > 0, name: p.name === 'Voxwarden', hostileInputRefused: p.hostileInputRefused, validatorsRefuse: p.validatorsRefuse, notAKeyRefused: p.notAKeyRefused, pageFetchRefused: p.pageFetchRefused,
       noInjectedElements: p.injectedElements === 0, hostileTextShownAsText: p.hostileTextShownAsText, notificationsSwitch: p.notificationsSwitch, policyLinks: p.policyLinks > 0, liveRegion: p.liveRegion, titleFocused: p.titleFocused,
       scheme: c.schemeOk, onlyPageRequests: c.onlyPageRequests, guardDefaultSession: g.defaultSession, guardUpdaterSession: g.updaterSession, guardUpdateHostWhileChecksOff: g.updateHostWhileChecksOff,
       bridge: c.bridge.ok === true, logRedacts: c.logRedacts, tlsOffRemoved: c.networkEnv.tlsOffRemoved, proxyRefused: c.networkEnv.proxyRefused,
@@ -1181,7 +1181,7 @@ if (PRIMARY) {
   start().catch(e => {
     log(`start failed: ${e?.stack ?? e}`);
     if (HEADLESS) {
-      process.stdout.write(`${JSON.stringify({ selfTest: 'neverquestalone', ok: false, error: redactText(String(e?.message ?? e)) })}\n`);
+      process.stdout.write(`${JSON.stringify({ selfTest: 'voxwarden', ok: false, error: redactText(String(e?.message ?? e)) })}\n`);
       app.exit(1);
     }
   });

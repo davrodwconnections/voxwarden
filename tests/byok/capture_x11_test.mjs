@@ -36,13 +36,13 @@ test('python unit tests: --magic, pitch search, the probe, typed errors, the gam
   assert.match(r.stderr, /OK/);
 });
 
-test('the default magic is NeverQuestAlone\'s C7 2C; upstream C7 1A needs --magic C71A', { skip }, () => {
+test('the default magic is Voxwarden\'s C7 2C; upstream C7 1A needs --magic C71A', { skip }, () => {
   const text = record(5, 'magic ✓ → 2C');
-  assert.equal(decodePng('c72c', encodeWithCodec('NeverQuestAlone', 5, text), { pitch: 4, width: 900, height: 300 }).text, text);
+  assert.equal(decodePng('c72c', encodeWithCodec('Voxwarden', 5, text), { pitch: 4, width: 900, height: 300 }).text, text);
   const upstream = encodeWithCodec('upstream', 5, text);
   assert.match(decodePng('c71a-default', upstream, { pitch: 4, width: 900, height: 300 }).error, /no valid strip/);
   assert.equal(decodePng('c71a-flag', upstream, { pitch: 4, width: 900, height: 300 }, ['--magic', 'C71A']).text, text);
-  assert.match(decodePng('c72c-as-c71a', encodeWithCodec('NeverQuestAlone', 5, text), { pitch: 4, width: 900, height: 300 }, ['--magic', 'C71A']).error, /no valid strip/);
+  assert.match(decodePng('c72c-as-c71a', encodeWithCodec('Voxwarden', 5, text), { pitch: 4, width: 900, height: 300 }, ['--magic', 'C71A']).error, /no valid strip/);
 });
 
 test('a bad --magic is a usage error', { skip }, () => {
@@ -54,7 +54,7 @@ test('a bad --magic is a usage error', { skip }, () => {
 test('--pitch-search decodes 3.5 to 6 px strips (scaled, noisy) that a fixed 4 px cell cannot', { skip }, () => {
   for (const [pitch, extra] of [[5, {}], [5.4, { jitter: 30 }], [3.5, { gamma: 0.8 }], [6, { x0: 3, y0: 2, jitter: 20 }], [4.5, { busyBackground: true }]]) {
     const text = record(60, 'long payload '.repeat(60));
-    const cells = encodeWithCodec('NeverQuestAlone', 60, text);
+    const cells = encodeWithCodec('Voxwarden', 60, text);
     const opts = { pitch, width: 1300, height: 360, ...extra };
     const fixed = decodePng(`fixed-${pitch}`, cells, opts);
     assert.ok(fixed.text !== text, `pitch ${pitch} decoded without --pitch-search`);
@@ -65,8 +65,8 @@ test('--pitch-search decodes 3.5 to 6 px strips (scaled, noisy) that a fixed 4 p
 
 test('--pitch-search leaves the native 4 px path and its rejects as they were', { skip }, () => {
   const text = record(61, 'native');
-  assert.equal(decodePng('native-search', encodeWithCodec('NeverQuestAlone', 61, text), { pitch: 4, width: 900, height: 300 }, ['--pitch-search']).text, text);
-  const cells = encodeWithCodec('NeverQuestAlone', 62, record(62, 'checksum victim'));
+  assert.equal(decodePng('native-search', encodeWithCodec('Voxwarden', 61, text), { pitch: 4, width: 900, height: 300 }, ['--pitch-search']).text, text);
+  const cells = encodeWithCodec('Voxwarden', 62, record(62, 'checksum victim'));
   cells[40] = (cells[40] + 3) % 8;
   assert.equal(decodePng('damaged-search', cells, { pitch: 4, width: 900, height: 300 }, ['--pitch-search']).error, 'checksum');
 });

@@ -3,7 +3,7 @@
 // 200 slot folders and the doorbells, only while it isn't.
 //
 //   findWow({ platform, env, home, roots, run, fs }) → [{ flavorDir, flavor, root, version?, iface?, account? }]
-//       the Forever flavors the addon's TOC targets (addon/NeverQuestAlone/*.toc ## Interface), best first; a
+//       the Forever flavors the addon's TOC targets (addon/Voxwarden/*.toc ## Interface), best first; a
 //       client a patch moved to a newer line is still found (clientFits)
 //   clientInterface(flavorDir, { platform, run, plist }) → { iface, version, from } | null
 //       the game's interface number as its install says it (.build.info; on macOS the app's Info.plist)
@@ -13,7 +13,7 @@
 //   wowRunning({ platform, flavorDir, run }) → { running, pids }
 //   checkAddonsPermissions(addonsDir, { platform, run, tighten }) → { ok, worldWritable, paths, fixed, fixable, detail }
 //       POSIX: the install's root and flavor folder, Interface/, AddOns/, and every folder and file of
-//       the addon's own (NeverQuestAlone, NQA_Data, NQA_S###)
+//       the addon's own (Voxwarden, NQA_Data, NQA_S###)
 //   installAddon({ flavorDir, platform, run, addonSource, slots, tighten, configFile })
 //       → { ok, steps, restartNeeded, permissions, iface, partsFold? } | { ok: false, error, detail }
 //       never writes through a link another account planted in AddOns (TH12): a link, or another
@@ -40,8 +40,8 @@ import { BELLS, signalPaths } from '../transport/signals.mjs';
 import { createRetrier, renameWithRetry, writeFileWithRetry } from '../transport/fsretry.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-export const ADDON_SOURCE = path.resolve(HERE, '..', '..', 'addon', 'NeverQuestAlone');
-export const ADDON_NAME = 'NeverQuestAlone';
+export const ADDON_SOURCE = path.resolve(HERE, '..', '..', 'addon', 'Voxwarden');
+export const ADDON_NAME = 'Voxwarden';
 /** The data addon's folder (reserved; none ships yet): the uninstall record and the permission walk know it. */
 export const DATA_NAME = 'NQA_Data';
 /** Flavor folders a Forever client installs under, best first. The Windows capture helper takes a
@@ -350,7 +350,7 @@ export function broadWritersFromIcacls(text) {
   return out;
 }
 
-/** The addon's own folders in AddOns: NeverQuestAlone, NQA_Data and the slot folders. */
+/** The addon's own folders in AddOns: Voxwarden, NQA_Data and the slot folders. */
 export const isAddonFolder = name => name === ADDON_NAME || name === DATA_NAME || /^NQA_S\d{3}$/.test(name);
 const MAX_WALK = 5000;
 
@@ -374,7 +374,7 @@ function addonEntries(f, p, addonsDir) {
  *   - the install's root and the flavor folder: group- or world-writable without the sticky bit
  *     (another account could move Interface/ aside and put its own there);
  *   - Interface/ and AddOns/: group- or world-writable (a new folder there is a new addon);
- *   - the addon's own folders and files (NeverQuestAlone, NQA_Data, NQA_S###, walked): group- or
+ *   - the addon's own folders and files (Voxwarden, NQA_Data, NQA_S###, walked): group- or
  *     world-writable, a link, or another account's.
  * `tighten` removes the group and world write bits on the ones this account owns (never a link).
  * Windows: a write grant to Everyone, Users or Authenticated Users on AddOns; reported only
@@ -449,18 +449,18 @@ const isRegular = (f, p) => { try { return f.lstatSync(p).isFile(); } catch { re
 // stay": the folder, the file names and the SavedVariables keep theirs): the product's Title and
 // Notes, whatever the copy it came from says. They are the repo's TOC's since main 0.5.3 (C-120,
 // C-124; tests/byok/wow_locate_test.mjs holds them equal), so an install's TOC is the repo's, line
-// for line: the AddOns list, the Settings category and every other way in say NeverQuestAlone. The
+// for line: the AddOns list, the Settings category and every other way in say Voxwarden. The
 // addon reads nothing from its TOC but its version: one build, with /nqa and the product's words from
 // the first frame whatever made the copy. (Until 2026-09-29 the stamp also added "## X-Backend:
 // byok", which only the two-build addon read; a copy that has it loses it here.) The slot TOCs are
-// slots.mjs's slotToc, the same for every install ("NeverQuestAlone Part NNN" under one folded
-// "NeverQuestAlone Parts" row, E-047). At install, both carry the game's own interface number (SY-29): stampToc's iface
+// slots.mjs's slotToc, the same for every install ("Voxwarden Part NNN" under one folded
+// "Voxwarden Parts" row, E-047). At install, both carry the game's own interface number (SY-29): stampToc's iface
 // for the addon's TOC, slotToc's for the slots, so each TOC is written once, words and number
 // together; patch day's retargetAddon then changes only that number.
-export const PUBLIC_TITLE = 'NeverQuestAlone';
+export const PUBLIC_TITLE = 'Voxwarden';
 // The AddOns list's tooltip: a short bullet list of what it does (maintainer; main c9599b5). |n is the
 // TOC's line break.
-export const PUBLIC_NOTES = '• Ask anything, right in the game|n• Quest help, routes and gear advice|n• Your route drawn on the map|n• Quality-of-life helpers you turn on|n• Any AI, with or without the free NeverQuestAlone app';
+export const PUBLIC_NOTES = '• Ask anything, right in the game|n• Quest help, routes and gear advice|n• Your route drawn on the map|n• Quality-of-life helpers you turn on|n• Any AI, with or without the free Voxwarden app';
 export function stampToc(text, { iface = null } = {}) {
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   const out = [];
@@ -517,7 +517,7 @@ export function installAddon({ flavorDir, platform = process.platform, run = spa
   const gameRunning = () => (typeof running === 'function' ? !!running() : (running ?? wowRunning({ platform, flavorDir, run }).running));
   if (gameRunning()) return { ok: false, error: 'wow_running', detail: RUNNING_LINE };
   const tocIface = addonInterface(addonSource, f);
-  if (!tocIface) return { ok: false, error: 'addon_missing', detail: 'This copy of NeverQuestAlone is missing its addon files. Download NeverQuestAlone again.' };
+  if (!tocIface) return { ok: false, error: 'addon_missing', detail: 'This copy of Voxwarden is missing its addon files. Download Voxwarden again.' };
   const addonsDir = p.join(flavorDir, 'Interface', 'AddOns');
   const steps = [];
   const step = (name, fn) => {
@@ -585,7 +585,7 @@ export function recordAddonFolder({ userData, flavorDir, platform = process.plat
   if (had.length && same(had[0])) return false;
   const list = [flavorDir, ...had.filter(d => !same(d))].slice(0, UNINSTALL_RECORD_MAX);
   const text = [
-    '; NeverQuestAlone: the World of Warcraft folders its addon was installed into. The Windows',
+    '; Voxwarden: the World of Warcraft folders its addon was installed into. The Windows',
     '; uninstaller removes the addon, its slot folders and its saved chat history from each.',
     '[addon]',
     ...list.map((d, i) => `folder${i + 1}="${d}"`),

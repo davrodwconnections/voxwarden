@@ -91,7 +91,7 @@ const { installAddon } = await load('bridge/byok/wow.mjs');
 const { createKeyStore } = await load('bridge/byok/security/keystore.mjs');
 fs.mkdirSync(addons, { recursive: true });
 // A player's SavedVariables, as after a first login (the poll looks it up in WTF/Account at each tick).
-const sv = path.join(flavorDir, 'WTF', 'Account', 'ACCOUNT', 'SavedVariables', 'NeverQuestAlone.lua');
+const sv = path.join(flavorDir, 'WTF', 'Account', 'ACCOUNT', 'SavedVariables', 'Voxwarden.lua');
 fs.mkdirSync(path.dirname(sv), { recursive: true });
 fs.writeFileSync(sv, 'NQADB = {\n\t["token"] = "3fa9c2d1",\n}\n');
 const installed = installAddon({ flavorDir, running: false });

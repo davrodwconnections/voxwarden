@@ -289,7 +289,7 @@ test('history: rows are shortened for the window, so a route or a pasted error d
   }
   tr.append('c0ffee0', { role: 'user', text: paste });
   tr.append('c0ffee0', { role: 'assistant', text: `That's a nil index in x.lua line 12. ${'Here is why. '.repeat(60)}\n\nTL;DR:\nFix line 12.` });
-  tr.append('c0ffee0', { role: 'user', text: '[NeverQuestAlone event] The route is finished. Sent by the addon, not typed by the player.' });
+  tr.append('c0ffee0', { role: 'user', text: '[Voxwarden event] The route is finished. Sent by the addon, not typed by the player.' });
   tr.append('c0ffee0', { role: 'assistant', text: route });
   const w = tr.window('c0ffee0');
   assert.ok(w.length >= 8, `${w.length / 2} exchanges in the window (the stored rows alone would fit 0 or 1)`);

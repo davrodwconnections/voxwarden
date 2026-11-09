@@ -9,7 +9,7 @@
 // matches the pin fails the release instead of stranding every install on the version before it.
 //
 //   node tools/check-update-signature.mjs <dist>
-//     dist: electron-builder's output, holding one NeverQuestAlone-Setup-<version>.exe and
+//     dist: electron-builder's output, holding one Voxwarden-Setup-<version>.exe and
 //     win-unpacked/resources/app-update.yml. Windows only (it runs Windows PowerShell).
 //   exit 0 the players' check accepts the installer · 1 it refuses it, or nothing is pinned
 //   · 2 usage, a missing file, or not Windows
@@ -62,8 +62,8 @@ export async function run(argv, {
   if (platform !== 'win32') { stderr('check-update-signature: Windows only: the players\' check runs Windows PowerShell\'s Get-AuthenticodeSignature'); return 2; }
   const dist = argv[0];
   let installers;
-  try { installers = fs.readdirSync(dist).filter(f => /^NeverQuestAlone-Setup-.+\.exe$/i.test(f)); } catch (e) { stderr(`check-update-signature: can't read ${dist}: ${e.code || e.message}`); return 2; }
-  if (installers.length !== 1) { stderr(`check-update-signature: want one NeverQuestAlone-Setup-<version>.exe in ${dist}, found ${installers.length}${installers.length ? ` (${installers.join(', ')})` : ''}`); return 2; }
+  try { installers = fs.readdirSync(dist).filter(f => /^Voxwarden-Setup-.+\.exe$/i.test(f)); } catch (e) { stderr(`check-update-signature: can't read ${dist}: ${e.code || e.message}`); return 2; }
+  if (installers.length !== 1) { stderr(`check-update-signature: want one Voxwarden-Setup-<version>.exe in ${dist}, found ${installers.length}${installers.length ? ` (${installers.join(', ')})` : ''}`); return 2; }
   const installer = path.resolve(dist, installers[0]);
   const feed = path.join(dist, 'win-unpacked', 'resources', 'app-update.yml');
   let names;

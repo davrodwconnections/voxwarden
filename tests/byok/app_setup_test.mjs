@@ -1,5 +1,5 @@
 // Setup in the window (app/desktop/renderer/app.js; the redesign's build spec §6.1), run in the mini
-// DOM over the real IPC layer and the mock API (helpers/page-rig.mjs): NeverQuestAlone's panel and the quest
+// DOM over the real IPC layer and the mock API (helpers/page-rig.mjs): Voxwarden's panel and the quest
 // tracker, step 2 "Connect your AI" and every key result, Other's form, step 3 "Say hi in game" and its
 // objectives, "You're set", reopening and Finish later, and the scans every setup state must pass.
 // Canary keys only; the clipboard is the rig's (main reads it), never the page's.
@@ -58,9 +58,9 @@ async function paste(r, text, where = 'paste-key') { r.setClipboard(text); await
 const atWow = (state = {}, o = {}) => pageRig({ onboarded: false, state: { ...CONNECTED, ...state }, appState: AT('wow'), ...o });
 
 // ---------------------------------------------------------------------------
-// NeverQuestAlone's panel and the tracker.
+// Voxwarden's panel and the tracker.
 
-test('NeverQuestAlone’s panel: the landmark is named for the companion shown, a renamed one too (CL-words-71)', async () => {
+test('Voxwarden’s panel: the landmark is named for the companion shown, a renamed one too (CL-words-71)', async () => {
   const r = await pageRig({ state: { ...CONNECTED, companion: 'Mort' } });
   assert.match(r.document.getElementById('bones-btn').getAttribute('aria-label'), /^Mort\b/);
   assert.equal(r.document.getElementById('companion').getAttribute('aria-label'), 'Mort');
@@ -68,7 +68,7 @@ test('NeverQuestAlone’s panel: the landmark is named for the companion shown, 
   assert.equal(r.document.getElementById('portrait').getAttribute('aria-label'), null, 'the hidden portrait has no label of its own');
 });
 
-test('NeverQuestAlone’s panel in setup: his portrait (named for him, nothing to open yet), no status word and no speech line (the 1.3 refresh), the tracker by name, never Step N of M; no nav', async () => {
+test('Voxwarden’s panel in setup: his portrait (named for him, nothing to open yet), no status word and no speech line (the 1.3 refresh), the tracker by name, never Step N of M; no nav', async () => {
   const r = await pageRig({ onboarded: false });
   assert.equal(r.document.getElementById('app').getAttribute('data-mode'), 'setup');
   const bb = r.document.getElementById('bones-btn');
@@ -109,7 +109,7 @@ test('Finish later: counts as done; Home names the first missing piece with Fini
   assert.equal(r.appState().setup.screen, 'ai', 'the saved screen');
   assert.equal(r.appState().setup.provider, 'openai', 'and the AI picked');
   assert.equal(titleText(r), 'Almost set up', 'the title never repeats the button');
-  assert.match(r.pageText(), /NeverQuestAlone can’t answer yet\./);
+  assert.match(r.pageText(), /Voxwarden can’t answer yet\./);
   assert.deepEqual(primaries(r).map(label), ['Finish setup']);
   await r.press(fk(r, 'finish-setup'));
   assert.equal(titleText(r), 'Connect your AI');
@@ -117,7 +117,7 @@ test('Finish later: counts as done; Home names the first missing piece with Fini
   const addon = await pageRig({ state: CONNECTED, appState: { ...AT('wow'), onboarded: true } });
   assert.match(addon.pageText(), /The addon isn’t in WoW yet\./);
   const screen = await pageRig({ state: { ...CONNECTED, addonInstalled: true }, appState: { ...AT('wow'), onboarded: true } });
-  assert.match(screen.pageText(), /NeverQuestAlone can’t see the game yet\./);
+  assert.match(screen.pageText(), /Voxwarden can’t see the game yet\./);
   // On another page, no banner (the app trim): the nav's Finish setup is the way back, and Home says what's missing.
   await screen.click('Settings');
   assert.equal(screen.bannerText(), '', 'no banner on another page');
@@ -165,19 +165,19 @@ test('reopening: the saved screen when its prerequisite holds, else the first st
 // ---------------------------------------------------------------------------
 // Step 2: Connect your AI.
 
-test('the welcome (a first run): what NeverQuestAlone does for your questing, his window in WoW, the AI a supporting line; one primary, Set up NeverQuestAlone, to step 2', async () => {
+test('the welcome (a first run): what Voxwarden does for your questing, his window in WoW, the AI a supporting line; one primary, Set up Voxwarden, to step 2', async () => {
   const r = await pageRig({ onboarded: false, welcome: true });
-  assert.equal(titleText(r), 'Meet NeverQuestAlone');
+  assert.equal(titleText(r), 'Meet Voxwarden');
   assert.equal(active(r).id, 'page-title');
-  assert.match(r.pageText(), /^Meet NeverQuestAlonePicks your next quests, draws the route and tracks things down\.Runs on the AI you pick\.Set up NeverQuestAlone$/, 'the AI line under the lead, before the one primary (APP-D-22)');
+  assert.match(r.pageText(), /^Meet VoxwardenPicks your next quests, draws the route and tracks things down\.Runs on the AI you pick\.Set up Voxwarden$/, 'the AI line under the lead, before the one primary (APP-D-22)');
   assert.equal(r.document.getElementById('portrait').getAttribute('data-mood'), 'happy');
   // The hero is the promise pictured: the route drawn on the map (CL-design-23).
   const map = r.document.querySelector('#page figure.mapfig');
   assert.ok(map && map.querySelector('img'), 'the route on the map');
-  assert.equal(map.getAttribute('aria-label'), 'NeverQuestAlone’s route on your map: your next quests, in order.');
+  assert.equal(map.getAttribute('aria-label'), 'Voxwarden’s route on your map: your next quests, in order.');
   // No step is current on the welcome (CL-design-31).
   assert.equal(r.document.querySelector('#tracker [aria-current="step"]'), null);
-  assert.deepEqual(primaries(r).map(label), ['Set up NeverQuestAlone']);
+  assert.deepEqual(primaries(r).map(label), ['Set up Voxwarden']);
   assert.equal(r.document.querySelector('[data-fk="back"]'), null);
   assert.ok(fk(r, 'finish-later'), 'Finish later, as on every setup screen');
   scan(r, 'welcome');
@@ -219,7 +219,7 @@ test('step 2: five rows from the manifests (a name, its company, a day’s cost)
   assert.equal(r.document.querySelector('[data-fk="back"]'), null, 'no Back on step 2');
   // What used to be on the screen is behind Show details now.
   assert.doesNotMatch(r.pageText(), /Keychain|terms|unofficial|Claude Pro|A day is about 40 replies/i);
-  assert.equal(r.byText('Try NeverQuestAlone free').length, 0, 'no free path');
+  assert.equal(r.byText('Try Voxwarden free').length, 0, 'no free path');
   assert.doesNotMatch(r.pageText(), /daily limit/i);
   scan(r, 'step 2');
   // ChatGPT's first link is its credit page; a hidden AI has no row.
@@ -273,7 +273,7 @@ test('step 2, Show details: the sheet scoped to the AI picked (cost, your key, w
   // The picture of where it goes, then one line; what Anthropic keeps is the manifest's own short line.
   // Every section is a card of rows (the owner, 2026-10-03; APP-D-40): the picture is Where it goes' first row.
   const pic = sheet.querySelector('.sheet-card .sheet-flow');
-  assert.equal(pic.getAttribute('aria-label'), 'Your messages and game data go from your Mac straight to Anthropic. Nothing goes to NeverQuestAlone.');
+  assert.equal(pic.getAttribute('aria-label'), 'Your messages and game data go from your Mac straight to Anthropic. Nothing goes to Voxwarden.');
   assert.equal(pic.querySelector('.sheet-row-quiet'), null, 'not inside the picture, whose alt a screen reader reads instead (APP-W-18)');
   assert.equal(pic.nextSibling.textContent, 'In each message: your question, level, zone, quests and gear.', 'one line after the picture, not five pills (APP-D-08)');
   const secs = sheet.querySelectorAll('.sheet-sec').filter(x => !x.classList.contains('sheet-fine'));
@@ -415,7 +415,7 @@ const ROWS = [
   ['overloaded', { forced: { error: 'overloaded' } }, 'Anthropic is busy. Test again soon.', 'Test again', ['Open Anthropic’s key page']],
   ['network', { forced: { error: 'network' } }, 'Can’t reach Anthropic. Check your internet, then click Test again.', 'Test again', ['Open Anthropic’s key page']],
   // fix-102: the app's own guard refused Anthropic's own address; never "check your internet".
-  ['restart', { forced: { error: 'restart', kind: 'egress_blocked' } }, 'NeverQuestAlone needs a restart before it can reach Anthropic.', 'Quit and reopen', ['Open Anthropic’s key page']],
+  ['restart', { forced: { error: 'restart', kind: 'egress_blocked' } }, 'Voxwarden needs a restart before it can reach Anthropic.', 'Quit and reopen', ['Open Anthropic’s key page']],
   ['keystore_error', { connect: { ok: false, error: 'keystore_error' } }, 'The key works but wasn’t saved.', 'Save again', ['Open Anthropic’s key page']],
   ['stage_expired', { forced: { error: 'stage_expired' } }, 'The pasted key expired.', 'Paste new key', ['Open Anthropic’s key page']],
   ['busy', { forced: { error: 'busy' } }, 'Finish the open dialog first.', 'Paste Anthropic key', ['Open Anthropic’s key page']],
@@ -448,7 +448,7 @@ test('the no-credit result: Test again tests the saved key and says the retest�
     [{ ok: false, error: 'overloaded', headline: 'x', detail: 'y' }, 'Anthropic is busy. Test again soon.', 'Test again'],
     [{ ok: false, error: 'network_before_send', headline: 'x', detail: 'y' }, 'Can’t reach Anthropic. Check your internet, then click Test again.', 'Test again'],
     // fix-102: the app's own guard refused the company's address: a restart, never the internet.
-    [{ ok: false, error: 'egress_blocked', action: 'restart', headline: 'x', detail: 'y' }, 'NeverQuestAlone needs a restart before it can reach Anthropic.', 'Quit and reopen'],
+    [{ ok: false, error: 'egress_blocked', action: 'restart', headline: 'x', detail: 'y' }, 'Voxwarden needs a restart before it can reach Anthropic.', 'Quit and reopen'],
     [{ ok: false, error: 'rate_limited', headline: 'x', detail: 'y' }, 'Anthropic is limiting this key. Test again in a minute.', 'Test again'],
     [{ ok: false, error: 'auth_invalid', headline: 'x', detail: 'y' }, 'Anthropic didn’t accept that key.', 'Paste new key'],
     [{ ok: false, error: 'no_key', action: 'keys', headline: 'x', detail: 'y' }, 'Your saved key couldn’t be read.', 'Paste new key'],
@@ -549,7 +549,7 @@ test('step 2’s banners: Move to Applications above the title (Mac), and the on
   await move.click('Move');
   assert.match(move.pageText(), /Couldn’t move it\./);
   const err = await pageRig({ onboarded: false, apiMode: 'error' });
-  assert.match(err.bannerText(), /NeverQuestAlone couldn’t start\./);
+  assert.match(err.bannerText(), /Voxwarden couldn’t start\./);
   assert.ok(err.byText('Quit and reopen').length);
   assert.equal(err.document.getElementById('portrait').getAttribute('data-mood'), 'away');
 });
@@ -586,7 +586,7 @@ test('Other: one small form (Base URL, API key optional, Model), Connect the one
   assert.equal(r.confirms.length, 0);
   await fill('https://openrouter.ai/api/v1/', 'openai/gpt-5-mini', `sk-or-v1-CANARY${'x'.repeat(56)}`);
   assert.equal(r.confirms.length, 1);
-  assert.equal(r.confirms[0].message, 'Connect NeverQuestAlone to openrouter.ai?');
+  assert.equal(r.confirms[0].message, 'Connect Voxwarden to openrouter.ai?');
   wentOn(r, 'Connected to openrouter.ai.');
   assert.equal(r.appState().defaultsSeen, true);
   // Step 2 again: Other's row names the service and says Connected; Continue is the primary.
@@ -672,7 +672,7 @@ test('Other’s failures in the table’s words: a rejected key, an unreachable 
   assert.equal(result(await at('https://openrouter.ai/api/v1', 'missing')).textContent, 'openrouter.ai doesn’t offer that model.');
   // fix-102: the app's own guard refused the service's address: a restart, and Quit and reopen takes Connect's place.
   const rs = await at('https://openrouter.ai/api/v1', 'm', '', { state: { results: { connectCustom: { ok: false, error: 'restart', kind: 'egress_blocked', documented: false, inferred: false, tier: false, model: 'm' } } } });
-  assert.equal(result(rs).textContent, 'NeverQuestAlone needs a restart before it can reach openrouter.ai.');
+  assert.equal(result(rs).textContent, 'Voxwarden needs a restart before it can reach openrouter.ai.');
   assert.deepEqual(primaries(rs).map(label), ['Quit and reopen']);
   await rs.press(primaries(rs)[0]);
   assert.ok(rs.calls.some(c => c[0] === 'relaunch'), 'main was asked to quit and reopen');
@@ -702,7 +702,7 @@ test('step 3: three objectives (two on Windows); only the current one has a line
   assert.deepEqual(primaries(r).map(label), ['Allow']);
   assert.match(after[1].textContent, /Reads only the top of WoW’s window, so your messages go at once\. Never keeps or sends pictures\./, 'what it reads, and that no picture is kept or sent (player-31, CL-player-48; never “sends nothing”, CL-words-63)');
   await r.press(primaries(r)[0]);
-  assert.match(r.pageText(), /Click Open System Settings, then turn on NeverQuestAlone\./);
+  assert.match(r.pageText(), /Click Open System Settings, then turn on Voxwarden\./);
   assert.deepEqual(primaries(r).map(label), ['Open System Settings']);
   for (const patch of [{ permission: 'granted' }, { game: { running: true } }]) {
     r.mock.control.patchSetup(patch);
@@ -763,7 +763,7 @@ test('step 3 row 1’s failures: an update says update; no free space; the insta
   const full = await atWow({ addonState: 'disk_full' });
   assert.match(full.pageText(), /No free space for the addon\./);
   const eperm = await atWow({ addonState: 'eperm' });
-  assert.match(eperm.pageText(), /NeverQuestAlone can’t write to AddOns\./);
+  assert.match(eperm.pageText(), /Voxwarden can’t write to AddOns\./);
   assert.deepEqual(primaries(eperm).map(label), ['Choose another folder…']);
   await eperm.press(fk(eperm, 'details'));
   assert.match(eperm.sheetText(), /Ask an administrator to give your account permission to change WoW’s AddOns folder\./);
@@ -786,7 +786,7 @@ test('step 3 row 1’s failures: an update says update; no free space; the insta
 
 test('step 3 row 2: asked, denied (the pane’s path in Show details, macOS 14 and 15+), Skip screen reading? turns it off in one click (the app’s switch); Screen Reading off counts as done', async () => {
   const asked = await atWow({ addonInstalled: true, permission: 'asked' });
-  assert.match(asked.pageText(), /Click Open System Settings, then turn on NeverQuestAlone\./);
+  assert.match(asked.pageText(), /Click Open System Settings, then turn on Voxwarden\./);
   const den = await atWow({ addonInstalled: true, permission: 'denied' });
   assert.match(den.pageText(), /Screen Recording is off\./);
   await den.press(fk(den, 'details'));
@@ -854,7 +854,7 @@ test('step 3 row 3: the steps in the game and Open Battle.net, no command to typ
   const row = g.document.querySelector('[data-row="row-start"]');
   // The steps in the game, in order and always on screen (2026-10-05).
   assert.deepEqual([...row.querySelectorAll('ol.obj-steps li')].map(li => li.textContent),
-    ['Start WoW.', 'At character select, click AddOns and make sure NeverQuestAlone is checked.', 'Log in. NeverQuestAlone shows up beside your quest tracker.']);
+    ['Start WoW.', 'At character select, click AddOns and make sure Voxwarden is checked.', 'Log in. Voxwarden shows up beside your quest tracker.']);
   assert.equal(row.querySelector('code.cmd'), null, 'nothing to type (the owner, 2026-10-05: saying hi was a needless task)');
   assert.deepEqual(primaries(g).map(label), ['Open Battle.net']);
   await g.press(primaries(g)[0]);
@@ -877,7 +877,7 @@ test('step 3 row 3: the steps in the game and Open Battle.net, no command to typ
   // The addon's hello (it loaded, and the app can see it) finishes setup: You're set.
   const hi = await atWow({ addonInstalled: true, permission: 'granted', wow: { found: true, running: true }, setup: { game: { hello: { at: 1, sig: 'ok', mode: 'pixel' } } } });
   assert.equal(titleText(hi), 'You’re set');
-  assert.ok(hi.liveText().some(t => t === 'NeverQuestAlone is in your game. You’re set.'));
+  assert.ok(hi.liveText().some(t => t === 'Voxwarden is in your game. You’re set.'));
   const snd = await atWow({ addonInstalled: true, permission: 'granted', wow: { found: true, running: true }, setup: { game: { hello: { at: 1, sig: 'muted', mode: 'pixel' } } } });
   assert.doesNotMatch(snd.pageText(), /Turn game sound on/, 'no sound tip (the app trim): the hello is the hello');
   assert.equal(snd.byText('Okay').length, 0);
@@ -937,7 +937,7 @@ test('step 3’s banners over the list: no credit (Add credit the primary, the f
   await iface.click('Open download page');
   assert.deepEqual(iface.opened, ['https://github.com/example/releases']);
   const dmg = await atWow({ addonInstalled: true, permission: 'granted', setup: { captureState: 'damaged' } });
-  assert.match(dmg.pageText(), /NeverQuestAlone is damaged\./);
+  assert.match(dmg.pageText(), /Voxwarden is damaged\./);
   // The app trim: step 3 never carries the held login item (Settings says it beside Start at login).
   const held = await atWow({ addonInstalled: true }, { info: { loginItem: { supported: true, openAtLogin: true, status: 'requires-approval' } } });
   assert.doesNotMatch(held.pageText(), /macOS paused Start at login\./);
@@ -989,18 +989,18 @@ test('You’re set: the title, one line, where he stays, Open Home; said once in
   assert.equal(r.document.querySelector('.quote'), null, 'no quote of his first words');
   assert.doesNotMatch(r.pageText(), /Well met|just now/, 'hostile or not, his words never reach this page');
   assert.equal(r.document.querySelector('#page img'), null, 'text, never markup');
-  assert.match(r.pageText(), /NeverQuestAlone stays in your menu bar\./);
-  assert.equal(r.liveText().filter(t => t === 'NeverQuestAlone is in your game. You’re set.').length, 1);
+  assert.match(r.pageText(), /Voxwarden stays in your menu bar\./);
+  assert.equal(r.liveText().filter(t => t === 'Voxwarden is in your game. You’re set.').length, 1);
   assert.equal(r.byText('Finish later').length, 0);
   assert.deepEqual(primaries(r).map(label), ['Open Home']);
   assert.ok(r.document.querySelectorAll('#tracker .tracker-done').length === 3, 'every tracker row done');
   await r.press(primaries(r)[0]);
   assert.equal(r.document.getElementById('app').getAttribute('data-mode'), 'app');
   const off = await atWow({ addonInstalled: true, setup: { firstReplyAt: 3 } }, { info: { loginItem: { supported: true, openAtLogin: false } } });
-  assert.match(off.pageText(), /Start NeverQuestAlone yourself when you play\./);
+  assert.match(off.pageText(), /Start Voxwarden yourself when you play\./);
   assert.equal(off.document.querySelector('.quote'), null, 'no quote, first words or not');
   const win = await atWow({ addonInstalled: true, setup: { firstReplyAt: 3 } }, { platform: 'win32', info: { loginItem: { supported: true, openAtLogin: true } } });
-  assert.match(win.pageText(), /NeverQuestAlone stays in your system tray\./);
+  assert.match(win.pageText(), /Voxwarden stays in your system tray\./);
 });
 
 test('a push patches step 3 in place (the controls stay the same nodes); a push that lands mid-press waits for the release, so the click counts (DU-02)', async () => {
@@ -1065,7 +1065,7 @@ test('the scans over every screen: no id the table lacks, no plumbing word, no S
   assert.deepEqual([...new Set(ids)].filter(id => !has(id)), []);
   // The screens the redesign removed are gone from the code: S1's welcome, S2's Connect <AI>, S3's defaults.
   for (const gone of ['defaults.', 'connectResult.', 'ai.card.', 'ai.leaves.', 'stage.connectLine2']) assert.ok(!app.includes(`'${gone}`), gone);
-  assert.doesNotMatch(app, /I’m \{name\}|I'm NeverQuestAlone/, 'no first-person paragraph on the stage');
+  assert.doesNotMatch(app, /I’m \{name\}|I'm Voxwarden/, 'no first-person paragraph on the stage');
   assert.doesNotMatch(app, /display\.en|\ben\(/, 'no manifest words in the renderer');
 });
 
@@ -1100,7 +1100,7 @@ test('onboarding review (2026-10-05): No key yet? opens the picked AI’s key in
   // Row 3 with WoW running and the addon in: no Start WoW step, it's done.
   const run = await atWow({ addonInstalled: true, permission: 'granted', wow: { found: true, running: true } });
   assert.deepEqual([...run.document.querySelectorAll('[data-row="row-start"] ol.obj-steps li')].map(li => li.textContent),
-    ['At character select, click AddOns and make sure NeverQuestAlone is checked.', 'Log in. NeverQuestAlone shows up beside your quest tracker.']);
+    ['At character select, click AddOns and make sure Voxwarden is checked.', 'Log in. Voxwarden shows up beside your quest tracker.']);
   // WoW running with the install waiting for it to close: the install stays the current row, and row 3 waits
   // for it with its title alone: no steps, no waiting status, no Still waiting? (ON-22).
   const armed = await atWow({ permission: 'granted', wow: { found: true, running: true } });

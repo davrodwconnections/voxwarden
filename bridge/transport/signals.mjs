@@ -3,7 +3,7 @@
 // next /reload, while a file that was there at load is checked live, so
 // deleting it reads missing and recreating it reads present again (E-015).
 //
-// So the bridge's signals are a few 0-byte files in NeverQuestAlone/sig/ctl, made at
+// So the bridge's signals are a few 0-byte files in Voxwarden/sig/ctl, made at
 // setup (or at start) and never renamed. A ring deletes one for a short pulse
 // and then recreates it. A bell that happens to be missing when the UI loads
 // is invisible for that session, so bells come in pairs (push, alive) and the
@@ -24,7 +24,7 @@ export const PUSH_MIN_MS = 1000;
 const LEGACY_FAMILIES = ['ack', 'push', 'act', 'presence'];
 
 export function signalPaths(addonsDir) {
-  const root = path.join(addonsDir, 'NeverQuestAlone', 'sig');
+  const root = path.join(addonsDir, 'Voxwarden', 'sig');
   return {
     root,
     dir: (family) => path.join(root, family),
@@ -52,7 +52,7 @@ function drop(file, retry) {
  * it's missing, rings fail loudly (the client only sees files that exist when
  * the UI loads). opts.pulseMs, opts.actGapMs and opts.timers are for tests.
  *
- * No write or removal follows a link another account planted in AddOns (TH12): NeverQuestAlone/, sig/
+ * No write or removal follows a link another account planted in AddOns (TH12): Voxwarden/, sig/
  * and sig/ctl must be real folders (a link there counts as a missing ctl, which setup replaces),
  * a link at a bell's path is removed (the link itself) and the bell made with O_EXCL, and only
  * regular files and links are ever removed.

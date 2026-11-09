@@ -193,7 +193,7 @@ function doubleGateway() {
     gw.handlers = handlers;
     return {
       kind: 'byok',
-      persona: 'NeverQuestAlone',
+      persona: 'Voxwarden',
       start() { handlers.onState({ state: 'ready', since: Date.now() }); handlers.onReady(); },
       stop() {},
       send: (args) => { gw.sends.push(args); return { runId: args.idem, status: 'started' }; },
@@ -718,12 +718,12 @@ async function workerPublisher(root, { worker = true, range = null } = {}) {
   const { createPublisher } = await import('../bridge/transport/publisher.mjs');
   const addons = path.join(root, 'AddOns');
   installSlots(addons, { count: 200, iface: '16001' });
-  fs.mkdirSync(path.join(addons, 'NeverQuestAlone'), { recursive: true });
+  fs.mkdirSync(path.join(addons, 'Voxwarden'), { recursive: true });
   const store = openStore(path.join(root, 'state'));
   const logs = [];
   const at = { n: 0 };
   const buildSlot = () => ({ v: 2, ts: '2026-10-03T00:00:00.000Z', now: 1, token: '3fa9c2d1', bridge: { push: store.state.push, n: at.n }, gw: {}, agents: [], chats: [], records: [] });
-  const inbox = () => fs.readFileSync(path.join(addons, 'NeverQuestAlone', 'Inbox.lua'), 'utf8');
+  const inbox = () => fs.readFileSync(path.join(addons, 'Voxwarden', 'Inbox.lua'), 'utf8');
   // At each ring: what the addon would find on disk then (three slots and the reload inbox).
   const rings = [];
   const signals = { ringPush: () => rings.push({ push: store.state.push, files: [1, 100, 200].map(i => slotFiles(addons, i)), inbox: inbox() }) };
@@ -871,7 +871,7 @@ test('publisher (code health BR-04): a worker that can\'t start, dies with a wri
 
 // ---------------------------------------------------------------- the reload path's file (SY-04, Batch 2)
 
-test('SavedVariables: the newest WTF/Account/*/SavedVariables/NeverQuestAlone.lua, looked up at each poll: two accounts, a stale folder, or none until the first login', async () => {
+test('SavedVariables: the newest WTF/Account/*/SavedVariables/Voxwarden.lua, looked up at each poll: two accounts, a stale folder, or none until the first login', async () => {
   const root = tmp();
   const addons = path.join(root, 'AddOns');
   installSlots(addons, { count: 3, iface: '16001' });
@@ -886,7 +886,7 @@ test('SavedVariables: the newest WTF/Account/*/SavedVariables/NeverQuestAlone.lu
   const sv = (account, key, text, mtime) => {
     const dir = path.join(wtf, 'Account', account, 'SavedVariables');
     fs.mkdirSync(dir, { recursive: true });
-    const file = path.join(dir, 'NeverQuestAlone.lua');
+    const file = path.join(dir, 'Voxwarden.lua');
     fs.writeFileSync(file, `NQADB = {\n\t["token"] = "3fa9c2d1",\n\t["outbox"] = {\n\t\t{\n\t\t\t["hex"] = "${wire(key, text)}",\n\t\t},\n\t},\n}\n`);
     fs.utimesSync(file, mtime, mtime);
   };

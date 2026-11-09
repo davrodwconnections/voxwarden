@@ -25,7 +25,7 @@
 // before uploading it. --allow-unsigned (release.yml's allow_unsigned input, an internal
 // test build) turns the signature findings into warnings; the binary findings still fail.
 //
-//   node tools/check-release.mjs [--allow-unsigned] <NeverQuestAlone.app> …
+//   node tools/check-release.mjs [--allow-unsigned] <Voxwarden.app> …
 //   exit 0 ready to ship · 1 a check failed · 2 usage, or codesign missing
 import fs from 'node:fs';
 import path from 'node:path';
@@ -215,7 +215,7 @@ export function run(argv, { stdout = s => process.stdout.write(`${s}\n`), stderr
   const allowUnsigned = argv.includes('--allow-unsigned');
   const apps = argv.filter(a => a !== '--allow-unsigned');
   if (!apps.length || apps.some(a => a.startsWith('-'))) {
-    stderr('usage: node tools/check-release.mjs [--allow-unsigned] <NeverQuestAlone.app> …');
+    stderr('usage: node tools/check-release.mjs [--allow-unsigned] <Voxwarden.app> …');
     return 2;
   }
   let appEntitlements;

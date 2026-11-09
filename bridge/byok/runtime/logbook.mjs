@@ -28,7 +28,7 @@ export const MEMORY_DIR = 'memory';
 export const LOG_MAX_ENTRIES = 500;
 const LAST_RE = /<!-- nqa:last (\{.*?\}) -->/;
 const KEY_RE = /<!-- nqa:m (\S+) -->/g;
-const WRITER = 'Written by NeverQuestAlone from game data: edit outside the markers.';
+const WRITER = 'Written by Voxwarden from game data: edit outside the markers.';
 
 // ---------------------------------------------------------------- checking
 
@@ -297,7 +297,7 @@ export function applyLogbook(doc, { dataDir, dryRun = false } = {}) {
     const have = logKeys(logText ?? '');
     const fresh = entries.filter(e => !have.has(e.key));
     if (fresh.length) {
-      let text = logText ?? '# Log\n\nMilestones and sessions, written by NeverQuestAlone from game data.\n';
+      let text = logText ?? '# Log\n\nMilestones and sessions, written by Voxwarden from game data.\n';
       if (!text.endsWith('\n')) text += '\n';
       for (const e of fresh) text += `- ${when(e.t)} · ${e.text} <!-- nqa:m ${e.key} -->\n`;
       writes.log = capLog(text);

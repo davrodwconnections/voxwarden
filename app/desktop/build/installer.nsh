@@ -1,4 +1,4 @@
-; NeverQuestAlone's additions to electron-builder's NSIS uninstaller (BYOK PRD
+; Voxwarden's additions to electron-builder's NSIS uninstaller (BYOK PRD
 ; §16.3 "Uninstall": "The Windows uninstaller does the same"; OB-3, B3.5).
 ;
 ; electron-builder already removes the install folder and, with
@@ -8,19 +8,19 @@
 ;   - the login item: the HKCU Run value main.mjs writes through
 ;     setLoginItemSettings (named after the app id, src/login-item.mjs), and
 ;     Explorer's enabled/disabled flag for it;
-;   - the saved provider keys in Credential Manager: service "NeverQuestAlone",
+;   - the saved provider keys in Credential Manager: service "Voxwarden",
 ;     account "<provider>" (bridge/byok/security/keystore.mjs), which
 ;     @napi-rs/keyring stores as the generic credential
-;     "<provider>.NeverQuestAlone";
-;   - electron-updater's download cache, %LOCALAPPDATA%\neverquestalone-updater;
+;     "<provider>.Voxwarden";
+;   - electron-updater's download cache, %LOCALAPPDATA%\voxwarden-updater;
 ;   - the addon, its slot folders and the chats the game keeps for it (audit
 ;     CV-07), from every World of Warcraft folder the app installed the addon
-;     into: the app lists them in %APPDATA%\NeverQuestAlone\uninstall.ini
+;     into: the app lists them in %APPDATA%\Voxwarden\uninstall.ini
 ;     (bridge/byok/wow.mjs recordAddonFolder; UTF-16 with a byte-order mark,
 ;     which ReadINIStr reads as Unicode), read here before electron-builder
-;     removes that folder. From each: Interface\AddOns\NeverQuestAlone, NQA_Data
+;     removes that folder. From each: Interface\AddOns\Voxwarden, NQA_Data
 ;     and NQA_S000 to NQA_S999 (wow.mjs isAddonFolder), and
-;     WTF\Account\<account>\SavedVariables\NeverQuestAlone.lua and NeverQuestAlone.lua.bak.
+;     WTF\Account\<account>\SavedVariables\Voxwarden.lua and Voxwarden.lua.bak.
 ;     Nothing else there is touched. A game still running writes that file
 ;     again when it logs out.
 ; None of it runs when the uninstaller is part of an update (isUpdated),
@@ -30,7 +30,7 @@
 ; give (a test checks).
 
 !macro nqaDeleteKey PROVIDER
-  System::Call 'advapi32::CredDeleteW(w "${PROVIDER}.NeverQuestAlone", i 1, i 0)'
+  System::Call 'advapi32::CredDeleteW(w "${PROVIDER}.Voxwarden", i 1, i 0)'
 !macroend
 
 !ifdef BUILD_UNINSTALLER
@@ -43,7 +43,7 @@
     Push $R2
     Push $R3
     StrCmp $nqaFlavor "" done
-    RMDir /r "$nqaFlavor\Interface\AddOns\NeverQuestAlone"
+    RMDir /r "$nqaFlavor\Interface\AddOns\Voxwarden"
     RMDir /r "$nqaFlavor\Interface\AddOns\NQA_Data"
     StrCpy $R0 0
     slot:
@@ -56,8 +56,8 @@
       StrCmp $R3 "" accountsDone
       StrCmp $R3 "." nextAccount
       StrCmp $R3 ".." nextAccount
-      Delete "$nqaFlavor\WTF\Account\$R3\SavedVariables\NeverQuestAlone.lua"
-      Delete "$nqaFlavor\WTF\Account\$R3\SavedVariables\NeverQuestAlone.lua.bak"
+      Delete "$nqaFlavor\WTF\Account\$R3\SavedVariables\Voxwarden.lua"
+      Delete "$nqaFlavor\WTF\Account\$R3\SavedVariables\Voxwarden.lua.bak"
     nextAccount:
       FindNext $R2 $R3
       Goto account
@@ -76,7 +76,7 @@
     StrCpy $R4 1
     folder:
       ClearErrors
-      ReadINIStr $nqaFlavor "$APPDATA\NeverQuestAlone\uninstall.ini" "addon" "folder$R4"
+      ReadINIStr $nqaFlavor "$APPDATA\Voxwarden\uninstall.ini" "addon" "folder$R4"
       Call un.bonesCleanFlavor
       IntOp $R4 $R4 + 1
       IntCmp $R4 8 folder folder 0
@@ -88,8 +88,8 @@
 !macro customUnInstall
   ${ifNot} ${isUpdated}
     Call un.bonesCleanWow
-    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "com.neverquestalone.app"
-    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "com.neverquestalone.app"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "com.voxwarden.app"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "com.voxwarden.app"
     !insertmacro nqaDeleteKey anthropic
     !insertmacro nqaDeleteKey openai
     !insertmacro nqaDeleteKey xai
@@ -97,6 +97,6 @@
     !insertmacro nqaDeleteKey custom
     ; An OpenRouter key saved before Other (custom) replaced OpenRouter's card (boot moves it to custom).
     !insertmacro nqaDeleteKey openrouter
-    RMDir /r "$LOCALAPPDATA\neverquestalone-updater"
+    RMDir /r "$LOCALAPPDATA\voxwarden-updater"
   ${endIf}
 !macroend

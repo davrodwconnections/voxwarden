@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Voxwarden">
+<rect width="512" height="512" rx="112" fill="#101a2c"/>
+<path d="M256 44 406 102 390 300 256 460 122 300 106 102Z" fill="#172e40" stroke="#5cdbc5" stroke-width="14" stroke-linejoin="round"/>
+<path d="M165 160 207 147 258 268 324 126 360 145 260 365Z" fill="#ffc76d"/>
+<path d="M65 180Q31 256 65 330M447 180Q481 256 447 330" fill="none" stroke="#5cdbc5" stroke-width="14" stroke-linecap="round"/>
+</svg>

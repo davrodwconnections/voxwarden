@@ -5,7 +5,7 @@
 // has the TOC an app install has. The repo's own TOC is never stamped (each copy is, never the
 // source): the tool refuses the repo's addon folder.
 //
-//   node tools/stamp-toc.mjs <addon folder>   (a copy of addon/NeverQuestAlone; its NeverQuestAlone.toc is rewritten)
+//   node tools/stamp-toc.mjs <addon folder>   (a copy of addon/Voxwarden; its Voxwarden.toc is rewritten)
 //
 // Exits 0 when the TOC is stamped (or already was), 2 on a wrong argument or the repo's own folder.
 import fs from 'node:fs';
@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stampToc, ADDON_NAME, ADDON_SOURCE } from '../bridge/byok/wow.mjs';
 
-/** Stamp <dir>/NeverQuestAlone.toc in place; returns the stamped text. */
+/** Stamp <dir>/Voxwarden.toc in place; returns the stamped text. */
 export function stampAddonCopy(dir) {
   if (typeof dir !== 'string' || !dir) throw Object.assign(new Error('no addon folder given'), { code: 'usage' });
   const real = p => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };

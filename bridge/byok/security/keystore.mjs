@@ -1,12 +1,12 @@
 // The key store (PRD §8.1 DB5, KY-2, KY-3, TH2/TH3): where provider keys live.
 //
-//   createKeyStore({ backend, service: 'NeverQuestAlone', platform })
+//   createKeyStore({ backend, service: 'Voxwarden', platform })
 //     → { backend, persistent, label, get(provider), set(provider, key),
 //         delete(provider), list(providers?), probe() }
 //
 // Backends (two; the file stores and the old-name key migration are gone, systems plan D6):
 //   'os'              the OS credential store through @napi-rs/keyring's
-//                     AsyncEntry (service 'NeverQuestAlone', account '<provider>').
+//                     AsyncEntry (service 'Voxwarden', account '<provider>').
 //                     Linux is pinned to the Secret Service; without one the
 //                     binding throws and so do we, with code
 //                     'no_secret_service' (fail closed: the caller keeps the

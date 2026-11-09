@@ -65,7 +65,7 @@ function makeZip(entries) {
 const plist = v => `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleName</key><string>NeverQuestAlone</string>
+  <key>CFBundleName</key><string>Voxwarden</string>
   <key>CFBundleShortVersionString</key>
   <string>${v}</string>
 </dict></plist>`;
@@ -89,7 +89,7 @@ function versionInfo({ product, fixed = [0, 0, 0, 0] }) {
   ffi.writeUInt32LE(((fixed[2] << 16) | fixed[3]) >>> 0, 12);
   ffi.writeUInt32LE(((fixed[0] << 16) | fixed[1]) >>> 0, 16);
   ffi.writeUInt32LE(((fixed[2] << 16) | fixed[3]) >>> 0, 20);
-  const strings = [['ProductName', 'NeverQuestAlone'], ...(product ? [['ProductVersion', product]] : []), ['FileVersion', 'decoy 9.9.9']]
+  const strings = [['ProductName', 'Voxwarden'], ...(product ? [['ProductVersion', product]] : []), ['FileVersion', 'decoy 9.9.9']]
     .map(([k, v]) => vblock(k, utf16z(v), v.length + 1, 1));
   const table = vblock('040904b0', null, 0, 1, strings);
   const sfi = vblock('StringFileInfo', null, 0, 1, [table]);
@@ -158,9 +158,9 @@ test('the macOS update zip: the top-level app’s Info.plist, stored or deflated
     for (const method of [0, 8]) {
       const file = path.join(dir, `update-${method}.zip`);
       fs.writeFileSync(file, makeZip([
-        { name: 'NeverQuestAlone.app/Contents/Frameworks/Electron Framework.framework/Resources/Info.plist', data: plist('44.4.5'), method },
-        { name: 'NeverQuestAlone.app/Contents/Info.plist', data: plist('0.2.0'), method },
-        { name: 'NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone', data: Buffer.alloc(64, 1), method },
+        { name: 'Voxwarden.app/Contents/Frameworks/Electron Framework.framework/Resources/Info.plist', data: plist('44.4.5'), method },
+        { name: 'Voxwarden.app/Contents/Info.plist', data: plist('0.2.0'), method },
+        { name: 'Voxwarden.app/Contents/MacOS/Voxwarden', data: Buffer.alloc(64, 1), method },
       ]));
       assert.equal(readMacZipVersion(file), '0.2.0', `method ${method}`);
       assert.equal(readInstallerVersion(file), '0.2.0');
@@ -170,7 +170,7 @@ test('the macOS update zip: the top-level app’s Info.plist, stored or deflated
     fs.writeFileSync(junk, Buffer.from('not a zip at all'));
     assert.equal(readInstallerVersion(junk), null);
     const nested = path.join(dir, 'nested.zip');
-    fs.writeFileSync(nested, makeZip([{ name: 'x/NeverQuestAlone.app/Contents/Info.plist', data: plist('9.9.9'), method: 8 }]));
+    fs.writeFileSync(nested, makeZip([{ name: 'x/Voxwarden.app/Contents/Info.plist', data: plist('9.9.9'), method: 8 }]));
     assert.equal(readMacZipVersion(nested), null, 'only a top-level .app counts');
     assert.equal(plistString('bplist00....', 'CFBundleShortVersionString'), null, 'binary plists are refused, not guessed');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
@@ -179,7 +179,7 @@ test('the macOS update zip: the top-level app’s Info.plist, stored or deflated
 test('the Windows installer: ProductVersion from the RT_VERSION resource, else the fixed file info', () => {
   const dir = tmp();
   try {
-    const exe = path.join(dir, 'NeverQuestAlone-Setup-0.2.0.exe');
+    const exe = path.join(dir, 'Voxwarden-Setup-0.2.0.exe');
     fs.writeFileSync(exe, makePe(versionInfo({ product: '0.2.0-beta.1', fixed: [0, 2, 0, 0] })));
     assert.equal(readPeVersion(exe), '0.2.0-beta.1');
     assert.equal(readInstallerVersion(exe), '0.2.0-beta.1');
@@ -290,7 +290,7 @@ test('the Windows installer’s version is read at its offsets, never the whole 
   const reads = { bytes: 0, calls: 0, whole: 0 };
   const { readSync, readFileSync } = fs;
   try {
-    const exe = path.join(dir, 'NeverQuestAlone-Setup-1.3.2.exe');
+    const exe = path.join(dir, 'Voxwarden-Setup-1.3.2.exe');
     fs.writeFileSync(exe, buildPe({ blob: versionInfo({ product: '1.3.2', fixed: [1, 3, 2, 0] }), types: [3, 14, 16, 24], extra: 'before', overlay: 24 << 20 }));
     fs.readSync = (...a) => { const n = readSync(...a); reads.bytes += n; reads.calls += 1; return n; };
     fs.readFileSync = (...a) => { reads.whole += 1; return readFileSync(...a); };
@@ -361,7 +361,7 @@ test('guardDownloads: runs before electron-updater’s handoff; a refused downlo
   try {
     const file = path.join(dir, 'update.zip');
     const make = (feed, inside) => {
-      fs.writeFileSync(file, makeZip([{ name: 'NeverQuestAlone.app/Contents/Info.plist', data: plist(inside), method: 8 }]));
+      fs.writeFileSync(file, makeZip([{ name: 'Voxwarden.app/Contents/Info.plist', data: plist(inside), method: 8 }]));
       const events = [];
       const updater = {
         downloadedUpdateHelper: { clear: async () => { events.push('clear'); } },
@@ -401,7 +401,7 @@ test('guardDownloads: runs before electron-updater’s handoff; a refused downlo
 // installer launch and electron's event plumbing are stubbed.
 
 const exe = v => makePe(versionInfo({ product: v, fixed: v.split(/[.-]/).slice(0, 3).map(Number) }));
-const macZip = v => makeZip([{ name: 'NeverQuestAlone.app/Contents/Info.plist', data: plist(v), method: 8 }]);
+const macZip = v => makeZip([{ name: 'Voxwarden.app/Contents/Info.plist', data: plist(v), method: 8 }]);
 const sha512 = b => crypto.createHash('sha512').update(b).digest('base64');
 
 function realUpdater(className, dir, { platform = className === 'MacUpdater' ? 'darwin' : 'win32' } = {}) {
@@ -421,7 +421,7 @@ function realUpdater(className, dir, { platform = className === 'MacUpdater' ? '
 
 /** Drive executeDownload the way NsisUpdater/MacUpdater.doDownloadUpdate do, with a task that "downloads" bytes. */
 function runDownload(u, { feed, bytes, ext, done }) {
-  const name = `NeverQuestAlone-${feed}.${ext}`;
+  const name = `Voxwarden-${feed}.${ext}`;
   const fileInfo = { url: new URL(`https://github.com/o/r/releases/download/v${feed}/${name}`), info: { url: name, sha512: sha512(bytes), size: bytes.length } };
   const info = { version: feed, files: [fileInfo.info], path: name, sha512: sha512(bytes), releaseDate: '2026-09-26T00:00:00.000Z' };
   return u.executeDownload({
@@ -485,10 +485,10 @@ test('real NsisUpdater: an old installer already in the cache (the path that ski
     const bytes = exe('0.1.0');
     const pending = u.downloadedUpdateHelper.cacheDirForPendingUpdate;
     fs.mkdirSync(pending, { recursive: true });
-    fs.writeFileSync(path.join(pending, 'NeverQuestAlone-0.1.0.exe'), bytes);
-    fs.writeFileSync(path.join(pending, 'update-info.json'), JSON.stringify({ fileName: 'NeverQuestAlone-0.1.0.exe', sha512: sha512(bytes), isAdminRightsRequired: false }));
+    fs.writeFileSync(path.join(pending, 'Voxwarden-0.1.0.exe'), bytes);
+    fs.writeFileSync(path.join(pending, 'update-info.json'), JSON.stringify({ fileName: 'Voxwarden-0.1.0.exe', sha512: sha512(bytes), isAdminRightsRequired: false }));
     let taskRan = false;
-    const name = 'NeverQuestAlone-0.1.0.exe';
+    const name = 'Voxwarden-0.1.0.exe';
     const fileInfo = { url: new URL(`https://github.com/o/r/releases/download/v0.1.0/${name}`), info: { url: name, sha512: sha512(bytes), size: bytes.length } };
     await assert.rejects(u.executeDownload({
       fileExtension: 'exe', fileInfo,
@@ -509,7 +509,7 @@ test('real AppImageUpdater: Linux downloads are always refused (notify-only; the
     await assert.rejects(runDownload(u, { feed: '0.3.0', bytes: Buffer.from('\x7fELF…'), ext: 'AppImage' }), /unreadable_version/);
     assert.equal(seen.quitHandlers, 0);
     assert.equal(installerKind('linux'), 'linux');
-    assert.equal(readInstallerVersion('/x/NeverQuestAlone-0.3.0.exe', 'linux'), null, 'the kind, not the name, decides');
+    assert.equal(readInstallerVersion('/x/Voxwarden-0.3.0.exe', 'linux'), null, 'the kind, not the name, decides');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -545,7 +545,7 @@ test('update checks: turning them back on schedules them again, "Never check" st
   const prefs = { mode: 'never' };
   const u = await startUpdater({
     app: { getVersion: () => '0.1.0', isPackaged: true },
-    identity: { releases: { owner: 'bones-co', repo: 'neverquestalone' } },
+    identity: { releases: { owner: 'bones-co', repo: 'voxwarden' } },
     prefs, savePrefs: () => {}, platform: 'darwin', timer, loadUpdater: async () => fake,
   });
   assert.deepEqual(live(), [], 'launched with checks off: nothing scheduled');
@@ -563,7 +563,7 @@ test('update checks: turning them back on schedules them again, "Never check" st
 // The update feed's two guards (rename spec H30): a literal owner turns the feed on, so a Windows build
 // with no pinned publisher must only notify, and a feed with no release yet is "up to date".
 const NO_TIMER = { setTimeout: () => null, setInterval: () => null, clearTimeout() {}, clearInterval() {} };
-const FEED = { releases: { owner: 'bones-co', repo: 'neverquestalone' } };
+const FEED = { releases: { owner: 'bones-co', repo: 'voxwarden' } };
 function eventFake(extra = {}) {
   const handlers = {};
   const calls = { download: 0 };
@@ -649,11 +649,11 @@ test('real MacUpdater: the loopback server stops listening once Squirrel.Mac has
       app: { getVersion: () => '0.2.0', isPackaged: true }, identity: FEED, prefs: { mode: 'notify' }, savePrefs() {}, platform: 'darwin', timer: NO_TIMER, loadUpdater: async () => u,
       onChange: s => { if (s.state === 'ready' && listeningAtReady === null) listeningAtReady = !!u.server?.listening; },
     }));
-    assert.equal(u.autoInstallOnAppQuit, true, 'NeverQuestAlone installs on quit, so Squirrel.Mac fetches the zip at once');
+    assert.equal(u.autoInstallOnAppQuit, true, 'Voxwarden installs on quit, so Squirrel.Mac fetches the zip at once');
     // Settles on the native updater's error too: a failed loopback fetch fails this test with its reason,
     // never leaves the promise pending until node cancels the rest of the file (windows-smoke 37153137267).
     const fetched = new Promise((r, j) => { native.once('update-downloaded', r); native.once('error', j); });
-    const served = u.updateDownloaded({ url: new URL('https://github.com/o/r/releases/download/v0.3.0/NeverQuestAlone-0.3.0-arm64-mac.zip'), info: { size: fs.statSync(zip).size } }, { downloadedFile: zip, version: '0.3.0' });
+    const served = u.updateDownloaded({ url: new URL('https://github.com/o/r/releases/download/v0.3.0/Voxwarden-0.3.0-arm64-mac.zip'), info: { size: fs.statSync(zip).size } }, { downloadedFile: zip, version: '0.3.0' });
     // electron-updater's own promise settles on its server response's 'finish', which a loaded machine
     // has been seen to never emit after the client read every byte (the suite on e5d31feb, load ~13). What
     // the app relies on is the update-downloaded event (the window's "ready") and the close below, so the
@@ -691,7 +691,7 @@ test('H30: a Windows build that pins no publisher only notifies (no download, no
   unpinned.handlers['update-available']({ version: '0.2.0' });
   // [UX-W06] The app's word for it everywhere is "download page"; a notification title ends with a period.
   assert.equal(notes.at(-1).body, 'Get it from the download page.', 'sent to the download page, as on Linux');
-  assert.equal(notes.at(-1).title, 'NeverQuestAlone 0.2.0 is available.');
+  assert.equal(notes.at(-1).title, 'Voxwarden 0.2.0 is available.');
   assert.deepEqual(await u.download(), { ok: false, error: 'notify_only' });
   assert.equal(unpinned.calls.download, 0, 'downloadUpdate never called');
   // A signed build that pins its publisher downloads as before.
@@ -842,13 +842,13 @@ test('the feed: GitHub, public, releases only, never a token; the build names th
   // An identity with no releases (the example plugin's) has no updates.
   assert.deepEqual([releasesRepo({ releases: null }).configured, releasesUrl({ releases: null })], [false, null]);
   // The OWNER placeholder is never a configured feed.
-  const placeholder = { releases: { owner: 'OWNER', repo: 'neverquestalone' } };
+  const placeholder = { releases: { owner: 'OWNER', repo: 'voxwarden' } };
   assert.equal(releasesRepo(placeholder).valid, true);
   assert.equal(releasesRepo(placeholder).configured, false);
   assert.equal(releasesUrl(placeholder), null);
-  const real = { releases: { owner: 'bones-co', repo: 'neverquestalone' } };
+  const real = { releases: { owner: 'bones-co', repo: 'voxwarden' } };
   assert.equal(releasesRepo(real).configured, true);
-  assert.equal(releasesUrl(real), 'https://github.com/bones-co/neverquestalone/releases');
+  assert.equal(releasesUrl(real), 'https://github.com/bones-co/voxwarden/releases');
   assert.equal(releasesRepo({ releases: { owner: 'x/../y', repo: 'r' } }).valid, false);
   const src = fs.readFileSync(path.join(APP, 'updater.mjs'), 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(src, /token\s*:|GH_TOKEN|GITHUB_TOKEN|requestHeaders\s*=|addAuthHeader/i, 'no token anywhere in the updater');
@@ -871,7 +871,7 @@ test('"Never check": checks off and saved, and nothing reminds the player (the o
   assert.equal(mod.reminderDue, undefined);
 });
 test('SY-13: the Windows installer\'s publisher check fails closed: PowerShell that can\'t run, an error, another file, status or publisher is a refusal; only Valid from the pinned publisher installs', async () => {
-  const FILE = 'C:\\Users\\p\\AppData\\Local\\neverquestalone-updater\\pending\\NeverQuestAlone-Setup-0.2.0.exe';
+  const FILE = 'C:\\Users\\p\\AppData\\Local\\voxwarden-updater\\pending\\Voxwarden-Setup-0.2.0.exe';
   const SUBJECT = 'CN=Bones Games LLC, O=Bones Games LLC, L=Portland, S=Oregon, C=US';
   const answer = (over = {}) => JSON.stringify({ Status: 0, Path: FILE, SignerCertificate: { Subject: SUBJECT }, ...over });
   const calls = [];
@@ -922,7 +922,7 @@ test('SY-13: the Windows installer\'s publisher check fails closed: PowerShell t
   // an OEM code page made of the same path (cp850: ü is 0x81, and 测试 has no code at all) was refused.
   // A byte-order mark before the answer is read past. tests/byok/updater_windows_test.mjs runs the real
   // PowerShell on such a folder.
-  const JURGEN = 'C:\\Users\\Jürgen 测试\\AppData\\Local\\neverquestalone-updater\\pending\\NeverQuestAlone-Setup-0.2.0.exe';
+  const JURGEN = 'C:\\Users\\Jürgen 测试\\AppData\\Local\\voxwarden-updater\\pending\\Voxwarden-Setup-0.2.0.exe';
   assert.equal(await verify([null, answer({ Path: JURGEN }), ''])(['Bones Games LLC'], JURGEN), null, 'a non-ASCII profile, answered in UTF-8');
   assert.equal(await verify([null, `\uFEFF${answer({ Path: JURGEN })}`, ''])(['Bones Games LLC'], JURGEN), null, 'a BOM first');
   assert.match(await verify([null, answer({ Path: JURGEN.replace('ü', '\u0081').replace('测试', '??') }), ''])(['Bones Games LLC'], JURGEN), /another file/);
@@ -931,7 +931,7 @@ test('SY-13: the Windows installer\'s publisher check fails closed: PowerShell t
   // startUpdater puts it on the Windows updater only.
   for (const platform of ['win32', 'darwin']) {
     const fake = { on() {}, setFeedURL() {}, checkForUpdates: async () => {}, executeDownload() {} };
-    await startUpdater({ app: { getVersion: () => '0.1.0', isPackaged: true }, identity: { releases: { owner: 'bones-co', repo: 'neverquestalone' } },
+    await startUpdater({ app: { getVersion: () => '0.1.0', isPackaged: true }, identity: { releases: { owner: 'bones-co', repo: 'voxwarden' } },
       prefs: { mode: 'never' }, savePrefs: () => {}, platform, loadUpdater: async () => fake });
     assert.equal(typeof fake.verifyUpdateCodeSignature, platform === 'win32' ? 'function' : 'undefined', platform);
   }
@@ -943,7 +943,7 @@ test('SY-13: the Windows installer\'s publisher check fails closed: PowerShell t
 
 test('CV-09: stage-rollout sets the share in a feed (10, then 50, then everyone; 0 stops it), the dry run writes nothing, and anything else is refused', async () => {
   const { stageFeed, stagedPercent, run } = await import('../../tools/stage-rollout.mjs');
-  const feed = 'version: 0.3.0\nfiles:\n  - url: NeverQuestAlone-Setup-0.3.0.exe\n    sha512: abc\n    size: 1\npath: NeverQuestAlone-Setup-0.3.0.exe\nsha512: abc\nreleaseDate: \'2026-09-27T00:00:00.000Z\'\n';
+  const feed = 'version: 0.3.0\nfiles:\n  - url: Voxwarden-Setup-0.3.0.exe\n    sha512: abc\n    size: 1\npath: Voxwarden-Setup-0.3.0.exe\nsha512: abc\nreleaseDate: \'2026-09-27T00:00:00.000Z\'\n';
   assert.equal(stagedPercent(feed), 100, 'no field: everyone');
   const ten = stageFeed(feed, 10);
   assert.ok(ten.endsWith('\nstagingPercentage: 10\n'));
@@ -1008,7 +1008,7 @@ test('CV-09: electron-updater (the real NsisUpdater) offers a staged feed to tha
   };
   const early = '6f1c2d3e-4a5b-4c6d-8e7f-000000000100'; // near the start of the line
   const late = '6f1c2d3e-4a5b-4c6d-8e7f-0000ffffff00'; // near its end
-  const feed = 'version: 0.3.0\npath: NeverQuestAlone-Setup-0.3.0.exe\nsha512: abc\nreleaseDate: \'2026-09-27T00:00:00.000Z\'\n';
+  const feed = 'version: 0.3.0\npath: Voxwarden-Setup-0.3.0.exe\nsha512: abc\nreleaseDate: \'2026-09-27T00:00:00.000Z\'\n';
   const offered = async (percent, id) => updater(id).isUpdateAvailable(yaml.load(stageFeed(feed, percent)));
   assert.equal(await offered(0, early), false, '0: no install');
   assert.equal(await offered(0, late), false);
@@ -1044,7 +1044,7 @@ test('automatic updates: found → downloaded → installed at the first quiet m
   await runTimeouts();
   assert.equal(ev.calls.download, 1, 'it downloads by itself');
   assert.equal(u.status().state, 'ready');
-  assert.deepEqual(notes.map(n => [n.title, n.body]), [['NeverQuestAlone 0.2.0 is ready.', 'It installs by itself while WoW is closed.']]);
+  assert.deepEqual(notes.map(n => [n.title, n.body]), [['Voxwarden 0.2.0 is ready.', 'It installs by itself while WoW is closed.']]);
   assert.deepEqual(installs, [], 'WoW open (or the window up): it waits');
   await tick();
   assert.deepEqual(installs, [], 'still busy at the next look');

@@ -22,11 +22,11 @@ app/desktop/package-lock.json email 707fa501fca6
 # The code signature is read as text whatever its entropy, its page hashes aside (code health EX-06 /
 # signature regions): 1.4.1's arm64 app shows this one id in each of its 16 Mach-Os (17 lines, the
 # capture helper having two slices) and nothing else.
-# The Info.plist copyright names "The NeverQuestAlone authors" and needs no entry.
-**/NeverQuestAlone.app/Contents/MacOS/NeverQuestAlone name 56d1c11058b5
-**/NeverQuestAlone.app/Contents/Frameworks/** name 56d1c11058b5
-**/NeverQuestAlone.app/Contents/Resources/NeverQuestAlone*Capture.app/Contents/MacOS/* name 56d1c11058b5
-**/NeverQuestAlone.app/Contents/Resources/app.asar.unpacked/node_modules/@napi-rs/keyring-darwin-*/keyring.darwin-*.node name 56d1c11058b5
+# The Info.plist copyright names "The Voxwarden authors" and needs no entry.
+**/Voxwarden.app/Contents/MacOS/Voxwarden name 56d1c11058b5
+**/Voxwarden.app/Contents/Frameworks/** name 56d1c11058b5
+**/Voxwarden.app/Contents/Resources/Voxwarden*Capture.app/Contents/MacOS/* name 56d1c11058b5
+**/Voxwarden.app/Contents/Resources/app.asar.unpacked/node_modules/@napi-rs/keyring-darwin-*/keyring.darwin-*.node name 56d1c11058b5
 
 # Build outputs (release.yml's scans; the first dry run of it, SY-16, found these): what Electron and
 # Chromium ship as they come, and the npm packages inside app.asar, carry their authors' and
@@ -36,7 +36,7 @@ app/desktop/package-lock.json email 707fa501fca6
 **/LICENSES.chromium.html email *
 **/Electron*Framework.framework/Versions/A/Electron*Framework email *
 **/Electron*Framework.framework/Versions/A/Helpers/chrome_crashpad_handler email *
-**/win-unpacked/NeverQuestAlone.exe email *
+**/win-unpacked/Voxwarden.exe email *
 **/app.asar/node_modules/** email *
 # The NSIS installer holds win-unpacked LZMA-compressed (scanned unpacked, above). Its compressed
 # bytes, read as strings, spelled address-shaped runs and once a short private name by chance (release
@@ -62,8 +62,8 @@ app/desktop/package-lock.json email 707fa501fca6
 # installer's signer (TH18): its one line. Another certificate, or the name anywhere else, still fails.
 **/win-unpacked/*.exe name 254a5596a08c
 **/win-unpacked/*.exe name 28c5f4169279
-**/NeverQuestAlone-Setup*.exe name 254a5596a08c
-**/NeverQuestAlone-Setup*.exe name 28c5f4169279
+**/Voxwarden-Setup*.exe name 254a5596a08c
+**/Voxwarden-Setup*.exe name 28c5f4169279
 **/win-unpacked/*.dll name 254a5596a08c
 **/win-unpacked/*.dll name 28c5f4169279
 **/win-unpacked/resources/**/*.exe name 254a5596a08c
@@ -71,7 +71,7 @@ app/desktop/package-lock.json email 707fa501fca6
 **/win-unpacked/resources/app.asar.unpacked/node_modules/@napi-rs/keyring-win32-*/keyring.win32-*.node name 254a5596a08c
 **/win-unpacked/resources/app.asar.unpacked/node_modules/@napi-rs/keyring-win32-*/keyring.win32-*.node name 28c5f4169279
 **/win-unpacked/resources/app-update.yml name 28a472889edb
-# The landing page's media (site/, and its published copy at neverquestalone.com): two short
+# The landing page's media (site/, and its published copy at voxwarden.com): two short
 # email-shaped byte runs inside compressed AV1 and AVIF data, which name no one. Exactly these two
 # files and runs; a re-encode changes the id, so a new run is reviewed again.
 **/assets/hero/hero-1280-av1.mp4 email d498e6b53a8b

@@ -3,7 +3,7 @@
 // pack.md is generated from prompts/companion.md by tools/gen-prompts.mjs (never edit it by hand).
 // It's the whole system prompt of every BYOK call, sent as the cached prefix: persona, reader
 // rules, the block grammar with its numbers from the code, companion rules, safety and the
-// addon/macro primer. loadPack puts the persona's name in (a setting, default NeverQuestAlone) and returns
+// addon/macro primer. loadPack puts the persona's name in (a setting, default Voxwarden) and returns
 // the text with a content hash as its version, so a log line or the "Last request" view can say
 // exactly which prompt a turn went with. Its size is kept at or above 4,096 tokens (estimated),
 // Haiku's minimum for caching a prefix.
@@ -11,8 +11,8 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { estimateTokens } from './history.mjs';
 
-export const DEFAULT_NAME = 'NeverQuestAlone';
-// The default until 1.4.9 (the owner, 2026-10-05: one name, NeverQuestAlone). Every config saved before
+export const DEFAULT_NAME = 'Voxwarden';
+// The default until 1.4.9 (the owner, 2026-10-05: one name, Voxwarden). Every config saved before
 // then holds it, so it reads as the default.
 export const EARLIER_DEFAULT_NAME = 'Bones';
 export const PACK_FILE = new URL('./pack.md', import.meta.url);

@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Fixes for the problems you’re most likely to hit building NeverQuestAlone, from installing to signing and updates.
+description: Fixes for the problems you’re most likely to hit building Voxwarden, from installing to signing and updates.
 status: ready
 ---
 
@@ -14,7 +14,7 @@ Check that `node --version` says 22.19 or later. Delete `node_modules` and run `
 
 ## The app quits as soon as it starts
 
-Another copy of NeverQuestAlone is running, often an installed one. A run from source is the same app, and only one copy runs at a time: a second one quits. Quit the other copy first.
+Another copy of Voxwarden is running, often an installed one. A run from source is the same app, and only one copy runs at a time: a second one quits. Quit the other copy first.
 
 ## Linux: the app stops at once, about the “SUID sandbox helper”
 
@@ -33,7 +33,7 @@ Never start the app without its sandbox.
 - “Your account at Anthropic has no credit.”: add credit there, then click **Test again**.
 - A model on your computer: start Ollama or LM Studio first, and check the address, for example `http://localhost:11434/v1` for Ollama.
 
-## NeverQuestAlone can’t see the game
+## Voxwarden can’t see the game
 
 A run from source has no capture helper until you build one: [Screen reading from source](get-started.md#5-screen-reading-from-source) says how, on a Mac and on Windows. Until then, turn off **Screen reading** on the app’s **Your data** page: your messages wait for a `/reload` in game, and replies still come in.
 
@@ -55,4 +55,4 @@ A run from source never updates itself. For a release, check that `releases` in 
 
 ## Still stuck
 
-[Search the issues on GitHub](https://github.com/tommygeoco/neverquestalone/issues), then open one with what you ran, what you expected and what happened. Never paste an API key. Security problems go to the [private report](security.md#report-a-problem), never a public issue.
+[Search the issues on GitHub](https://github.com/davrodwconnections/voxwarden/issues), then open one with what you ran, what you expected and what happened. Never paste an API key. Security problems go to the [private report](security.md#report-a-problem), never a public issue.

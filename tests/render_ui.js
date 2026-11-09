@@ -54,7 +54,7 @@ function ring(vm) {
   vm.run('NS.Transport.Poll()');
 }
 function slotLua({ push = 0, nonce = null, acked = [], records = [], chats = '{}', extra = '', bridge = '' } = {}) {
-  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = { ${acked.map(k => `"${k}"`).join(', ')} }${bridge} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "NeverQuestAlone" } }, chats = ${chats}, records = { ${records.join(', ')} }${extra} }`;
+  return `{ v = 2, ts = "2026-09-25T18:04:00Z", now = time(), token = NQADB.token, bridge = { ver = "1.4.0", push = ${push}, nonce = ${nonce ? `"${nonce}"` : 'nil'}, acked = { ${acked.map(k => `"${k}"`).join(', ')} }${bridge} }, gw = { state = "ready", ver = "2026.9.6", proto = 4, queued = 0 }, agents = { { id = "main", name = "Voxwarden" } }, chats = ${chats}, records = { ${records.join(', ')} }${extra} }`;
 }
 function confirmHello(vm) {
   vm.advance(3.1);
@@ -370,13 +370,13 @@ function settingsPanel(rows, caption, { page = false, search = false, tip = null
 async function addonsPanels() {
   const { addonListRows, tocMeta } = await import('./helpers/addon-list.mjs');
   const S = await import('../bridge/transport/slots.mjs');
-  const toc = tocMeta(fs.readFileSync(path.join(__dirname, '..', 'addon', 'NeverQuestAlone', 'NeverQuestAlone.toc'), 'utf8'));
+  const toc = tocMeta(fs.readFileSync(path.join(__dirname, '..', 'addon', 'Voxwarden', 'Voxwarden.toc'), 'utf8'));
   const LOD = 'Only loadable on demand'; // ADDON_DEMAND_LOADED: a slot's status, as the owner read it
   const WHITE_TIP = [1, 1, 1, 1]; // AddonTooltip_Update: the notes in white
   const others = ['Leatrix_Maps', 'Leatrix_Plus', 'Leatrix_Sounds'].map(name => ({ name, title: name.replace('_', ' '), group: name, icon: 'Interface\\ICONS\\INV_Misc_QuestionMark' }));
-  const us = { name: 'NeverQuestAlone', title: toc.Title, group: 'NeverQuestAlone', icon: toc.IconTexture };
+  const us = { name: 'Voxwarden', title: toc.Title, group: 'Voxwarden', icon: toc.IconTexture };
   const now = Array.from({ length: S.SLOT_COUNT }, (_, k) => { const m = tocMeta(S.slotToc(k + 1, '16001')); return { name: S.slotName(k + 1), title: m.Title, group: m.Group, category: m.Category, icon: m.IconTexture, status: LOD }; });
-  const was = Array.from({ length: S.SLOT_COUNT }, (_, k) => ({ name: S.slotName(k + 1), title: `NeverQuestAlone slot ${String(k + 1).padStart(3, '0')}`, group: 'NeverQuestAlone', icon: 'Interface\\ICONS\\INV_Misc_QuestionMark', status: LOD }));
+  const was = Array.from({ length: S.SLOT_COUNT }, (_, k) => ({ name: S.slotName(k + 1), title: `Voxwarden slot ${String(k + 1).padStart(3, '0')}`, group: 'Voxwarden', icon: 'Interface\\ICONS\\INV_Misc_QuestionMark', status: LOD }));
   // tip: { row: a row's text, title, right, lines } drawn beside that row (the list's AddonTooltip).
   const draw = (rows, caption, { max = 14, tip = null } = {}) => {
     const W = 560, GOLD = [1, 0.82, 0, 1], WHITE = [1, 1, 1, 1];
@@ -412,10 +412,10 @@ async function addonsPanels() {
     }
     return { caption, w: root.w + 20, h: root.h + 20, html: renderTree(root, { ox: 10, oy: 10, scale: SCALE }) };
   };
-  // The rows 0.5.2 showed: its TOC's title ("NeverQuestAlone") and the old slot TOCs.
-  const old = { ...us, title: 'NeverQuestAlone' };
+  // The rows 0.5.2 showed: its TOC's title ("Voxwarden") and the old slot TOCs.
+  const old = { ...us, title: 'Voxwarden' };
   return [
-    draw(addonListRows([...others, old, ...was]), '0.5.2 (the owner\'s report): NeverQuestAlone with its 200 parts under it, each with a check box and a red question mark (the Leatrix icons aren\'t modeled)'),
+    draw(addonListRows([...others, old, ...was]), '0.5.2 (the owner\'s report): Voxwarden with its 200 parts under it, each with a check box and a red question mark (the Leatrix icons aren\'t modeled)'),
     draw(addonListRows([...others, us, ...now], { [S.SLOT_CATEGORY]: true }), `0.5.3, folded (setup folds it at install, before the first start, C-119; the addon at a logout where setup didn't): the parts' one row, then the addon's own, "${toc.Title}"`),
     draw(addonListRows([...others, us, ...now]), '0.5.3, unfolded (a player who opens it): the parts under their row, none under the addon\'s own'),
     draw(addonListRows([...others, us, ...now], { [S.SLOT_CATEGORY]: true }), 'The addon\'s row under the pointer (C-120): its name and version, and its notes in plain words',
@@ -488,7 +488,7 @@ async function keybindingsPanels() {
   const { bindingsXml, keybindingSections, GAME_STRINGS } = await import('./helpers/keybindings.mjs');
   const vm = confirmHello(newVM({ db: 'NQADB = { hudIntro = true, qolAsked = true, firstReply = true }', extra: METRICS }).login());
   const G = k => vm.evaluate(`type(_G[${lstr(k)}]) == "string" and _G[${lstr(k)}] or nil`) ?? GAME_STRINGS[k];
-  const bindings = bindingsXml(fs.readFileSync(path.join(__dirname, '..', 'addon', 'NeverQuestAlone', 'Bindings.xml'), 'utf8'));
+  const bindings = bindingsXml(fs.readFileSync(path.join(__dirname, '..', 'addon', 'Voxwarden', 'Bindings.xml'), 'utf8'));
   // Round 3 (d3ac2a7): category="ADDONS", a header on the first key, and the item key's name then.
   const was = bindings.map((b, i) => ({ ...b, category: 'ADDONS', header: i === 0 ? 'NQA' : undefined }));
   const wasG = k => (k === 'BINDING_NAME_NQA_ASK_ITEM' ? 'Ask About the Item Under the Mouse' : G(k));
@@ -498,7 +498,7 @@ async function keybindingsPanels() {
     { kind: 'button', text: GAME_STRINGS.CLICK_BIND_MODE }, { kind: 'button', text: GAME_STRINGS.SETTINGS_QUICK_KEYBIND_BUTTON }];
   const name = G('BINDING_HEADER_NQA');
   return [
-    keybindingsPanel([...top, ...sections(was, wasG).slice(0, 5)], 'Round 3 (d3ac2a7): Bind Keys opened the page at its top, as nothing on it was named NeverQuestAlone', { top: true }),
+    keybindingsPanel([...top, ...sections(was, wasG).slice(0, 5)], 'Round 3 (d3ac2a7): Bind Keys opened the page at its top, as nothing on it was named Voxwarden', { top: true }),
     keybindingsPanel(sections(was, wasG, 'AddOns').slice(-4), 'Round 3: the page\'s end, AddOns opened: a blank row (the header), then the five keys, unnamed (the item key cut)'),
     keybindingsPanel(sections(bindings, G).slice(-4), `0.5.3 (C-127): the keys' own section, ${name}, last on the page; Bind Keys scrolls to it, collapsed as the game's own open`),
     keybindingsPanel(sections(bindings, G, name).slice(-4), `One click on ${name}: its five keys, each name whole (the item key: Ask About the Hovered Item)`),
@@ -633,7 +633,7 @@ async function main() {
   panels.push(panel(hud({ route: false }), 'Idle, no route (the owner, 2026-09-27: "the UI looks like this and its ass")'));
   panels.push(panel(hud({ route: false, setup: vm => vm.run('local b = NS.HUD.h.routeAskBtn; b.scripts.OnClick(b, "LeftButton")') }), 'No route, Ask for a Route clicked: Undo for 3 s, "Asking: a route"'));
   panels.push(panel(hud({ setup: vm => apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id(vm)}", mid = "m1", agent = "main", text = "x", summary = "Drew a 5-stop loop: the Fold, then the Thornweavers, then the Crossroads.", more = 0, drew = { "barrens" } }`] })) }), 'News: a reply that drew a route (Okay follows it; its tooltip says so)'));
-  panels.push(panel(hud({ route: false, setup: vm => { vm.send('where are the thornweavers'); for (let t = 0; t < 3; t++) { vm.advance(11.7); vm.run('NS.Transport.Beat()'); } } }), 'Sending for 35 s, the message unread: how long, and that it hasn\'t reached NeverQuestAlone'));
+  panels.push(panel(hud({ route: false, setup: vm => { vm.send('where are the thornweavers'); for (let t = 0; t < 3; t++) { vm.advance(11.7); vm.run('NS.Transport.Beat()'); } } }), 'Sending for 35 s, the message unread: how long, and that it hasn\'t reached Voxwarden'));
   // A reply that drew another route than the one you follow: its first button says Follow Route (C-100).
   const NEW_ROUTE = BARRENS_ROUTE.replace('version = 1, layers = {', 'version = 2, layers = { { name = "mulgore", title = "Red Cloud loop", ordered = true, loop = false, points = { { 1432, 60, 70, "1. Camp", "kill" }, { 1432, 65, 75, "2. Well", "object" } } },');
   panels.push(panel(hud({ setup: vm => apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id(vm)}", mid = "m1", agent = "main", text = "x", summary = "Drew a 2-stop loop at Red Cloud Mesa: the camp, then the well.", more = 0, drew = { "mulgore" } }`], extra: NEW_ROUTE })) }), 'News: a reply that drew another route: Follow Route, then Open Chat (C-100)'));
@@ -653,7 +653,7 @@ async function main() {
   panels.push(panel(hud({ setup: vm => { vm.send('where are the thornweavers'); vm.run('local b = NS.HUD.h.stopBtn; b.scripts.OnClick(b)'); } }), 'Stop clicked: the same button, greyed, until the run ends'));
   panels.push(panel(hud({ setup: vm => vm.run('local b = NS.HUD.h.segs.hit[2]; b.scripts.OnClick(b, "LeftButton"); NQAMap.UpdateNavigator()') }), 'The bar\'s second part clicked: back to stop 2'));
   panels.push(panel(hud({ setup: vm => { vm.run('local b = NS.HUD.h.askBtn; b.scripts.OnClick(b, "LeftButton")'); vm.run('NS.HUD.h.replyBox:SetText("where do the raptors spawn?")'); } }), 'Asking, with words typed: Ask is the box\'s X'));
-  panels.push(panel(hud({ setup: vm => { vm.run('NQADB.settings.hudMin = true'); apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id(vm)}", mid = "m1", agent = "main", text = "The Fold is north.", summary = "The Fold is north.", more = 0 }`] })); } }), 'Minimized, with news: NeverQuestAlone says, and Okay'));
+  panels.push(panel(hud({ setup: vm => { vm.run('NQADB.settings.hudMin = true'); apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id(vm)}", mid = "m1", agent = "main", text = "The Fold is north.", summary = "The Fold is north.", more = 0 }`] })); } }), 'Minimized, with news: Voxwarden says, and Okay'));
   panels.push(panel(hud({ route: false, setup: vm => vm.run('NQADB.settings.hudMin = true') }), 'Minimized, no route'));
   panels.push(panel(hud({ setup: vm => vm.run('NQADB.settings.hudMin = true; NQADB.settings.hudCompass = true') }), 'The compass (the bar\'s Show Less): the arrow and the distance'));
   panels.push(panel(hud({ setup: vm => { ghost(vm); vm.run('NQADB.settings.hudMin = true; NQADB.settings.hudCompass = true') } }), 'The compass, a ghost'));
@@ -668,13 +668,13 @@ async function main() {
     'A reply with the HUD closed: the banner at the top middle, until Okay or Open Chat', 'NQAToast1'));
   panels.push(panel(hud({ setup: vm => { vm.run('local b = NS.HUD.h.closeBtn; b.scripts.OnClick(b, "LeftButton")'); apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id(vm)}", mid = "m1", agent = "main", text = "x", summary = "The Thornweavers camp on the ridge north of the Fold; pull them one at a time, since they cast from range and flee at low health.", more = 0 }`] })); } }),
     'A long reply: two lines, the banner as tall as they are', 'NQAToast1'));
-  // Folded to the bar by a fight while NeverQuestAlone works: its menu still has Show More, which shows the panel now (the owner, 2026-09-27).
+  // Folded to the bar by a fight while Voxwarden works: its menu still has Show More, which shows the panel now (the owner, 2026-09-27).
   const fight = vm => { vm.send('where are the thornweavers'); vm.run('NS.UI.Toggle(false); STUB.combat = true; STUB.FireEvent("PLAYER_REGEN_DISABLED")'); };
   const barMenu = vm => vm.run('local g = NQAHUDBar.grip; g.scripts.OnClick(g, "RightButton")');
-  panels.push(panel(hud({ setup: fight }), 'In combat, NeverQuestAlone working: folded to the bar'));
-  panels.push(panel(hud({ setup: vm => { fight(vm); barMenu(vm); } }), 'In combat, NeverQuestAlone working: the bar\'s right-click menu (Show More always there)', 'NQAPopupMenu'));
+  panels.push(panel(hud({ setup: fight }), 'In combat, Voxwarden working: folded to the bar'));
+  panels.push(panel(hud({ setup: vm => { fight(vm); barMenu(vm); } }), 'In combat, Voxwarden working: the bar\'s right-click menu (Show More always there)', 'NQAPopupMenu'));
   panels.push(panel(hud({ setup: vm => { fight(vm); barMenu(vm); vm.run('for _, b in ipairs(NQAPopupMenu.items) do if b.shown and b.label.text == "Show More" then b.scripts.OnClick(b) end end'); } }),
-    'In combat, Show More picked: the whole panel, NeverQuestAlone working'));
+    'In combat, Show More picked: the whole panel, Voxwarden working'));
   // The reply lands mid-fight and Quiet in Combat holds it (C-104): not "Ready".
   const held = vm => { fight(vm); barMenu(vm); vm.run('for _, b in ipairs(NQAPopupMenu.items) do if b.shown and b.label.text == "Show More" then b.scripts.OnClick(b) end end'); vm.run('for k in pairs(NS.R.out) do NS.Transport.Acked(k, "slot") end'); apply(vm, slotLua({ records: [`{ seq = 1, t = "reply", chat = "${id(vm)}", mid = "m1", agent = "main", text = "Up on the ridge.", summary = "", more = 0 }`] })); };
   panels.push(panel(hud({ route: false, setup: held }), 'In combat, the reply held by Quiet in Combat: the panel (Show More)'));
@@ -682,7 +682,7 @@ async function main() {
   // The bar re-planning: its row says so (no 4/6 on the bar since 0.4.8).
   panels.push(panel(hud({ setup: vm => { vm.run('NQADB.settings.hudMin = true; NS.HUD.Replan()'); vm.advance(3.1); vm.run('for _, c in ipairs(NQADB.chats) do c.pending = {} end'); } }), 'Minimized, Re-planning…'));
   // 0.4.9: the status lines a click away (never "the portrait's tooltip says how"), and the bar's Okay on what its row shows (E-1).
-  const lightIs = (state, extra = '') => vm => vm.run(`${extra} NS.Transport.Light = function() return "${state}", "The NeverQuestAlone app is running but can't reach your AI: connecting." end`);
+  const lightIs = (state, extra = '') => vm => vm.run(`${extra} NS.Transport.Light = function() return "${state}", "The Voxwarden app is running but can't reach your AI: connecting." end`);
   panels.push(panel(hud({ route: false, setup: lightIs('grey') }), 'Not ready: Click to see why in the window (the lines are a button)'));
   panels.push(panel(hud({ route: false, setup: lightIs('yellow', 'NS.R.gw = { state = "connecting" };') }), 'Can\'t reach your AI: Click to see why in the window'));
   panels.push(panel(hud({ setup: vm => vm.run('NS.Transport.Warn("t", "Replies arrive more slowly for now: the game can\'t hear the sound that says a reply is ready. A /reload usually fixes it.", "Replies are slower for now")') }), 'A warning from the transport: Click for the details'));

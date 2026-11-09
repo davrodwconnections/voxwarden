@@ -1,7 +1,7 @@
-# Runs NeverQuestAlone from this checkout on Windows, with no build (odd/tasks/nqa-voice.md T6):
+# Runs Voxwarden from this checkout on Windows, with no build (odd/tasks/nqa-voice.md T6):
 # the app's core headless (bridge/nqa.mjs start), so this checkout's changes (the voice inbox, the
 # new game data) serve the game, plus the voice companion. The signed screen-reading helper comes from
-# the installed NeverQuestAlone app.
+# the installed Voxwarden app.
 #
 #   powershell -ExecutionPolicy Bypass -File tools\voice\run-from-source.ps1 [-Ai openai|anthropic|proxy] [-Model <id>] [-InstallAddon] [-NoVoice] [-Persona skeleton|orc-shaman] [-Companion]
 #
@@ -14,7 +14,7 @@
 #   full game data on its own (/nqa live on) and which also allows automatic check-in turns. Off by default.
 # -ShowVoice: open the voice page as a normal browser tab instead of the hidden off-screen window.
 # -NoWeb: no Wowhead lookups for the voice (on by default here: only quest, item, spell or NPC ids leave the PC).
-# Quit the NeverQuestAlone app first: the app and this never serve one AddOns folder at once.
+# Quit the Voxwarden app first: the app and this never serve one AddOns folder at once.
 param(
   [ValidateSet('openai', 'anthropic', 'proxy')] [string]$Ai = 'openai',
   [string]$Model = '',
@@ -28,16 +28,16 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $flavor = 'C:\Program Files (x86)\World of Warcraft\_forever_'
-$data = Join-Path $env:APPDATA 'NeverQuestAlone\dev'
+$data = Join-Path $env:APPDATA 'Voxwarden\dev'
 $keys = Join-Path $env:USERPROFILE '.config\neverquestalone\api-keys.json'
 
-if (Get-Process NeverQuestAlone -ErrorAction SilentlyContinue) { throw 'Quit the NeverQuestAlone app first (tray icon > Quit).' }
+if (Get-Process Voxwarden,NeverQuestAlone -ErrorAction SilentlyContinue) { throw 'Quit both Voxwarden and the upstream app first (tray icon > Quit).' }
 
 # The signed capture helper, where a run from source looks for it (bridge/transport/capture.mjs WINDOWS_EXE).
-$helper = Join-Path $env:LOCALAPPDATA 'Programs\neverquestalone\resources\capture\nqa-capture.exe'
+$helper = Join-Path $env:LOCALAPPDATA 'Programs\voxwarden\resources\capture\nqa-capture.exe'
 $dest = Join-Path $repo 'bridge\capture\windows\build'
 if (-not (Test-Path (Join-Path $dest 'nqa-capture.exe'))) {
-  if (-not (Test-Path $helper)) { throw "No capture helper at $helper (install the NeverQuestAlone app, or build it: npm run capture:build)." }
+  if (-not (Test-Path $helper)) { throw "No capture helper at $helper (install the Voxwarden app, or build it: npm run capture:build)." }
   New-Item -ItemType Directory -Force $dest | Out-Null
   Copy-Item $helper $dest
 }

@@ -124,7 +124,7 @@ test('T18 sanitizer: explicit schemas, integer bounds, 60-character strings and 
 });
 
 test('T18 drop orders and encoding: extras go before quest detail, inventory fit retains durability with gear',()=>{
-  const src=fs.readFileSync(new URL('../addon/NeverQuestAlone/Companion.lua',import.meta.url),'utf8');
+  const src=fs.readFileSync(new URL('../addon/Voxwarden/Companion.lua',import.meta.url),'utf8');
   const order=name=>[...src.match(new RegExp(`local ${name} = \\{([\\s\\S]*?)\\}`))[1].matchAll(/"([^"]+)"/g)].map(m=>m[1]);
   const normal=order('DROP_ORDER'), inv=order('INV_DROP_ORDER');
   for(const k of ['rewards','durability','rested','hearth','talents']) assert.ok(normal.indexOf(k)<normal.indexOf('quests.obj.done'),k);

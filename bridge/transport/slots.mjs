@@ -5,7 +5,7 @@
 // doorbells: sig/ctl/present.wav and the bell_*.wav files (PROTOCOL §3), which
 // the client only sees if they exist when the UI loads.
 // publish side (bridge): the same slot table into every slot's Inbox.lua and
-// into NeverQuestAlone/Inbox.lua. Slot files are derived data: no fsync (PRD §9.5).
+// into Voxwarden/Inbox.lua. Slot files are derived data: no fsync (PRD §9.5).
 import fs from 'node:fs';
 import path from 'node:path';
 import { BELLS, signalPaths } from './signals.mjs';
@@ -15,19 +15,19 @@ export const SLOT_COUNT = 200;
 export const SLOT_PREFIX = 'NQA_S';
 // The slots' one row in the game's AddOns list: a category, which the addon
 // folds once (Settings.lua P.FoldParts, the same name as ns.SLOT_CATEGORY).
-export const SLOT_CATEGORY = 'NeverQuestAlone Parts';
+export const SLOT_CATEGORY = 'Voxwarden Parts';
 // Each slot's icon there, once that row is unfolded: the addon's own, never
 // the red question mark the list gives an addon that names none.
-export const SLOT_ICON = 'Interface\\AddOns\\NeverQuestAlone\\Media\\NeverQuestAlone';
+export const SLOT_ICON = 'Interface\\AddOns\\Voxwarden\\Media\\Voxwarden';
 export const slotName = i => `${SLOT_PREFIX}${String(i).padStart(3, '0')}`;
 // What a slot's Inbox.lua holds until the bridge writes one.
 export const SLOT_PLACEHOLDER = 'NQA_SlotData = nil\n';
 
 // A slot's TOC. The list shows its title, and its notes on hover, so those
 // are the player's words (docs/STYLE.md, where "slot" is a plumbing word).
-// Its Group is its own name: left to the client, a slot joins NeverQuestAlone's group
+// Its Group is its own name: left to the client, a slot joins Voxwarden's group
 // (named alike, and needing it), and 0.5.2's list showed all 200, each with a
-// check box, under NeverQuestAlone's row. With a Group of its own and the Category,
+// check box, under Voxwarden's row. With a Group of its own and the Category,
 // each sits under that category's row instead (Blizzard_AddOnList's
 // AddonList_Update), and its row's menu items "Disable All AddOns" and
 // "Enable All AddOns" (the game's ADDON_LIST_DISABLE_CATEGORY and
@@ -38,13 +38,13 @@ export function slotToc(i, iface) {
   const n = String(i).padStart(3, '0');
   return [
     `## Interface: ${iface}`,
-    `## Title: NeverQuestAlone Part ${n}`,
-    '## Notes: A part of NeverQuestAlone that brings replies into the game. Leave it checked.',
+    `## Title: Voxwarden Part ${n}`,
+    '## Notes: A part of Voxwarden that brings replies into the game. Leave it checked.',
     `## Category: ${SLOT_CATEGORY}`,
     `## Group: ${slotName(i)}`,
     `## IconTexture: ${SLOT_ICON}`,
     '## LoadOnDemand: 1',
-    '## Dependencies: NeverQuestAlone',
+    '## Dependencies: Voxwarden',
     '',
     'Inbox.lua',
     '',
@@ -256,7 +256,7 @@ export function foldSlotCategory(flavorDir, category = SLOT_CATEGORY) {
 
 /**
  * The parts' row in the game's AddOns list, folded at install (C-119), so a new
- * player's first character select shows one folded "NeverQuestAlone Parts" row, not
+ * player's first character select shows one folded "Voxwarden Parts" row, not
  * 200 parts above their own addons. Once per install: recorded in the installer's
  * config file (partsFolded, by the category's name, as the addon's backstop remembers
  * it), so a player who unfolds it keeps it open through a later install. Only while
@@ -383,6 +383,6 @@ export function writeSlots(addonsDir, slotText, inboxText, { count = SLOT_COUNT,
   const lo = Math.max(1, from | 0), hi = Math.min(count, to | 0);
   for (let i = lo; i <= hi; i++) write(path.join(addonsDir, slotName(i), 'Inbox.lua'), slotText);
   for (const [a, b] of blank) for (let i = Math.max(1, a); i <= Math.min(count, b); i++) write(path.join(addonsDir, slotName(i), 'Inbox.lua'), EMPTY_SLOT);
-  write(path.join(addonsDir, 'NeverQuestAlone', 'Inbox.lua'), inboxText);
+  write(path.join(addonsDir, 'Voxwarden', 'Inbox.lua'), inboxText);
   return { bytes, errors, files, written, retries: retry.stats() };
 }

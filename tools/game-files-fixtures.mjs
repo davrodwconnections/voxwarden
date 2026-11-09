@@ -2,7 +2,7 @@
 // The game-files parity fixtures (open-shell PRD §2; lane 2a): for each request parity case's reply
 // (tools/last-request-fixtures.mjs, on bench-turn's harness), the files the game gets: every slot
 // folder, the outbox and the reload inbox, as paths and bytes, with times, the bridge's random
-// epochs and its version normalized. Until the shell and the WoW plugin are split, NeverQuestAlone
+// epochs and its version normalized. Until the shell and the WoW plugin are split, Voxwarden
 // must write the game exactly these.
 //
 // A fixture is {about, files, texts}: files maps each path to the sha256 (first 16 hex) of its
@@ -68,7 +68,7 @@ export function gameFiles({ addonsDir, stateDir }) {
     for (const [from, to, id] of list) files[`${key} [${from}-${to}]`] = id;
   }
   const one = (name, file) => { files[name] = fs.existsSync(file) ? keep(normalize(fs.readFileSync(file, 'utf8'))) : null; };
-  one('NeverQuestAlone/Inbox.lua', path.join(addonsDir, 'NeverQuestAlone', 'Inbox.lua'));
+  one('Voxwarden/Inbox.lua', path.join(addonsDir, 'Voxwarden', 'Inbox.lua'));
   one('<bridge state>/outbox.jsonl', path.join(stateDir, 'outbox.jsonl'));
   return { files, texts: Object.fromEntries(Object.entries(texts).sort(([a], [b]) => a.localeCompare(b))) };
 }

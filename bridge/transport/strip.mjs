@@ -1,6 +1,6 @@
 // The strip decoder in JavaScript (docs/PROTOCOL.md §2.1), for pictures the
 // bridge reads itself, such as the game's own screenshots (docs/ADDON-FIRST.md).
-// It follows NeverQuestAlone Capture's StripDecoder.swift rule for rule: a cell is read
+// It follows Voxwarden Capture's StripDecoder.swift rule for rule: a cell is read
 // at its centre, a channel is on at 128 or more, and the geometry (top-left
 // corner and cell pitch) is measured from the magic's colour runs, then fitted
 // to the colour changes along the first row.

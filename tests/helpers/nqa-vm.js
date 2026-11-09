@@ -1,11 +1,11 @@
 'use strict';
-// A fengari VM running the real NeverQuestAlone addon (addon/NeverQuestAlone, every file in its
+// A fengari VM running the real Voxwarden addon (addon/Voxwarden, every file in its
 // TOC order) on upstream's WoW stub (tests/wow_stub.lua), plus:
 //   - the Forever APIs the stub lacks (SOUNDKIT, FlashClientIcon, EventRegistry,
 //     DEFAULT_CHAT_FRAME, combat lockdown, ...), as build 70009 has them;
 //   - a timer queue that honours delays: STUB.Advance(seconds) runs every
 //     C_Timer.After callback and ticker that falls due, in time order;
-//   - traps for everything NeverQuestAlone must never call (SendChatMessage, RunScript,
+//   - traps for everything Voxwarden must never call (SendChatMessage, RunScript,
 //     loadstring, ...): each call is recorded in STUB.forbidden and raises.
 // The addon's private table is passed in as NS, so tests can read its state;
 // in the game nothing of it is global (PRD TB5).
@@ -16,8 +16,8 @@ const assert = require('node:assert/strict');
 const { lua, lauxlib, lualib, to_luastring, to_jsstring } = require('fengari');
 
 const ROOT = path.join(__dirname, '..', '..');
-const ADDON = path.join(ROOT, 'addon', 'NeverQuestAlone');
-const SIG = 'Interface\\AddOns\\NeverQuestAlone\\sig\\';
+const ADDON = path.join(ROOT, 'addon', 'Voxwarden');
+const SIG = 'Interface\\AddOns\\Voxwarden\\sig\\';
 const CELLS_PER_ROW = 200;
 
 // A Lua string literal holding exactly these UTF-8 bytes (control and high
@@ -34,7 +34,7 @@ function lstr(s) {
 }
 
 function tocFiles() {
-  const toc = fs.readFileSync(path.join(ADDON, 'NeverQuestAlone.toc'), 'utf8');
+  const toc = fs.readFileSync(path.join(ADDON, 'Voxwarden.toc'), 'utf8');
   return toc.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#') && l.endsWith('.lua'));
 }
 
@@ -451,7 +451,7 @@ const TRAPS = `
 local function Trap(name)
 	return function()
 		table.insert(STUB.forbidden, name)
-		error("NeverQuestAlone must never call " .. name, 2)
+		error("Voxwarden must never call " .. name, 2)
 	end
 end
 SendChatMessage = Trap("SendChatMessage")
@@ -482,8 +482,8 @@ function newVM(opts = {}) {
   };
   // Load one addon file the way the client does: (addonName, addonTable).
   const loadFile = (src, name) => {
-    check(lauxlib.luaL_loadbuffer(L, to_luastring(src), null, to_luastring('@NeverQuestAlone/' + name)), 'Lua load ' + name);
-    lua.lua_pushstring(L, to_luastring('NeverQuestAlone'));
+    check(lauxlib.luaL_loadbuffer(L, to_luastring(src), null, to_luastring('@Voxwarden/' + name)), 'Lua load ' + name);
+    lua.lua_pushstring(L, to_luastring('Voxwarden'));
     lua.lua_getglobal(L, to_luastring('NS'));
     check(lua.lua_pcall(L, 2, 0, 0), 'Lua error in ' + name);
   };
@@ -561,7 +561,7 @@ function newVM(opts = {}) {
     L, run, evaluate, json, num,
     bool: (expr) => evaluate(`(${expr}) and true or false`) === 'true',
     login() {
-      run('STUB.FireEvent("ADDON_LOADED", "NeverQuestAlone"); STUB.FireEvent("PLAYER_LOGIN")');
+      run('STUB.FireEvent("ADDON_LOADED", "Voxwarden"); STUB.FireEvent("PLAYER_LOGIN")');
       return vm;
     },
     advance(sec) { run(`STUB.Advance(${sec})`); return vm; },

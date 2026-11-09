@@ -147,8 +147,8 @@ test('egress (fix-102): a stopped guard refuses even the AI\'s own host with EGR
   assert.deepEqual([c.kind, c.code, c.retryable], ['egress_blocked', EGRESS_STOPPED, false]);
   assert.equal(needsRestart(c), true);
   const l = userLine(c, { provider: 'Anthropic' });
-  assert.equal(l.headline, 'NeverQuestAlone needs a restart.');
-  assert.equal(l.detail, 'Quit and reopen the NeverQuestAlone app.');
+  assert.equal(l.headline, 'Voxwarden needs a restart.');
+  assert.equal(l.detail, 'Quit and reopen the Voxwarden app.');
   assert.equal(l.action.id, 'restart');
   assert.doesNotMatch(`${l.headline} ${l.detail}`, /internet|can.t reach/i);
   // A live guard refusing the AI's own host (an allowlist that lost it) is the app's fault too.

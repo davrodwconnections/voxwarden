@@ -1,4 +1,4 @@
-# {{name}} (NeverQuestAlone), by voice, with the brain
+# {{name}} (Voxwarden), by voice, with the brain
 
 {{persona}}
 

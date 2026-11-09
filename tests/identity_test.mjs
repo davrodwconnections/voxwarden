@@ -15,6 +15,7 @@ import { pluginConfig, signedRefusal, signs, RESERVED } from '../app/desktop/scr
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const WOW = read('plugins/wow/identity.json');
+const UPSTREAM = { appId: 'com.neverquestalone.app', keychainService: 'NeverQuestAlone' };
 const EXAMPLE = read('plugins/example/identity.json');
 
 function tree(t, files) {
@@ -94,7 +95,7 @@ test('identity: electron-builder\'s config from it; an identity with no feed or 
     publish: null,
   });
   const wow = pluginConfig('wow', WOW);
-  assert.deepEqual(wow.mac, { extraResources: [{ from: '../../bridge/capture/mac/build-public/NeverQuestAlone Capture.app', to: 'NeverQuestAlone Capture.app' }], signIgnore: ['/Contents/Resources/NeverQuestAlone Capture\\.app(/|$)'] });
+  assert.deepEqual(wow.mac, { extraResources: [{ from: '../../bridge/capture/mac/build-public/Voxwarden Capture.app', to: 'Voxwarden Capture.app' }], signIgnore: ['/Contents/Resources/Voxwarden Capture\\.app(/|$)'] });
 });
 
 test('identity: a signed build goes out under names of its own: never NeverQuestAlone\'s in an app with another name, the example\'s, nor another plugin\'s; an unsigned one may', (t) => {
@@ -110,13 +111,13 @@ test('identity: a signed build goes out under names of its own: never NeverQuest
   assert.equal(refusal('example', EXAMPLE, {}), null, 'unsigned: a developer\'s build of the example');
   // NeverQuestAlone's two reserved names, whatever the plugin is called and with no plugin of this repo
   // beside it (a public fork): refused in an app with another name; NeverQuestAlone's own build passes.
-  assert.deepEqual(RESERVED, [['appId', WOW.appId], ['keychainService', WOW.keychainService]]);
+  assert.deepEqual(RESERVED, [['appId', UPSTREAM.appId], ['keychainService', UPSTREAM.keychainService]]);
   const fork = tree(t, { 'plugins/mine/identity.json': {} });
   const renamed = { ...EXAMPLE, productName: 'Mine', name: 'mine', appId: 'com.mine.app', keychainService: 'Mine' };
   for (const plugin of ['mine', 'wow']) {
     for (const r of [root, fork]) {
-      assert.match(signedRefusal({ plugin, identity: { ...renamed, appId: WOW.appId }, env: signed, root: r }), /the app id "com\.neverquestalone\.app" is NeverQuestAlone's/, plugin);
-      assert.match(signedRefusal({ plugin, identity: { ...renamed, keychainService: WOW.keychainService }, env: signed, root: r }), /the key store service "NeverQuestAlone" is NeverQuestAlone's/, plugin);
+      assert.match(signedRefusal({ plugin, identity: { ...renamed, appId: UPSTREAM.appId }, env: signed, root: r }), /the app id "com\.neverquestalone\.app" is NeverQuestAlone's/, plugin);
+      assert.match(signedRefusal({ plugin, identity: { ...renamed, keychainService: UPSTREAM.keychainService }, env: signed, root: r }), /the key store service "NeverQuestAlone" is NeverQuestAlone's/, plugin);
     }
   }
   assert.equal(signedRefusal({ plugin: 'mine', identity: renamed, env: signed, root: fork }), null, 'a fork under names of its own');

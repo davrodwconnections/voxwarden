@@ -1,6 +1,6 @@
 // The packaged Mac app's check of its capture helper's peer check, for the self-test (main.mjs; code
 // health BR-01), and of the app's own check the other way round (code health LS-03 / peer check): the
-// helper NeverQuestAlone ships serves nothing but this app, and this app hears nothing but that helper.
+// helper Voxwarden ships serves nothing but this app, and this app hears nothing but that helper.
 // Four launches of it, each through LaunchServices with boot's arguments (transport/capture.mjs
 // launchApp: open -n -g -a), with -W to wait for it to exit and its stdout and stderr in files (open's
 // exit code isn't the helper's, so its lines say which exit it took), each on a socket of its own in a
@@ -31,7 +31,7 @@ import { spawn } from 'node:child_process';
 
 /** How long each launch may take; the four run at once. */
 export const GATE_MS = 10_000;
-/** The stranger: a program that isn't NeverQuestAlone, listening (or connecting) in a process of its own. */
+/** The stranger: a program that isn't Voxwarden, listening (or connecting) in a process of its own. */
 export const STRANGER = '/usr/bin/nc';
 /**
  * How long the listener's stranger may stay connected before it's called served: longer than the app's
@@ -188,7 +188,7 @@ export async function captureGate({ helper, team = null, createCapture = null, t
     ]);
     return {
       handshake: a.handshake,
-      strangerRefused: !!b.listened && !b.served && /^NeverQuestAlone Capture: refused: /m.test(b.err),
+      strangerRefused: !!b.listened && !b.served && /^Voxwarden Capture: refused: /m.test(b.err),
       argsRefused: !!c.listened && !c.served && jsonLines(c.out).some(ev => ev.kind === 'args_refused'),
       // The other way round: nc, connecting first, closed by the app's listener (it went by itself, nothing
       // reached it, it never counted as connected, and the listener said why); then the helper got through.

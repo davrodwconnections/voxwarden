@@ -3,7 +3,7 @@
 // and render it the way the Mac compositor might show it: at the native 4 px
 // cell, or scaled (bilinear) to another pitch, below a title bar, over a busy
 // background, with noise and a gamma curve.
-// [code health AD-11] The shipped encoder (addon/NeverQuestAlone/Codec.lua, magic C7 2C), so
+// [code health AD-11] The shipped encoder (addon/Voxwarden/Codec.lua, magic C7 2C), so
 // the decoder tests read what the game draws; magic2 0x1A stands in for upstream's strip.
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +11,7 @@ const zlib = require('zlib');
 const fengari = require('fengari');
 const { lua, lauxlib, lualib, to_luastring, to_jsstring } = fengari;
 
-const CODEC = path.join(__dirname, '..', '..', 'addon', 'NeverQuestAlone', 'Codec.lua');
+const CODEC = path.join(__dirname, '..', '..', 'addon', 'Voxwarden', 'Codec.lua');
 
 // magic2: the second magic byte, for an upstream fixture (0x1A); the shipped codec's (0x2C) by default.
 function encodeWithLua(id, payload, magic2) {

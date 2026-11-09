@@ -79,10 +79,10 @@ test('the label: a child of the strip, in the UI\'s own scale, takes no clicks; 
   assert.equal(vm.evaluate('NQAStripLabel.mouse'), 'false', 'clicks go to the world under it');
   assert.equal(vm.evaluate('NQAStripLabel.template'), 'TooltipBackdropTemplate', 'the game\'s tooltip frame, as the small bar and the reply banner');
   const words = vm.evaluate('NQAStripLabel.words.text');
-  assert.equal(words, 'Sending to the NeverQuestAlone app…');
+  assert.equal(words, 'Sending to the Voxwarden app…');
   assert.ok(words.split(/\s+/).length <= 6, words);
   assert.doesNotMatch(words, /\bBones\b|\bNQA\b|\bstrip\b|\bpixel/i, 'one name, and no plumbing words (docs/STYLE.md §2.1, §10)');
-  assert.equal(vm.evaluate('NQAStripLabel.mark.texture'), 'Interface\\AddOns\\NeverQuestAlone\\Media\\NeverQuestAlone', 'the mark players know from the HUD and the AddOns list');
+  assert.equal(vm.evaluate('NQAStripLabel.mark.texture'), 'Interface\\AddOns\\Voxwarden\\Media\\Voxwarden', 'the mark players know from the HUD and the AddOns list');
   // None of the strip's own cells: the capture's reading of them (vm.strip) is untouched.
   assert.equal(vm.evaluate('(function() for _, t in ipairs(NQAStrip.textures) do if t == NQAStripLabel.mark then return "cell" end end return "own" end)()'), 'own');
   // Hidden with the strip: nothing else shows or hides it.
@@ -146,7 +146,7 @@ test('turning screen reading off: while the strip tells the app so one last time
   vm.slash('stream off');
   vm.send('where is the forge?');
   assert.ok(vm.strip(), 'on again: the message on the strip');
-  assert.equal(vm.evaluate('NQAStripLabel.words.text'), 'Sending to the NeverQuestAlone app…');
+  assert.equal(vm.evaluate('NQAStripLabel.words.text'), 'Sending to the Voxwarden app…');
   assert.ok('Stopping screen reading…'.split(/\s+/).length <= 6);
 });
 
@@ -160,11 +160,11 @@ function cellsFor(rows, id = 300 + rows) {
   let seed = rows * 7919;
   const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   const text = Array.from({ length: 75 * rows - 10 }, () => String.fromCharCode(32 + Math.floor(rand() * 95))).join('');
-  const cells = encodeWithCodec('NeverQuestAlone', id, text);
+  const cells = encodeWithCodec('Voxwarden', id, text);
   assert.equal(Math.ceil(cells.length / 200), rows);
   return { cells, text, id };
 }
-const FAKE = encodeWithCodec('NeverQuestAlone', 999, 'not the strip: '.repeat(14)); // three rows of a valid frame
+const FAKE = encodeWithCodec('Voxwarden', 999, 'not the strip: '.repeat(14)); // three rows of a valid frame
 // A capture: s is captured pixels a strip pixel (the cells' pitch over 4); x0, y0 where the strip's
 // top-left is in the picture (y0 under a title bar of that height).
 const CAPTURES = [
@@ -331,7 +331,7 @@ test('the zone\'s gap covers every decoder\'s reach: its search box, the widest 
   const read = f => fs.readFileSync(path.join(REPO, f), 'utf8');
   const c = read('bridge/capture/windows/decoder.c'), swift = read('bridge/capture/mac/Sources/StripDecoder/StripDecoder.swift');
   const capture = read('bridge/capture/mac/Sources/NQACapture/Capture.swift'), x11 = read('bridge/capture_x11.py'), js = read('bridge/transport/strip.mjs');
-  const transport = read('addon/NeverQuestAlone/Transport.lua');
+  const transport = read('addon/Voxwarden/Transport.lua');
   // The strip's geometry: 4-pixel cells, 200 a row, 48 rows at most.
   assert.match(transport, /local CELL, CELLS_PER_ROW, MAX_ROWS = 4, 200, 48/);
   // Every decoder: an 80-row, 32-column search (Capture.swift scales both by the display's scale), runs

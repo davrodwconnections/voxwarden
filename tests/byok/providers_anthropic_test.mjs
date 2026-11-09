@@ -44,7 +44,7 @@ test('request: the cached prefix carries cache_control ttl 1h; volatile blocks c
   const { sent } = await run('success.sse', req('claude-haiku-4-5', { maxTokens: 777, effort: null }), { provider: { requestOptions: { temperature: 0.2, top_p: 0.9, top_k: 5 } } });
   const b = sent.body;
   assert.deepEqual(b.system, [
-    { type: 'text', text: 'You are NeverQuestAlone, a skeleton guide.', cache_control: { type: 'ephemeral', ttl: '1h' } },
+    { type: 'text', text: 'You are Voxwarden, a skeleton guide.', cache_control: { type: 'ephemeral', ttl: '1h' } },
     { type: 'text', text: 'Game data: level 12 warrior in Elwynn.' },
   ]);
   assert.equal(b.stream, true);

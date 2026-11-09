@@ -20,7 +20,7 @@ import { createKeyStore } from '../../bridge/byok/security/keystore.mjs';
 import { waitFor, sleep, tmpDir } from './helpers/byok-env.mjs';
 
 const BELLS = ['push_a', 'push_b', 'alive_a', 'alive_b', 'act'];
-const bellFile = (addons, b) => path.join(addons, 'NeverQuestAlone', 'sig', 'ctl', `bell_${b}.wav`);
+const bellFile = (addons, b) => path.join(addons, 'Voxwarden', 'sig', 'ctl', `bell_${b}.wav`);
 /** Each bell's file identity: a pulse deletes and re-creates it, so a pulse changes it. */
 const bellIds = addons => BELLS.map((b) => { try { const st = fs.statSync(bellFile(addons, b)); return `${st.ino}:${st.birthtimeMs}`; } catch { return 'missing'; } });
 const allBells = addons => BELLS.every((b) => { try { return fs.lstatSync(bellFile(addons, b)).isFile(); } catch { return false; } });
@@ -29,7 +29,7 @@ const allBells = addons => BELLS.every((b) => { try { return fs.lstatSync(bellFi
 function gatewayDouble() {
   return (handlers) => ({
     kind: 'byok',
-    persona: 'NeverQuestAlone',
+    persona: 'Voxwarden',
     start() { handlers.onState({ state: 'ready', since: Date.now() }); handlers.onReady(); },
     stop() {},
     send: args => ({ runId: args.idem, status: 'started' }),
@@ -47,7 +47,7 @@ function core({ gate = true, helper = false, running = false, reported = false, 
   const calls = { sv: 0, capture: 0, check: 0, checkAt: [] };
   const said = [];
   const world = { running, reported, pids };
-  const bridge = createBridge({ transport: { slots: 3 }, sessions: { labels: { main: 'NeverQuestAlone' } } }, {
+  const bridge = createBridge({ transport: { slots: 3 }, sessions: { labels: { main: 'Voxwarden' } } }, {
     stateDir: path.join(root, 'state'), addonsDir: addons, log: (kind, f) => { if (kind === 'game-state') said.push(f); },
     gatewayFactory: gatewayDouble(),
     publisherOpts: { coalesceMs: 5, progressMs: 0 }, signalsOpts: { pulseMs: { push: 5, alive: 5, act: 5 }, actGapMs: 5 },
@@ -133,7 +133,7 @@ test('WoW closed (code health BR-15): a write under WTF/Account (a login\'s cach
   assert.equal(c.calls.check, 1, 'the start\'s ask, then a minute\'s wait');
   // The player starts WoW: it writes in its account folder.
   c.world.running = true;
-  fs.writeFileSync(path.join(sv, 'NeverQuestAlone.lua'), 'NQADB = {}\n');
+  fs.writeFileSync(path.join(sv, 'Voxwarden.lua'), 'NQADB = {}\n');
   await waitFor(() => c.bridge.status().game.state === 'up', 5000, 'woken, asked, found');
   assert.equal(c.calls.check, 2);
   assert.deepEqual(c.said.at(-1), { state: 'up', why: 'check' });

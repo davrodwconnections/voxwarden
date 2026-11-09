@@ -1,4 +1,4 @@
-// NeverQuestAlone desktop app: the window's player-facing strings (the renderer's table).
+// Voxwarden desktop app: the window's player-facing strings (the renderer's table).
 //
 // Source: the redesign's build spec (redesign v1, "the companion panel", 2026-09-30), §5 and §6,
 // cleaned against docs/STYLE.md. English only (v1). The bar: brevity beats completeness. A screen
@@ -16,7 +16,7 @@
 // Plurals are { one, other } objects, picked with Intl.PluralRules('en').
 //
 // Placeholders (filled with F.fill):
-//   {name}       companion(), the companion's name ("NeverQuestAlone" unless renamed; STYLE §11)
+//   {name}       companion(), the companion's name ("Voxwarden" unless renamed; STYLE §11)
 //   {ai}         the AI's name: Claude, ChatGPT, Grok, Gemini; Other's service by its host
 //   {co}         the AI company: Anthropic, OpenAI, xAI, Google; Other's service by its host
 //   {host}       Other's service, by the host of its address (openrouter.ai, localhost:11434)
@@ -150,7 +150,7 @@ window.BonesStrings = {
       overloadedLine: '{co} is busy. Test again soon.',
       rateLimitedLine: '{co} is limiting this key. Test again in a minute.',
       networkLine: 'Can’t reach {co}. Check your internet, then click Test again.',
-      restartLine: 'NeverQuestAlone needs a restart before it can reach {co}.', // the app's own connections stopped (fix-102), never the internet
+      restartLine: 'Voxwarden needs a restart before it can reach {co}.', // the app's own connections stopped (fix-102), never the internet
       keystoreErrorLine: 'The key works but wasn’t saved.',
       readFailedLine: 'Your saved key couldn’t be read.',
       termsRequiredLine: 'Agree to {co}’s terms again.',
@@ -214,14 +214,14 @@ window.BonesStrings = {
   },
 
   // The picture of where your data goes (step 2's sheet, Your data): your computer, straight to the
-  // AI company; NeverQuestAlone struck out; what's in a message. Short labels; the words are its alt.
+  // AI company; Voxwarden struck out; what's in a message. Short labels; the words are its alt.
   flow: {
     youLine: 'Your {os:Mac}',
-    usLine: 'NeverQuestAlone',
+    usLine: 'Voxwarden',
     usSubLine: 'Gets nothing: no account, no tracking',
     inMessageLine: 'In each message: your question, level, zone, quests and gear.',
-    aria: 'Your messages and game data go from your {os:Mac} straight to {co}. Nothing goes to NeverQuestAlone.',
-    ariaOther: 'Your messages and game data go from your {os:Mac} to the service you connect. Nothing goes to NeverQuestAlone.',
+    aria: 'Your messages and game data go from your {os:Mac} straight to {co}. Nothing goes to Voxwarden.',
+    ariaOther: 'Your messages and game data go from your {os:Mac} to the service you connect. Nothing goes to Voxwarden.',
   },
 
   // The per-AI extras for the sheet, by manifest id (spec §6.1): one line each. What each AI company
@@ -285,7 +285,7 @@ window.BonesStrings = {
     network: { headline: 'Can’t reach {host}.' },
     outOfCredit: { headline: 'No credit at {host}.' },
     busy: { headline: '{host} is busy right now.' },
-    restart: { headline: 'NeverQuestAlone needs a restart before it can reach {host}.' }, // the app's own connections stopped (fix-102)
+    restart: { headline: 'Voxwarden needs a restart before it can reach {host}.' }, // the app's own connections stopped (fix-102)
     keystoreError: { headline: 'The key couldn’t be saved.' },
     cancelled: { headline: 'Nothing was sent or saved.' },
     failed: { headline: '{host} didn’t answer the test.' },
@@ -338,7 +338,7 @@ window.BonesStrings = {
       updateBtn: 'Update',
       updateWhenClosedBtn: 'Update when WoW closes',
       updateAgainBtn: 'Update again',
-      epermLine: 'NeverQuestAlone can’t write to AddOns.',
+      epermLine: 'Voxwarden can’t write to AddOns.',
       chooseAnotherBtn: 'Choose another folder…',
       copyCommandBtn: 'Copy the command',
       epermAskBody: 'Ask an administrator to give your account permission to change WoW’s AddOns folder.',
@@ -356,7 +356,7 @@ window.BonesStrings = {
       title: 'Allow Screen Recording',
       notAskedLine: 'Reads only the top of WoW’s window, so your messages go at once. Never keeps or sends pictures.', // the sheet's words; pictures, never "nothing": your messages still go to your AI (CL-words-63, CL-player-48)
       allowBtn: 'Allow',
-      askedLine: 'Click {os:Open System Settings}, then turn on NeverQuestAlone.',
+      askedLine: 'Click {os:Open System Settings}, then turn on Voxwarden.',
       deniedLine: 'Screen Recording is off.',
       paneLine: 'Turn it on in {os:System Settings} > {os:Privacy & Security} > {pane}.',
       openSettingsBtn: 'Open {os:System Settings}',
@@ -372,7 +372,7 @@ window.BonesStrings = {
     startWow: {
       title: 'Turn on the addon',
       startStep: 'Start WoW.',
-      addonsStep: 'At character select, click {game:AddOns} and make sure NeverQuestAlone is checked.',
+      addonsStep: 'At character select, click {game:AddOns} and make sure Voxwarden is checked.',
       loginStep: 'Log in. {name} shows up beside your quest tracker.',
       typeLine: 'In chat, type:',
       code: '/nqa hi',
@@ -392,7 +392,7 @@ window.BonesStrings = {
       errorLine: 'Once it’s fixed, say hi again.',
       ifaceMismatchLine: 'The addon’s out of date.', // what's true (the game's own words); its button is the fix (CL-words-81)
       checkUpdatesBtn: 'Check for updates',
-      damagedLine: 'NeverQuestAlone is damaged.',
+      damagedLine: 'Voxwarden is damaged.',
       openDownloadBtn: 'Open download page',
       cornerLineWin: 'Keep the top of WoW’s window on screen.',
       checkAgainBtn: 'Check again',
@@ -405,7 +405,7 @@ window.BonesStrings = {
         minimized: 'WoW is minimized. Click it in the taskbar.',
         blocked: 'Another program blocks screen reading. Close it.',
         noWindow: 'The app can’t find WoW’s window yet. Click Check again in a moment.',
-        nothingSeen: 'If WoW was open during the install, restart it. If {game:AddOns} marks NeverQuestAlone out of date, check {game:Load out of date AddOns}.',
+        nothingSeen: 'If WoW was open during the install, restart it. If {game:AddOns} marks Voxwarden out of date, check {game:Load out of date AddOns}.',
       },
     },
     // A card over the list while the AI isn't ready (the no-credit words; the rest are homeCard.*).
@@ -422,9 +422,9 @@ window.BonesStrings = {
     mapLine: 'In game, click {game:Say Hi}, then ask for a route.',
     mapLineReplied: 'In game, ask {name} for a route.', // after a first reply Say Hi is gone from the HUD (ON-26)
     liveLine: '{name} is in your game. You’re set.', // said once in #live; the addon's hello finishes setup (2026-10-05)
-    menuBarLine: 'NeverQuestAlone stays in your menu bar.',
-    menuBarLineWin: 'NeverQuestAlone stays in your system tray.',
-    noLoginLine: 'Start NeverQuestAlone yourself when you play.',
+    menuBarLine: 'Voxwarden stays in your menu bar.',
+    menuBarLineWin: 'Voxwarden stays in your system tray.',
+    noLoginLine: 'Start Voxwarden yourself when you play.',
     homeBtn: 'Open Home',
   },
 
@@ -789,12 +789,12 @@ window.BonesStrings = {
       state: {
         idle: 'Not checked yet.',
         checking: 'Checking…',
-        none: 'NeverQuestAlone is up to date.',
+        none: 'Voxwarden is up to date.',
         available: 'A new version is available.',
         availableVersion: 'Version {version} is available.',
         downloading: 'Downloading…',
         downloadingPct: 'Downloading {pct}%',
-        ready: 'Ready. It installs when you quit NeverQuestAlone.',
+        ready: 'Ready. It installs when you quit Voxwarden.',
         readyAuto: 'Ready. It installs by itself while WoW is closed.', // Automatic updates (Settings)
         error: 'The last check didn’t finish.',
         off: 'Updates work in the installed app.',
@@ -814,19 +814,19 @@ window.BonesStrings = {
     },
     about: {
       title: 'About',
-      lead: 'NeverQuestAlone {version}.',
+      lead: 'Voxwarden {version}.',
       legalBtn: 'Show legal and credits',
       hideLegalBtn: 'Hide legal and credits',
-      unofficialBody: 'NeverQuestAlone is not affiliated with or endorsed by Blizzard Entertainment, Anthropic, OpenAI, Google, xAI or OpenRouter.',
+      unofficialBody: 'Voxwarden is not affiliated with or endorsed by Blizzard Entertainment, Anthropic, OpenAI, Google, xAI or OpenRouter.',
       trademarkBody: 'World of Warcraft and Blizzard Entertainment are trademarks or registered trademarks of Blizzard Entertainment, Inc., in the U.S. and/or other countries.',
       trademarksLink: 'Open Blizzard’s trademark guidelines',
       creditsTitle: 'Credits',
-      upstreamBody: 'Built on chelinho139/wow-ai (MIT): the addon and the way it talks to the app.',
+      upstreamBody: 'Maintained by David Rodriguez. Based on NeverQuestAlone and chelinho139/wow-ai (MIT); their code credits are preserved.',
       upstreamLink: 'Open wow-ai on GitHub',
       codexBody: '0xInuarashi’s wow-forever-codex, for how WoW loads addons.',
       codexLink: 'Open wow-forever-codex on GitHub',
       licenseTitle: 'License',
-      licenseNote: 'The license covers NeverQuestAlone’s code, not its name or its artwork: the skull logo, the icons and the pictures.',
+      licenseNote: 'The license covers Voxwarden’s code, not its name or its artwork: the original shield mark, icons and pictures.',
       noticesTitle: 'Third-party notices',
       noticesBody: 'Electron and Chromium’s notices ship beside the app as LICENSE.electron.txt and LICENSES.chromium.html.',
       packageCol: 'Package',
@@ -838,14 +838,14 @@ window.BonesStrings = {
     },
     uninstall: {
       title: 'Uninstall',
-      lead: 'Removes NeverQuestAlone from this {os:Mac}.',
+      lead: 'Removes Voxwarden from this {os:Mac}.',
       appItem: 'The app and its data',
       keysItem: 'Your saved keys',
       loginItem: 'Start at login and Screen Recording',
       loginItemWin: 'Start at login',
       addonLabel: 'The addon in WoW',
       uninstallBtn: 'Uninstall',
-      doneLine: 'Uninstalled. NeverQuestAlone is quitting.',
+      doneLine: 'Uninstalled. Voxwarden is quitting.',
     },
   },
 
@@ -885,13 +885,13 @@ window.BonesStrings = {
     unknown_provider: 'That AI isn’t available.',
     unknown_model: 'That model isn’t available for this AI.',
     no_models: 'No models are listed yet. Check the key, or start the app that runs your model, then try again.',
-    unsupported: 'This version of NeverQuestAlone can’t do that yet.',
-    bridge_unavailable: 'NeverQuestAlone couldn’t start. Quit and reopen it.',
+    unsupported: 'This version of Voxwarden can’t do that yet.',
+    bridge_unavailable: 'Voxwarden couldn’t start. Quit and reopen it.',
     dev_build: 'This works in the installed app, not in a development run.',
     wow_running: 'Quit World of Warcraft first. The game loads new addons only when it starts.',
-    wow_not_found: 'NeverQuestAlone couldn’t find World of Warcraft: Forever.',
+    wow_not_found: 'Voxwarden couldn’t find World of Warcraft: Forever.',
     install_failed: 'The addon didn’t install. Check again, or copy diagnostics if it keeps happening.',
-    restart_failed: 'The addon is installed, but NeverQuestAlone couldn’t start with it. Quit and reopen it.',
+    restart_failed: 'The addon is installed, but Voxwarden couldn’t start with it. Quit and reopen it.',
     no_update_ready: 'No update is ready yet.',
     not_configured: 'Updates aren’t set up in this version.',
     not_packaged: 'Updates work in the installed app.',
@@ -902,9 +902,9 @@ window.BonesStrings = {
     not_found: 'Nothing found.',
     forbidden: 'That request wasn’t allowed.',
     no_link: 'That page isn’t available.',
-    not_needed: 'NeverQuestAlone is running.',
+    not_needed: 'Voxwarden is running.',
     failed: 'That didn’t work. If it keeps happening, copy diagnostics and report a bug.',
-    windowFailed: 'NeverQuestAlone couldn’t start this window.',
+    windowFailed: 'Voxwarden couldn’t start this window.',
   },
 
   // Shared buttons and lines.
@@ -942,15 +942,15 @@ window.BonesStrings = {
       body: 'Open it again. If it keeps happening, copy diagnostics and report a bug.',
     },
     notRunning: {
-      headline: 'NeverQuestAlone couldn’t start.',
+      headline: 'Voxwarden couldn’t start.',
       detail: 'Quit and reopen it.',
       detailAlreadyRunning: 'Another copy’s open.',
-      detailMissingPart: 'A file is missing. Download NeverQuestAlone again.',
-      detailChanged: 'This copy was changed. Download NeverQuestAlone again.',
+      detailMissingPart: 'A file is missing. Download Voxwarden again.',
+      detailChanged: 'This copy was changed. Download Voxwarden again.',
       quitReopenBtn: 'Quit and reopen',
       quitCopyBtn: 'Quit this copy',
       // The engine started and then stopped while the window stayed (fix-102): not a failed start.
-      stoppedHeadline: 'NeverQuestAlone needs a restart.',
+      stoppedHeadline: 'Voxwarden needs a restart.',
       detailStopped: 'Your keys and settings are kept.',
     },
     osTokens: {

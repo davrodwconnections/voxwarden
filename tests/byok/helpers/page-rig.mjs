@@ -15,7 +15,7 @@ import { loadManifests } from '../../../bridge/byok/providers/index.mjs';
 const PLAYER_TEXT = Object.fromEntries(loadManifests().map(m => [m.id, playerCard(m)]));
 
 /**
- * welcome: stay on the welcome a first setup opens on; by default the rig clicks its Set up NeverQuestAlone,
+ * welcome: stay on the welcome a first setup opens on; by default the rig clicks its Set up Voxwarden,
  * as a player does, so a test starts at Connect your AI.
  * store: the shell's settings as main keeps them across windows ({seen: [...]}, like app-state.json);
  * pass the same one to a second rig to open the window again after closing it.
@@ -51,12 +51,12 @@ export async function pageRig({ state = {}, onboarded = true, welcome = false, h
     loginItem: { set: (open) => { loginSets.push(open); return { ok: true, supported: true, openAtLogin: open }; }, get: () => ({ supported: true, openAtLogin: false }) },
     notify: n => notified.push(n),
     openGame: () => { calls.push(['openGame']); return { ok: true }; },
-    moveToApplications: () => ({ ok: false, error: 'move_failed', headline: 'Couldn’t move it.', detail: 'Drag NeverQuestAlone into Applications, then open it from there.' }),
-    info: () => ({ name: 'NeverQuestAlone', version: '0.1.0', electron: '44', chrome: '152', node: '24', platform, arch: 'arm64', packaged: false, apiMode, apiReason, loginItem: { supported: true, openAtLogin: false }, license: 'MIT', osRelease: '24.1.0', appleSilicon: true, inApplications: null, workPc: false, ...info }),
+    moveToApplications: () => ({ ok: false, error: 'move_failed', headline: 'Couldn’t move it.', detail: 'Drag Voxwarden into Applications, then open it from there.' }),
+    info: () => ({ name: 'Voxwarden', version: '0.1.0', electron: '44', chrome: '152', node: '24', platform, arch: 'arm64', packaged: false, apiMode, apiReason, loginItem: { supported: true, openAtLogin: false }, license: 'MIT', osRelease: '24.1.0', appleSilicon: true, inApplications: null, workPc: false, ...info }),
     notices: () => [],
-    companion: () => 'NeverQuestAlone',
+    companion: () => 'Voxwarden',
     releasesUrl: () => releases,
-    uninstallShell: r => ({ ...r, quitting: true, finish: 'To finish, drag NeverQuestAlone from Applications to the Trash.' }),
+    uninstallShell: r => ({ ...r, quitting: true, finish: 'To finish, drag Voxwarden from Applications to the Trash.' }),
     pickFolder: async () => (typeof pickFolder === 'function' ? pickFolder() : pickFolder),
     relaunch: () => { calls.push(['relaunch']); return { ok: true }; },
     quitApp: () => { calls.push(['quitApp']); return { ok: true }; },

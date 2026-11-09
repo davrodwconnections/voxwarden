@@ -13,11 +13,11 @@ import Security
 // the bridge strip records or status lines. An app with no team (unsigned, ad hoc) asks nothing, as
 // this helper's own check skips when it has none.
 //
-// The helper's own (NeverQuestAlone's build only, below).
+// The helper's own (Voxwarden's build only, below).
 
 /// nil when the peer of the socket on `fd` meets `requirement`; else why not, for one stderr line, which
 /// names the peer `who` and says it isn't `wanted`.
-func peerRefusal(fd: Int32, requirement text: String, who: String = "the socket's owner", wanted: String = "NeverQuestAlone") -> String? {
+func peerRefusal(fd: Int32, requirement text: String, who: String = "the socket's owner", wanted: String = "Voxwarden") -> String? {
     var token = audit_token_t()
     var len = socklen_t(MemoryLayout<audit_token_t>.size)
     guard getsockopt(fd, SOL_LOCAL, LOCAL_PEERTOKEN, &token, &len) == 0, Int(len) == MemoryLayout<audit_token_t>.size else {
@@ -37,7 +37,7 @@ func peerRefusal(fd: Int32, requirement text: String, who: String = "the socket'
 }
 
 #if NQA_PUBLIC_ID
-// NeverQuestAlone's helper serves nothing but the NeverQuestAlone app (code health BR-01, the old
+// Voxwarden's helper serves nothing but the Voxwarden app (code health BR-01, the old
 // audit LS-01). It holds the player's Screen Recording grant, so a process that launched it with a
 // socket of its own would get pictures under that grant. main.swift asks right after connecting,
 // before the lock, the capture or any permission call, and sends nothing to a socket that fails.
@@ -53,7 +53,7 @@ func peerRefusal(fd: Int32, requirement text: String, who: String = "the socket'
 /// The app's code signing identifier (app/desktop/electron-builder.yml appId). The bridge listens on
 /// the socket in the app's main process (main.mjs imports boot.mjs); a bridge moved into one of the
 /// app's helper processes would need that helper's identifier here.
-let nqaAppIdentifier = "com.neverquestalone.app"
+let nqaAppIdentifier = "com.voxwarden.app"
 
 /// What the socket's owner must satisfy for a helper signed by `team`: the app's identifier and that
 /// team's Developer ID, in the form transport/capture.mjs builds for the helper.
@@ -85,7 +85,7 @@ func ownTeam() -> OwnTeam {
     return .team(team)
 }
 
-/// nil when the NeverQuestAlone app serves the socket on `fd`, or when this helper has no team to ask
+/// nil when the Voxwarden app serves the socket on `fd`, or when this helper has no team to ask
 /// for (ad hoc, a local identity); else why not.
 func peerRefusal(fd: Int32) -> String? {
     switch ownTeam() {

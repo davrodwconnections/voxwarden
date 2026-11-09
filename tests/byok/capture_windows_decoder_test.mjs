@@ -45,10 +45,10 @@ function decode(files, extra = []) {
 const US = '\x1F', RS = '\x1E';
 const record = (i, body) => ['a1b2c3d4', 'c3f9a1', String(i), '', '', 'Hyjal route', body].join(US);
 
-test('decodes NeverQuestAlone strips (C7 2C) at 4, 5 and 6.5 px cells', { skip }, () => {
+test('decodes Voxwarden strips (C7 2C) at 4, 5 and 6.5 px cells', { skip }, () => {
   const text = record(41, 'fastest way to Hyjal from here? ✓ Mulgore → Hyjal');
   const pitches = [4, 5, 6.5];
-  const files = pitches.map(p => fixture(`pitch-${p}`, encodeWithCodec('NeverQuestAlone', 41, text), { pitch: p, width: 1400, height: 400 }));
+  const files = pitches.map(p => fixture(`pitch-${p}`, encodeWithCodec('Voxwarden', 41, text), { pitch: p, width: 1400, height: 400 }));
   decode(files).forEach((r, i) => {
     assert.equal(r.status, 'decoded', JSON.stringify(r));
     assert.equal(r.id, 41);
@@ -61,7 +61,7 @@ test('decodes NeverQuestAlone strips (C7 2C) at 4, 5 and 6.5 px cells', { skip }
 test('the magic is configurable: upstream C7 1A only with --magic C71A, and never by default', { skip }, () => {
   const text = record(3, 'strip v1');
   const upstream = fixture('magic-c71a', encodeWithCodec('upstream', 3, text), { pitch: 4 });
-  const fork = fixture('magic-c72c', encodeWithCodec('NeverQuestAlone', 3, text), { pitch: 4 });
+  const fork = fixture('magic-c72c', encodeWithCodec('Voxwarden', 3, text), { pitch: 4 });
   const [a, b] = decode([upstream, fork]);
   assert.equal(a.status, 'none', 'C7 1A must not decode under the default C7 2C');
   assert.equal(b.text, text);
@@ -80,12 +80,12 @@ test('decodes through noise, gamma, a title bar, a busy background and an offset
     ['crop-900x300', { pitch: 4, width: 900, height: 300, jitter: 20 }],
   ];
   const text = record(12, 'héllo wörld — "quotes" & \\backslash\\ ✓');
-  const files = cases.map(([name, opts]) => fixture(name, encodeWithCodec('NeverQuestAlone', 12, text), opts));
+  const files = cases.map(([name, opts]) => fixture(name, encodeWithCodec('Voxwarden', 12, text), opts));
   decode(files).forEach((r, i) => assert.equal(r.text, text, `${cases[i][0]}: ${JSON.stringify(r).slice(0, 200)}`));
 });
 
 test('a damaged strip is rejected on its checksum; no strip is nothing', { skip }, () => {
-  const cells = encodeWithCodec('NeverQuestAlone', 9, record(9, 'checksum victim'));
+  const cells = encodeWithCodec('Voxwarden', 9, record(9, 'checksum victim'));
   cells[40] = (cells[40] + 3) % 8; // flip bits in the payload
   const bad = fixture('damaged', cells, { pitch: 4 });
   const bad5 = fixture('damaged-5', cells, { pitch: 5, jitter: 20 });
@@ -108,7 +108,7 @@ test('a length past the strip is rejected, not read out of bounds', { skip }, ()
 test('a near-full strip (two records, ~40 rows) decodes at a fractional pitch', { skip }, () => {
   const long = 'x'.repeat(1400) + ' middle ' + 'y'.repeat(1400);
   const text = record(7, long.slice(0, 1500)) + RS + record(8, long.slice(1500, 2880));
-  const [r] = decode([fixture('long-5.4', encodeWithCodec('NeverQuestAlone', 8, text), { pitch: 5.4, height: 800, jitter: 20 })]);
+  const [r] = decode([fixture('long-5.4', encodeWithCodec('Voxwarden', 8, text), { pitch: 5.4, height: 800, jitter: 20 })]);
   assert.equal(r.status, 'decoded', JSON.stringify(r).slice(0, 300));
   assert.equal(r.text, text);
 });
@@ -124,7 +124,7 @@ test('sweep: long strips at 16 pitches (3.6 to 9 px) and offsets', { skip }, () 
       jitter: Math.floor(rand() * 50), gamma: rand() < 0.3 ? 0.7 + rand() * 0.8 : 0, seed: i + 1,
       busyBackground: i % 4 === 0, height: 900, width: 1900 };
     const text = record(100 + i, 'z'.repeat(200 + Math.floor(rand() * 2400)));
-    cases.push({ i, pitch, text, file: fixture(`sweep-${i}`, encodeWithCodec('NeverQuestAlone', 100 + i, text), opts) });
+    cases.push({ i, pitch, text, file: fixture(`sweep-${i}`, encodeWithCodec('Voxwarden', 100 + i, text), opts) });
   }
   const results = decode(cases.map(c => c.file));
   const failures = cases.filter((c, k) => results[k].text !== c.text).map((c, k) => ({ i: c.i, pitch: c.pitch, got: results[k].status, reason: results[k].reason }));
@@ -135,8 +135,8 @@ test('payload text reaches JSON intact: separators, quotes, non-ASCII; invalid U
   const good = record(21, 'tab\there, newline\nthere, NUL-free ✓ 🐉 "q" \\ end') + RS + 'x';
   const bad = Buffer.from([0x41, 0xFF, 0x42, 0xE2, 0x82, 0x43, 0xC0, 0xAF, 0xED, 0xA0, 0x80, 0xF0, 0x9F, 0x90, 0x89, 0xF4, 0x90, 0x80, 0x80, 0xE2, 0x82]);
   // Cross-check: the JS encoder agrees with Codec.lua cell for cell.
-  assert.deepEqual(encodeBytes(21, Buffer.from(good, 'utf8')), encodeWithCodec('NeverQuestAlone', 21, good));
-  const [a, b] = decode([fixture('utf8-good', encodeWithCodec('NeverQuestAlone', 21, good), { pitch: 4 }),
+  assert.deepEqual(encodeBytes(21, Buffer.from(good, 'utf8')), encodeWithCodec('Voxwarden', 21, good));
+  const [a, b] = decode([fixture('utf8-good', encodeWithCodec('Voxwarden', 21, good), { pitch: 4 }),
     fixture('utf8-bad', encodeBytes(22, bad), { pitch: 4 })]);
   assert.equal(a.text, good);
   assert.equal(b.status, 'decoded');
@@ -146,7 +146,7 @@ test('payload text reaches JSON intact: separators, quotes, non-ASCII; invalid U
 
 test('the hint: the last good geometry decodes directly, and a stale one falls back to the search', { skip }, () => {
   const text = record(30, 'hinted');
-  const file = fixture('hint', encodeWithCodec('NeverQuestAlone', 30, text), { pitch: 5, x0: 2, y0: 10, titleBar: 10 });
+  const file = fixture('hint', encodeWithCodec('Voxwarden', 30, text), { pitch: 5, x0: 2, y0: 10, titleBar: 10 });
   const [free] = decode([file]);
   const g = free.geometry;
   assert.equal(decode([file], ['--hint', `${g.x0},${g.y0},${g.pitch}`])[0].text, text);
@@ -158,7 +158,7 @@ test('the hint: the last good geometry decodes directly, and a stale one falls b
 
 test('a 900x300 crop decodes in well under the 250 ms tick (idle frames too)', { skip }, () => {
   const text = record(40, 'q'.repeat(2000));
-  const strip = fixture('perf-strip', encodeWithCodec('NeverQuestAlone', 40, text), { pitch: 4, width: 900, height: 300 });
+  const strip = fixture('perf-strip', encodeWithCodec('Voxwarden', 40, text), { pitch: 4, width: 900, height: 300 });
   const idle = fixture('perf-idle', [], { pitch: 4, width: 900, height: 300, busyBackground: true });
   const [a, b] = decode([strip, idle], ['--repeat', '50']);
   assert.equal(a.text, text);
@@ -168,7 +168,7 @@ test('a 900x300 crop decodes in well under the 250 ms tick (idle frames too)', {
 
 test('DXGI\'s pixels: 4-byte BGRA (and RGBA) with padded rows decode like RGB', { skip }, () => {
   const text = record(50, 'bgra ✓ → padded rows ' + 'b'.repeat(400));
-  const cells = encodeWithCodec('NeverQuestAlone', 50, text);
+  const cells = encodeWithCodec('Voxwarden', 50, text);
   const files = [fixture('bgra-4', cells, { pitch: 4, width: 900, height: 300, jitter: 20 }),
     fixture('bgra-5.4', cells, { pitch: 5.4, width: 1300, height: 360, jitter: 20, gamma: 1.1 })];
   for (const flags of [[], ['--bgra-stride', '0'], ['--bgra-stride', String(1300 * 4 + 192)], ['--rgba-stride', String(1300 * 4 + 64)]]) {
@@ -184,7 +184,7 @@ test('the crop: 900 x 300 cuts a scaled strip off; the helper grows it to the st
   for (const pitch of [5, 6.5, 9]) {
     // The whole strip: x0 + 200 p + 8 wide and y0 + 48 p + 8 tall (x0, y0 < 2 px here), at least 900 x 300.
     const crop = { width: Math.ceil(200 * pitch) + 8, height: Math.max(300, Math.ceil(48 * pitch) + 8) };
-    const file = fixture(`crop-${pitch}`, encodeWithCodec('NeverQuestAlone', 41, long), { pitch, width: 2000, height: 700, jitter: 20 });
+    const file = fixture(`crop-${pitch}`, encodeWithCodec('Voxwarden', 41, long), { pitch, width: 2000, height: 700, jitter: 20 });
     // One frame at the old fixed crop: cut off, read as truncated (the defect).
     const [cut] = decode([file], ['--crop', '900x300']);
     assert.deepEqual([cut.status, cut.reason], ['rejected', 'truncated'], `pitch ${pitch}: ${JSON.stringify(cut).slice(0, 200)}`);
@@ -201,12 +201,12 @@ test('the crop: 900 x 300 cuts a scaled strip off; the helper grows it to the st
 
 test('the crop: a native 4 px strip keeps 900 x 300; a short scaled frame sizes it for the next; no strip keeps it', { skip }, () => {
   const long = record(42, 'n'.repeat(1200));
-  const native = fixture('crop-native', encodeWithCodec('NeverQuestAlone', 42, long), { pitch: 4, width: 2000, height: 700 });
+  const native = fixture('crop-native', encodeWithCodec('Voxwarden', 42, long), { pitch: 4, width: 2000, height: 700 });
   const [a] = decode([native], ['--crop', '900x300', '--frames', '3']);
   assert.equal(a.text, long);
   assert.deepEqual(a.crop, { width: 900, height: 300 });
   // 20 bytes fit in one 900 px row at 5 px: it decodes in the first frame, and sizes the crop anyway.
-  const short = fixture('crop-short-5', encodeWithCodec('NeverQuestAlone', 43, 'hi'), { pitch: 5, width: 2000, height: 700 });
+  const short = fixture('crop-short-5', encodeWithCodec('Voxwarden', 43, 'hi'), { pitch: 5, width: 2000, height: 700 });
   const [b] = decode([short], ['--crop', '900x300']);
   assert.equal(b.text, 'hi');
   assert.deepEqual(decode([short], ['--crop', '900x300', '--frames', '2'])[0].crop, { width: 1008, height: 300 });
@@ -214,7 +214,7 @@ test('the crop: a native 4 px strip keeps 900 x 300; a short scaled frame sizes 
   const [c] = decode([idle], ['--crop', '900x300', '--frames', '3']);
   assert.deepEqual([c.status, c.crop], ['none', { width: 900, height: 300 }]);
   // Never past the window: a small window clamps the crop.
-  const small = fixture('crop-small', encodeWithCodec('NeverQuestAlone', 44, long), { pitch: 5, width: 950, height: 260 });
+  const small = fixture('crop-small', encodeWithCodec('Voxwarden', 44, long), { pitch: 5, width: 950, height: 260 });
   assert.deepEqual(decode([small], ['--crop', '900x300', '--frames', '2'])[0].crop, { width: 950, height: 260 });
 });
 

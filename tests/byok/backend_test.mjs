@@ -28,7 +28,7 @@ async function started(opts) {
   return env;
 }
 
-test('backend: start says ready, then onReady once; the persona is the app\'s (NeverQuestAlone by default); the gateway\'s RPC is gone (code health BR-22)', async () => {
+test('backend: start says ready, then onReady once; the persona is the app\'s (Voxwarden by default); the gateway\'s RPC is gone (code health BR-22)', async () => {
   const keystore = await canaryKeystore();
   const env = await started({ keystore, config: { persona: { name: 'Mortimer' } } });
   try {
@@ -40,9 +40,9 @@ test('backend: start says ready, then onReady once; the persona is the app\'s (N
     assert.equal(env.backend.request, undefined, 'no request(method, params)');
     assert.equal(env.backend.kind, 'byok');
     assert.equal(env.backend.displayName, 'Anthropic');
-    // The default persona is NeverQuestAlone.
+    // The default persona is Voxwarden.
     const d = await started({ keystore });
-    assert.equal(d.backend.persona, 'NeverQuestAlone');
+    assert.equal(d.backend.persona, 'Voxwarden');
     await d.backend.stop();
   } finally { await env.backend.stop(); }
 });
@@ -373,7 +373,7 @@ test('backend: transient errors retry at most twice, honoring retry-after, with 
     await waitFor(() => env.chats('final').length === 1, 5000, 'final after two retries');
     const items = env.events.filter(e => e.event === 'agent' && e.payload.stream === 'item').map(e => e.payload.data);
     assert.equal(items.length, 2);
-    assert.ok(items.every(d => d.kind === 'tool' && d.phase === 'start' && /^Anthropic asked NeverQuestAlone to slow down\. Trying again in 1 second\.$/.test(d.title)), JSON.stringify(items));
+    assert.ok(items.every(d => d.kind === 'tool' && d.phase === 'start' && /^Anthropic asked Voxwarden to slow down\. Trying again in 1 second\.$/.test(d.title)), JSON.stringify(items));
     assert.equal(chatCalls(mock).length, 3);
   } finally { await env.backend.stop(); await mock.close(); }
 
@@ -466,7 +466,7 @@ test('backend: slotExtras: the addon\'s caps, bridge.provider, bridge.usage (wit
         { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
       ],
       efforts: 'off low medium high xhigh max',
-      auth: 'key', keyState: 'ok', privacy: 'cloud-no-train', product: 'NeverQuestAlone', companion: 'NeverQuestAlone',
+      auth: 'key', keyState: 'ok', privacy: 'cloud-no-train', product: 'Voxwarden', companion: 'Voxwarden',
     });
     assert.equal(x.bridge.usage.capMicros, 500000, 'the cap the player set');
     assert.equal(x.bridge.usage.capTurns, undefined, 'no typed-message cap');
@@ -517,7 +517,7 @@ test('backend: a stop mid-run leaves the turn for the next start: booked at its 
     const said = b.backend.outcomes([p.idem, p2.idem]);
     for (const [o, x] of [[said[0], p], [said[1], p2]]) {
       assert.deepEqual(o, { runId: x.idem, chatId: CHAT, state: 'interrupted', errorKind: 'interrupted',
-        errorMessage: 'NeverQuestAlone restarted before NeverQuestAlone answered.', action: 'send_again' });
+        errorMessage: 'Voxwarden restarted before Voxwarden answered.', action: 'send_again' });
     }
     assert.deepEqual(b.backend.outcomes([p.idem, p2.idem]), said, 'the same each time: it changes nothing');
     assert.deepEqual(b.backend.send(p), { runId: p.idem, status: 'interrupted' }, 'the core\'s resend: not sent again');
@@ -663,7 +663,7 @@ test('backend: helpers: actions, settings', () => {
   const s = settingsOf({ byok: { provider: 'openai', effort: 'turbo', persona: { name: 'x' }, privacy: { identity: true } } });
   assert.equal(s.provider, 'openai');
   assert.equal(s.effort, 'low', 'an unknown effort is the default, low (DB22)');
-  assert.equal(s.persona, 'NeverQuestAlone', 'an unusable persona name is the default');
+  assert.equal(s.persona, 'Voxwarden', 'an unusable persona name is the default');
   assert.equal(s.identity, true);
   assert.equal(settingsOf({}).historyBudget, 1500);
   assert.ok(manifestsAt('http://127.0.0.1:1').find(m => m.id === 'anthropic').baseUrl.startsWith('http://127.0.0.1:1/'));
@@ -681,7 +681,7 @@ test('backend: automatic turns are counted apart from typed ones and never cappe
     const block = readDataBlock(content);
     assert.equal(block.data.game.recap.kind, 'session');
     assert.equal(block.data.game.recap.end.level, 9);
-    assert.ok(content.endsWith('\n\n[NeverQuestAlone event] Session recap. Sent by the app after the game closed, not typed by the player.'));
+    assert.ok(content.endsWith('\n\n[Voxwarden event] Session recap. Sent by the app after the game closed, not typed by the player.'));
     const log = fs.readFileSync(path.join(env.dataDir, 'memory', 'Tavi-Testrealm', 'log.md'), 'utf8');
     assert.match(log, /nqa:m /, 'the session line, written by the logbook (RT-5)');
     // An event after the recap goes too (no automatic-turn cap), and a typed turn beside them.
@@ -786,7 +786,7 @@ const responsesCalls = mock => mock.requests.filter(r => r.method === 'POST' && 
 const insideOutput = (provider, model) => effectivePrice({ provider, model, input: 0.1, output: 0.5, reasoningInOutput: true });
 const openaiEnv = (mock, extra = {}) => started({ url: mock.url, config: { provider: 'openai' }, keystore: null, manifests: manifestsAt(mock.url, ['openai']),
   priceBook: { priceFor: insideOutput, worstPriceFor: p => insideOutput(p, null) }, ...extra });
-const NO_REPLY = "NeverQuestAlone couldn't finish a reply. Ask again, or lower Thinking.";
+const NO_REPLY = "Voxwarden couldn't finish a reply. Ask again, or lower Thinking.";
 
 test('empty reply (Anthropic): thinking that used the whole ceiling (max_tokens, no text) is tried once more at the lowest level (Off on Sonnet 5.5), same reply ceiling; the reply goes through and both attempts count', async () => {
   let n = 0;
@@ -1021,7 +1021,7 @@ test('empty reply (Other): a model that never answers, even with High\'s room, e
     await env.backend.send(sendParams(CHAT, 'e_7n', 'where now?'));
     const err = await waitFor(() => env.chats('error')[0], 5000, 'the error');
     assert.deepEqual([err.errorKind, err.errorMessage, err.action],
-      ['empty_reply', "NeverQuestAlone couldn't finish a reply. Ask again, or pick another model in the NeverQuestAlone app.", 'retry']);
+      ['empty_reply', "Voxwarden couldn't finish a reply. Ask again, or pick another model in the Voxwarden app.", 'retry']);
     assert.deepEqual(customCalls(mock).map(c => c.max_tokens), [1200, 9392]);
     assert.equal(env.backend.status().lastError.code, 'length', 'MAX_TOKENS is the ceiling');
   } finally { await env.backend.stop(); await mock.close(); }

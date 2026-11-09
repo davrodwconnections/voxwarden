@@ -1,12 +1,12 @@
 # Voice companion
 
-Talk with NeverQuestAlone while you play, the way ChatGPT's voice mode works: speak whenever you like, interrupt it mid-sentence, and it answers out loud in about half a second. It reads your game data from the NeverQuestAlone app, so it knows your quests, place, gear, bags and more, and it can put pins and routes on your map.
+Talk with Voxwarden while you play, the way ChatGPT's voice mode works: speak whenever you like, interrupt it mid-sentence, and it answers out loud in about half a second. It reads your game data from the Voxwarden app, so it knows your quests, place, gear, bags and more, and it can put pins and routes on your map.
 
 It never plays for you: its tools only read your game data and draw on your map, like the companion in the chat window.
 
 ## What you need
 
-- The NeverQuestAlone app running, and the addon in game. For the voice to see changes between typed messages, type `/nqa live on` in game.
+- The Voxwarden app running, and the addon in game. For the voice to see changes between typed messages, type `/nqa live on` in game.
 - An OpenAI API key with credit. The voice uses the OpenAI Realtime API (`gpt-realtime-2.1-mini` by default), billed per use: a short question and answer costs about a cent.
 - Node 22.19 or later, and a browser (Chrome or Edge).
 - Headphones, so it doesn't hear itself or the game.
@@ -29,7 +29,7 @@ The key comes from `OPENAI_API_KEY`, or from `--key-file`: a file that holds the
 | `--voice` | `marin` | The model's voice |
 | `--lang` | `Spanish` | The language it speaks unless you speak another |
 | `--web` | off | Lets it read Wowhead tooltips for World of Warcraft: Forever, by quest, item, spell or NPC id from your game data |
-| `--app-data` | the app's folder | Where the app keeps `config.json` and `bridge/` (`%APPDATA%\NeverQuestAlone` on Windows) |
+| `--app-data` | the app's folder | Where the app keeps `config.json` and `bridge/` (`%APPDATA%\Voxwarden` on Windows) |
 
 ## How it works
 

@@ -57,7 +57,7 @@ function makeCtx({ confirm = true, api: apiOverride = null, updaterState = 'idle
     loginItem: { set: open => ({ ok: true, openAtLogin: open }) },
     info: () => ({ version: '0.1.0', electron: '44.4.5', chrome: '152', node: '24.21.0', platform: 'darwin', arch: 'arm64', packaged: false, apiMode: 'mock' }),
     notices: () => [],
-    companion: () => 'NeverQuestAlone',
+    companion: () => 'Voxwarden',
     releasesUrl: () => null,
     uninstallShell: r => ({ ...r, quitting: true }),
     shellLog: () => [],
@@ -231,7 +231,7 @@ test('fix-102: Quit and reopen also runs while the bridge says it needs a restar
   const relaunch = () => { relaunched += 1; return { ok: true }; };
   // A key test the app's own guard refused (desktopLine's restart): its card's Quit and reopen works.
   const base = wrapApi(createMockApi({ delayMs: 0 }));
-  const restartLine = { ok: false, error: 'egress_blocked', action: 'restart', headline: 'NeverQuestAlone needs a restart.', detail: 'Click Quit and reopen.' };
+  const restartLine = { ok: false, error: 'egress_blocked', action: 'restart', headline: 'Voxwarden needs a restart.', detail: 'Click Quit and reopen.' };
   const a = makeCtx({ api: { ...base, testKey: async () => restartLine } });
   a.ctx.relaunch = relaunch;
   assert.equal((await a.ipc.call('relaunch')).error, 'not_needed', 'nothing asked for it yet');
@@ -299,7 +299,7 @@ test('deleteKey and connectCustom: confirm-gated; declined means the API is neve
   assert.equal(apiCalled(no.calls, 'deleteKey'), false);
   assert.equal(apiCalled(no.calls, 'connectCustom'), false);
   assert.equal(no.confirms[0].destructive, true, 'deleting a key defaults to Cancel');
-  assert.equal(no.confirms[1].message, 'Connect NeverQuestAlone to openrouter.ai?');
+  assert.equal(no.confirms[1].message, 'Connect Voxwarden to openrouter.ai?');
   assert.match(no.confirms[1].detail, /https:\/\/openrouter\.ai\/api\/v1/);
   assert.ok(!JSON.stringify(no.confirms).includes('CANARY'), 'the key is never in a dialog');
   const yes = makeCtx({ confirm: true });
@@ -395,7 +395,7 @@ test('setCaps: the player\'s own daily spend limit only (no limits of ours): a n
   // A raise asks, and a no changes nothing.
   assert.equal((await ipc.call('setCaps', { dailyUsd: 3 })).error, 'cancelled');
   assert.equal(confirms[0].message, 'Raise your daily spend limit to $3.00?');
-  assert.equal(confirms[0].detail, 'It’s $2.50 now. NeverQuestAlone keeps sending until today’s spend reaches $3.00.');
+  assert.equal(confirms[0].detail, 'It’s $2.50 now. Voxwarden keeps sending until today’s spend reaches $3.00.');
   assert.equal(confirms[0].okLabel, 'Raise limit');
   assert.equal(confirms[0].cancelLabel, 'Cancel');
   assert.deepEqual(await ipc.call('caps'), { dailyUsd: 2.5, spentTodayMicros: 180_000 }, 'declined: unchanged');
@@ -414,10 +414,10 @@ test('setCaps: the player\'s own daily spend limit only (no limits of ours): a n
   assert.equal(yes.confirms.length, 0, 'lowering, then the same: no dialog');
   assert.equal((await yes.ipc.call('setCaps', { dailyUsd: 0.75 })).ok, true);
   assert.equal(yes.confirms[0].message, 'Raise your daily spend limit to $0.75?');
-  assert.equal(yes.confirms[0].detail, 'It’s $0.50 now. NeverQuestAlone keeps sending until today’s spend reaches $0.75.');
+  assert.equal(yes.confirms[0].detail, 'It’s $0.50 now. Voxwarden keeps sending until today’s spend reaches $0.75.');
   assert.equal((await yes.ipc.call('setCaps', { dailyUsd: null })).ok, true);
   assert.equal(yes.confirms[1].message, 'Turn off your daily spend limit?', 'turning it off is the largest raise');
-  assert.equal(yes.confirms[1].detail, 'It’s $0.75 a day now. Without it, NeverQuestAlone keeps answering whatever today costs. Your AI company’s own limits still apply.');
+  assert.equal(yes.confirms[1].detail, 'It’s $0.75 a day now. Without it, Voxwarden keeps answering whatever today costs. Your AI company’s own limits still apply.');
   assert.equal(yes.confirms[1].okLabel, 'Turn off limit');
   assert.deepEqual(await yes.ctx.api.caps(), { dailyUsd: null, spentTodayMicros: 180_000 });
   assert.deepEqual(yes.calls.filter(c => c[0] === 'setCaps').map(c => c[1]), [{ dailyUsd: 2 }, { dailyUsd: 0.5 }, { dailyUsd: 0.5 }, { dailyUsd: 0.75 }, { dailyUsd: null }], 'only dailyUsd reaches the bridge');
@@ -427,7 +427,7 @@ test('setCaps: the player\'s own daily spend limit only (no limits of ours): a n
   await blind.ipc.call('setCaps', { dailyUsd: null });
   assert.deepEqual(blind.confirms.map(c => c.message), ['Set your daily spend limit to $0.10?', 'Turn off your daily spend limit?']);
   assert.equal(blind.confirms[0].okLabel, 'Set limit');
-  assert.equal(blind.confirms[1].detail, 'Without it, NeverQuestAlone keeps answering whatever today costs. Your AI company’s own limits still apply.');
+  assert.equal(blind.confirms[1].detail, 'Without it, Voxwarden keeps answering whatever today costs. Your AI company’s own limits still apply.');
 });
 
 test('setPrivacy: six booleans, all required; no confirm', async () => {
@@ -482,7 +482,7 @@ test('forgetMemory({all: true}): every character the memory lists, after one con
   const no = makeCtx({ confirm: false });
   assert.equal((await no.ipc.call('forgetMemory', { all: true })).error, 'cancelled');
   assert.equal(no.confirms.length, 1, 'one dialog for every character');
-  assert.equal(no.confirms[0].message, 'Forget what NeverQuestAlone remembers about all your characters?');
+  assert.equal(no.confirms[0].message, 'Forget what Voxwarden remembers about all your characters?');
   assert.equal(no.confirms[0].detail, 'The notes on this computer are deleted. Chat history stays. This can’t be undone.');
   assert.equal(no.confirms[0].okLabel, 'Forget all');
   assert.equal(no.confirms[0].destructive, true);
@@ -620,7 +620,7 @@ test('uninstall is confirm-gated and lists what goes', async () => {
   const no = makeCtx({ confirm: false });
   // The last step is in the confirm too (D-18), and the plumbing words aren't.
   await no.ipc.call('uninstall', { removeAddon: true });
-  assert.match(no.confirms[0].detail, /To finish, drag NeverQuestAlone from Applications to the Trash\./);
+  assert.match(no.confirms[0].detail, /To finish, drag Voxwarden from Applications to the Trash\./);
   assert.doesNotMatch(no.confirms[0].detail, /slot|doorbell/i);
   no.confirms.length = 0;
   assert.equal((await no.ipc.call('uninstall', { removeAddon: true })).error, 'cancelled');
@@ -629,7 +629,7 @@ test('uninstall is confirm-gated and lists what goes', async () => {
   assert.match(no.confirms[0].detail, /Keychain/);
   assert.match(no.confirms[0].detail, /Screen Recording/);
   // The addon takes the game's copy of the chats with it (code health AP-11); without it, neither goes.
-  assert.ok(no.confirms[0].detail.split('\n').includes('• the NeverQuestAlone addon, its folders and chats in WoW'), no.confirms[0].detail);
+  assert.ok(no.confirms[0].detail.split('\n').includes('• the Voxwarden addon, its folders and chats in WoW'), no.confirms[0].detail);
   await no.ipc.call('uninstall', { removeAddon: false });
   assert.doesNotMatch(no.confirms.at(-1).detail, /addon|in WoW/);
   const yes = makeCtx({ confirm: true });
@@ -663,7 +663,7 @@ test('diagnostics: the shell adds its lines, and the whole bundle is redacted (k
     assert.ok(!text.includes('CANARY'));
     assert.ok(!text.includes(home));
     assert.ok(!text.includes('abc.def.ghi'));
-    assert.match(text, /NeverQuestAlone \(desktop shell\)/);
+    assert.match(text, /Voxwarden \(desktop shell\)/);
     assert.ok(text.includes(`~${path.sep}secret.txt`), 'the home folder is ~, the rest of the path as it was');
   }
   const { ctx } = makeCtx({ api });
@@ -712,7 +712,7 @@ test('loadApi: forced mock, NQA_MOCK_API=1, missing module → mock with the rea
 });
 
 test('loadApi: a packaged app without its bridge is an error state, never the demo data (a key saved there would go nowhere)', async () => {
-  const appDir = path.join(os.tmpdir(), 'NeverQuestAlone.app', 'Contents', 'Resources', 'app.asar');
+  const appDir = path.join(os.tmpdir(), 'Voxwarden.app', 'Contents', 'Resources', 'app.asar');
   const logged = [];
   const out = await loadApi({ appDir, packaged: true, env: {}, exists: () => false, log: l => logged.push(l) });
   assert.equal(out.mode, 'error');
@@ -748,7 +748,7 @@ function fakeBridge(overrides = {}) {
   };
   return { calls, imported, importer, find: name => calls.find(c => c[0] === name) };
 }
-const PATHS = { userData: '/u/NeverQuestAlone', state: '/u/NeverQuestAlone/bridge', logs: '/u/logs', appDir: APP, version: '0.1.0' };
+const PATHS = { userData: '/u/Voxwarden', state: '/u/Voxwarden/bridge', logs: '/u/logs', appDir: APP, version: '0.1.0' };
 const inRepo = p => p.endsWith(path.join('bridge', 'byok', 'boot.mjs'));
 
 test('loadApi: main boots the bridge through bridge/byok/boot.mjs with its folders, log and opener', async () => {
@@ -785,7 +785,7 @@ test('loadApi: a module that fails to load or start is an error state, never dem
   assert.equal(noBoot.mode, 'error');
   assert.match(noBoot.reason, /bootByok/, 'only the export boot.mjs names counts');
 
-  const throws = await loadApi({ appDir: APP, env: {}, exists: inRepo, importer: fakeBridge({ boot: { bootByok: async () => { throw Object.assign(new Error('Another copy of NeverQuestAlone is already running for this World of Warcraft (pid 42). Quit it first.'), { code: 'BRIDGE_RUNNING' }); } } }).importer, paths: PATHS });
+  const throws = await loadApi({ appDir: APP, env: {}, exists: inRepo, importer: fakeBridge({ boot: { bootByok: async () => { throw Object.assign(new Error('Another copy of Voxwarden is already running for this World of Warcraft (pid 42). Quit it first.'), { code: 'BRIDGE_RUNNING' }); } } }).importer, paths: PATHS });
   assert.equal(throws.mode, 'error');
   assert.match(throws.reason, /already running/, 'the plain message reaches the window');
 
@@ -798,7 +798,7 @@ test('loadApi: a module that fails to load or start is an error state, never dem
 
 test('loadApi: a packaged app imports bridge code only from inside app.asar (SC-9)', async () => {
   // A per-user NSIS install: the folder beside app.asar is the player's to write.
-  const appDir = path.join(os.tmpdir(), 'Programs', 'NeverQuestAlone', 'resources', 'app.asar');
+  const appDir = path.join(os.tmpdir(), 'Programs', 'Voxwarden', 'resources', 'app.asar');
   const planted = path.resolve(appDir, '..', '..', 'bridge', 'byok', 'boot.mjs');
   const f = fakeBridge();
   const looked = [];

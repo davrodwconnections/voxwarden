@@ -2,7 +2,7 @@
 // npm run capture:build: builds this computer's screen-reading helper, where a run from source looks for it
 // (bridge/transport/capture.mjs). Arguments after `--` go to the build script.
 //
-//   macOS    mac/build-app.sh: the helper app, signed with your "NeverQuestAlone Local Code Signing"
+//   macOS    mac/build-app.sh: the helper app, signed with your "Voxwarden Local Code Signing"
 //            certificate (docs/get-started.md, "Screen reading from source")
 //   Windows  windows/build.sh --native, with MinGW-w64's gcc on PATH, in Git Bash (its MSYSTEM tells): from
 //            PowerShell or cmd, `bash` can be WSL's, which can't build it

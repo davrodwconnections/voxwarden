@@ -203,7 +203,7 @@ export function createMockApi({ now = Date.now, platform = process.platform, del
       id: p.id, name: p.name, model: m.id, modelName: m.name, effort: s.choice.effort, effortSupported: !!m.effort,
       ...(m.efforts?.length ? { efforts: m.efforts.join(' ') } : {}),
       auth: isLocalP(p) ? 'local' : p.auth === 'custom' ? 'key' : p.auth, keyState: isLocalP(p) || p.auth === 'custom' ? (k && k.state === 'invalid' ? 'invalid' : 'ok') : (k ? (k.state === 'invalid' ? 'invalid' : s.keyState[p.id] === 'no_credit' ? 'no_credit' : 'ok') : 'missing'),
-      privacy: p.privacyCard.class, product: 'NeverQuestAlone', companion: s.companion ?? 'NeverQuestAlone',
+      privacy: p.privacyCard.class, product: 'Voxwarden', companion: s.companion ?? 'Voxwarden',
     };
   }
   /** The player's daily spend limit in micro-dollars, or null: none (the default). */
@@ -332,7 +332,7 @@ export function createMockApi({ now = Date.now, platform = process.platform, del
     if (s.writeError) out.store = { writeError: clone(s.writeError) };
     if (s.lastError && lastErrorView) {
       const pb = out.backend.provider;
-      const le = lastErrorView(s.lastError, { provider: pb?.name, model: pb?.modelName, companion: 'NeverQuestAlone', platform });
+      const le = lastErrorView(s.lastError, { provider: pb?.name, model: pb?.modelName, companion: 'Voxwarden', platform });
       if (le) out.backend.lastError = le;
     }
     out.view = statusView(out, { platform });
@@ -521,7 +521,7 @@ export function createMockApi({ now = Date.now, platform = process.platform, del
       };
     },
     async lastRequest(chatId) {
-      const chats = [{ id: 'c3f9a1e', title: 'NeverQuestAlone' }, { id: 'b77e012', title: 'Route planning' }];
+      const chats = [{ id: 'c3f9a1e', title: 'Voxwarden' }, { id: 'b77e012', title: 'Route planning' }];
       const id = chats.some(c => c.id === chatId) ? chatId : chats[0].id;
       return {
         chats, chatId: id, at: now() - 5 * 60e3, provider: 'anthropic', model: 'claude-haiku-4-5',

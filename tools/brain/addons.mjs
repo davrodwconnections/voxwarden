@@ -71,7 +71,7 @@ export function importAddonsIntoBrain({ brainFile, wtfDir, now = Date.now() }) {
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
  const args=process.argv.slice(2); if(args.shift()!=='import')throw Error('Usage: addons.mjs import [--wow-dir dir] [--brain file]');
- let wowDir=DEFAULT_WOW_DIR, file=brainFile(path.join(process.env.APPDATA??path.join(os.homedir(),'AppData','Roaming'),'NeverQuestAlone','dev'));
+ let wowDir=DEFAULT_WOW_DIR, file=brainFile(path.join(process.env.APPDATA??path.join(os.homedir(),'AppData','Roaming'),'Voxwarden','dev'));
  while(args.length) { const flag=args.shift(),v=args.shift(); if(!v)throw Error('Missing option value'); if(flag==='--wow-dir')wowDir=v; else if(flag==='--brain')file=v; else throw Error('Unknown option'); }
  const db=openBrain(file),start=performance.now(); try { console.log(JSON.stringify({counts:importAddons({wowDir,db}),elapsed_ms:performance.now()-start})); } finally { db.close(); }
 }

@@ -149,7 +149,7 @@ export const last = (events) => events[events.length - 1];
 
 export const REQ = Object.freeze({
   model: null,
-  system: [{ text: 'You are NeverQuestAlone, a skeleton guide.', cache: true }, { text: 'Game data: level 12 warrior in Elwynn.' }],
+  system: [{ text: 'You are Voxwarden, a skeleton guide.', cache: true }, { text: 'Game data: level 12 warrior in Elwynn.' }],
   messages: [{ role: 'user', content: 'Where do I go next?' }],
   maxTokens: 300,
   effort: 'low',

@@ -1,4 +1,4 @@
-// "Start NeverQuestAlone when I log in" (BYOK PRD §11.1 "Background", PF-2,
+// "Start Voxwarden when I log in" (BYOK PRD §11.1 "Background", PF-2,
 // §16.1 step 9, §16.3 "Uninstall").
 //   macOS, Windows  Electron's setLoginItemSettings: a login item, or the
 //                   HKCU Run value named after the app id (so the NSIS

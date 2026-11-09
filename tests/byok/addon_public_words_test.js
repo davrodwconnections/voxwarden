@@ -1,6 +1,6 @@
 'use strict';
 // The words on main's widget (the consolidation plan's commit 1, D; PRD C-04,
-// C-05, C-14, UX-5, UX-6): "NeverQuestAlone", never NeverQuestAlone, the bridge, the
+// C-05, C-14, UX-5, UX-6): "Voxwarden", never Voxwarden, the bridge, the
 // gateway, pairing or a private term (SCRUB_TERMS: tests/helpers/private-terms.js),
 // and no "he" or "his" in our own words; the companion named through ns.P; /nqa. One build since
 // the retired build went: an install's TOC stamp (PUBLIC, the app's) changes nothing.
@@ -28,9 +28,9 @@ function byokFirst(slot = {}, opts = {}) {
 
 // ---------------------------------------------------------------- the backend from load (R3)
 
-test('one build from load, whatever installed it: /nqa (no /oc), the keys\' section NeverQuestAlone, and no saved backend (0.5.3\'s is dropped at load)', () => {
+test('one build from load, whatever installed it: /nqa (no /oc), the keys\' section Voxwarden, and no saved backend (0.5.3\'s is dropped at load)', () => {
   for (const vm of [appVM(), newVM().login()]) {
-    assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'NeverQuestAlone');
+    assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'Voxwarden');
     assert.equal(vm.evaluate('SLASH_BONES1'), '/nqa');
     assert.equal(vm.evaluate('SLASH_BONES2'), '/bones', '/bones, the earlier command, still works');
     assert.equal(vm.evaluate('SLASH_BONESOC1'), null, 'no /oc');
@@ -40,7 +40,7 @@ test('one build from load, whatever installed it: /nqa (no /oc), the keys\' sect
   const older = newVM({ db: 'NQADB = { cursor = 12, reported = 12, token = "0a1b2c3d", backend = "legacy" }' }).login();
   assert.equal(older.evaluate('NQADB.backend'), null, 'dropped at load');
   assert.equal(older.evaluate('SLASH_BONES1'), '/nqa');
-  assert.equal(older.evaluate('select(2, NS.Transport.Light())'), 'Waiting to hear from the NeverQuestAlone app…');
+  assert.equal(older.evaluate('select(2, NS.Transport.Light())'), 'Waiting to hear from the Voxwarden app…');
 });
 
 test('a slot whose provider part failed (bridge.backend "byok", no provider): the app\'s words, never the retired build\'s, the bridge\'s, pairing or a private term', async (t) => {
@@ -51,7 +51,7 @@ test('a slot whose provider part failed (bridge.backend "byok", no provider): th
   assert.ok(!failed.includes('provider = {') && failed.includes('backend = "byok"'), failed);
   apply(vm, failed);
   vm.run('NS.HUD.Render()');
-  assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'Voxwarden');
   const said = [vm.evaluate('NS.HUD.h.status.text'), vm.evaluate('NS.HUD.h.sub.text'), vm.evaluate('select(2, NS.Transport.Light())')].join(' | ');
   assert.doesNotMatch(said, /bridge|pairing/i, said);
   assert.match(said, /can't reach your AI: unknown provider\./, said);
@@ -60,7 +60,7 @@ test('a slot whose provider part failed (bridge.backend "byok", no provider): th
   });
   vm.slash('');
   vm.slash('diag');
-  assert.match(notice(vm), /\nProvider: no report from NeverQuestAlone yet\n/);
+  assert.match(notice(vm), /\nProvider: no report from Voxwarden yet\n/);
   assert.doesNotMatch(notice(vm), /Gateway/);
 });
 
@@ -69,11 +69,11 @@ test('C-05: /nqa probe and /nqa state say the desktop app, never the bridge', ()
   vm.slash('');
   vm.slash('probe');
   const probe = plain(notice(vm));
-  assert.match(probe, /told NeverQuestAlone /);
+  assert.match(probe, /told Voxwarden /);
   vm.slash('state');
   const state = plain(notice(vm));
-  assert.match(state, /^.*\nNeverQuestAlone has seq /m);
-  assert.match(state, /Milestones waiting for NeverQuestAlone: \d+\. Companion (on|off); NeverQuestAlone caps: /);
+  assert.match(state, /^.*\nVoxwarden has seq /m);
+  assert.match(state, /Milestones waiting for Voxwarden: \d+\. Companion (on|off); Voxwarden caps: /);
   for (const t of [probe, state]) assert.doesNotMatch(t, /bridge/i, t);
 });
 
@@ -115,11 +115,11 @@ test('N-1: /nqa update names the desktop app, which keeps the addon up to date; 
   vm.slash('');
   vm.run('NS.UI.Update = function() STUB.updateCalled = true end');
   vm.slash('update');
-  assert.equal(notice(vm), 'The NeverQuestAlone app keeps the addon up to date.');
+  assert.equal(notice(vm), 'The Voxwarden app keeps the addon up to date.');
   assert.equal(vm.evaluate('STUB.updateCalled'), null, 'nothing asks a bridge for updates');
   assert.equal(vm.outboxWires().length, 0);
   vm.slash('update install');
-  assert.equal(notice(vm), 'The NeverQuestAlone app keeps the addon up to date.');
+  assert.equal(notice(vm), 'The Voxwarden app keeps the addon up to date.');
   assert.equal(vm.outboxWires().length, 0, 'nothing asks for updates from the game');
   vm.run('NS.UI.SetListShown(true); NS.Refresh("all")');
   assert.equal(vm.evaluate('NS.UI.ui.updateBtn'), null);
@@ -135,7 +135,7 @@ test('N-1: /nqa update names the desktop app, which keeps the addon up to date; 
 
 // ---------------------------------------------------------------- UX-5, the persona
 
-test('UX-5: the companion\'s name runs through the addon\'s own words (the window, the bindings, the map, the chat frame\'s prefix); where they mean the product, "NeverQuestAlone" stays', () => {
+test('UX-5: the companion\'s name runs through the addon\'s own words (the window, the bindings, the map, the chat frame\'s prefix); where they mean the product, "Voxwarden" stays', () => {
   const vm = byokFirst({ p: provider({ companion: 'Nova' }), companion: 'Nova' });
   vm.slash('');
   vm.run('NS.Refresh("status")');
@@ -143,18 +143,18 @@ test('UX-5: the companion\'s name runs through the addon\'s own words (the windo
   assert.equal(vm.evaluate('NS.UI.ui.hint.text'), 'Ask anything (Up Arrow brings back what you sent)', 'main\'s hint, with no name (PUI-22; the owner, 2026-10-05)');
   // The key bindings: main's names (Title Case, STYLE §6), under the product's header.
   assert.equal(vm.evaluate('BINDING_NAME_NQA_OPEN_AND_TYPE'), 'Open or Close the Window');
-  assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'Voxwarden');
   const nessa = byokFirst({ p: provider({ companion: 'Nessa' }), companion: 'Nessa' });
-  assert.equal(nessa.evaluate('NS.P("Update NeverQuestAlone, then ask NeverQuestAlone.")'), 'Update NeverQuestAlone, then ask Nessa.', 'the product\'s name survives any persona');
+  assert.equal(nessa.evaluate('NS.P("Update Voxwarden, then ask Voxwarden.")'), 'Update Voxwarden, then ask Nessa.', 'the product\'s name survives any persona');
   // Where the words mean the product, its name stays: the app, the addon, a menu path (STYLE §11).
-  assert.equal(nessa.evaluate('NS.P("NeverQuestAlone answered. Open the NeverQuestAlone app, the NeverQuestAlone addon or Options > AddOns > NeverQuestAlone.")'),
-    'Nessa answered. Open the NeverQuestAlone app, the NeverQuestAlone addon or Options > AddOns > NeverQuestAlone.');
-  assert.equal(nessa.evaluate('NS.P("50% NeverQuestAlone")'), '50% Nessa', 'a % in the words is no trouble');
-  vm.run('NS.Notify.Local(NS.P("NeverQuestAlone is hidden."))');
+  assert.equal(nessa.evaluate('NS.P("Voxwarden answered. Open the Voxwarden app, the Voxwarden addon or Options > AddOns > Voxwarden.")'),
+    'Nessa answered. Open the Voxwarden app, the Voxwarden addon or Options > AddOns > Voxwarden.');
+  assert.equal(nessa.evaluate('NS.P("50% Voxwarden")'), '50% Nessa', 'a % in the words is no trouble');
+  vm.run('NS.Notify.Local(NS.P("Voxwarden is hidden."))');
   assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[Nova]|r Nova is hidden.');
   vm.slash('help all');
   assert.ok(notice(vm).includes('Ask what to do next'), 'the help names no one');
-  vm.run('NS.Notify.Game(NS.P("Asked NeverQuestAlone."))');
+  vm.run('NS.Notify.Game(NS.P("Asked Voxwarden."))');
   assert.equal(vm.list('STUB.errors').at(-1), 'Asked Nova.');
   vm.run('table.insert(STUB.prints, "-"); NQAMap.Command("")');
   const prints = vm.list('STUB.prints');
@@ -168,10 +168,10 @@ test('UX-5: the companion\'s name runs through the addon\'s own words (the windo
   assert.equal(vm.evaluate('NS.UI.Voice("Writing", 50)'), 'Writing…');
   // A slot whose agents list names the companion, with no provider part: its name too (C2).
   const listed = confirmHello(newVM().login());
-  apply(listed, byokSlot().replace(/caps = \{[^}]*\}/, 'caps = { "state", "evt", "think", "z", "ctx" }').replace(/, provider = \{[^}]*\}, usage = \{[^}]*\}/, '').replace('name = "NeverQuestAlone"', 'name = "Nova"'));
+  apply(listed, byokSlot().replace(/caps = \{[^}]*\}/, 'caps = { "state", "evt", "think", "z", "ctx" }').replace(/, provider = \{[^}]*\}, usage = \{[^}]*\}/, '').replace('name = "Voxwarden"', 'name = "Nova"'));
   assert.equal(listed.evaluate('NS.Name()'), 'Nova');
-  assert.equal(listed.evaluate('NS.P("Ask NeverQuestAlone")'), 'Ask Nova');
-  assert.equal(listed.evaluate('BINDING_HEADER_NQA'), 'NeverQuestAlone');
+  assert.equal(listed.evaluate('NS.P("Ask Voxwarden")'), 'Ask Nova');
+  assert.equal(listed.evaluate('BINDING_HEADER_NQA'), 'Voxwarden');
 });
 
 test('PUI-23, UX-5: main\'s line under a reply cut in the window says to ask for the rest (no name: the owner, 2026-10-05)', () => {
@@ -184,7 +184,7 @@ test('PUI-23, UX-5: main\'s line under a reply cut in the window says to ask for
   assert.equal(vm.evaluate(`NS.UI.ui.bubbles[${n}].body.text`), 'Long answer, first part.\n\n|cff9d9d9d(… the rest didn\'t fit in the window: ask for it)|r');
 });
 
-test('UX-5: the name goes into our own words only: chat names, items and the bridge\'s words keep theirs ("Bones" too); a name with "NeverQuestAlone" in it comes out once', () => {
+test('UX-5: the name goes into our own words only: chat names, items and the bridge\'s words keep theirs ("Bones" too); a name with "Voxwarden" in it comes out once', () => {
   const vm = byokFirst({ p: provider({ companion: 'Nova' }), companion: 'Nova' }, { db: 'NQADB = { weights = { ["Testchar-Test Realm"] = { str = 1 } } }', extra: `
 STUB.stats = { ["item:1"] = { ITEM_MOD_STRENGTH_SHORT = 10 }, ["item:2"] = { ITEM_MOD_STRENGTH_SHORT = 5 } }
 C_Item.GetItemStats = function(link) return STUB.stats["item:" .. tostring(link):match("item:(%d+)")] end
@@ -200,64 +200,64 @@ function GameTooltip:GetItem() return "x", STUB.hover end
   assert.match(notice(vm), /\n\d+\. Bones and Bonescythe {2}\(current\)/);
   vm.run('STUB.lines = {}; STUB.hover = "|Hitem:1|h[Bone Vest]|h"; NS.Tooltips.OnItemTooltip(GameTooltip)');
   assert.deepEqual(vm.list('STUB.lines'), ['Nova: an upgrade for your build, +100% over Bonescythe Breastplate']);
-  vm.run('NS.Transport.Warn("w", "NeverQuestAlone saw Bonescythe drop. Bones says hi.", "x")');
-  assert.equal(notice(vm), 'NeverQuestAlone saw Bonescythe drop. Bones says hi.');
-  const jr = byokFirst({ p: provider({ companion: 'NeverQuestAlone Jr' }), companion: 'NeverQuestAlone Jr' });
+  vm.run('NS.Transport.Warn("w", "Voxwarden saw Bonescythe drop. Bones says hi.", "x")');
+  assert.equal(notice(vm), 'Voxwarden saw Bonescythe drop. Bones says hi.');
+  const jr = byokFirst({ p: provider({ companion: 'Voxwarden Jr' }), companion: 'Voxwarden Jr' });
   jr.slash('');
-  jr.run('NS.Notify.Game(NS.P("Asked NeverQuestAlone."))');
-  assert.equal(jr.list('STUB.errors').at(-1), 'Asked NeverQuestAlone Jr.');
-  assert.equal(jr.evaluate('NS.P("Target something first, then ask NeverQuestAlone about it.")'), 'Target something first, then ask NeverQuestAlone Jr about it.');
+  jr.run('NS.Notify.Game(NS.P("Asked Voxwarden."))');
+  assert.equal(jr.list('STUB.errors').at(-1), 'Asked Voxwarden Jr.');
+  assert.equal(jr.evaluate('NS.P("Target something first, then ask Voxwarden about it.")'), 'Target something first, then ask Voxwarden Jr about it.');
   // A name with the earlier default in it is a name of its own: only "Bones" itself reads as the default.
   const bonesJr = byokFirst({ p: provider({ companion: 'Bones Jr' }), companion: 'Bones Jr' });
   bonesJr.slash('');
   assert.equal(bonesJr.evaluate('NS.Name()'), 'Bones Jr');
-  bonesJr.run('NS.Notify.Game(NS.P("Asked NeverQuestAlone."))');
+  bonesJr.run('NS.Notify.Game(NS.P("Asked Voxwarden."))');
   assert.equal(bonesJr.list('STUB.errors').at(-1), 'Asked Bones Jr.');
 });
 
-test('"Bones", the companion\'s name until 1.4.9, reads as the default, NeverQuestAlone: in saved data, and from an app that still sends it (the owner, 2026-10-05)', () => {
+test('"Bones", the companion\'s name until 1.4.9, reads as the default, Voxwarden: in saved data, and from an app that still sends it (the owner, 2026-10-05)', () => {
   // An app before 1.4.9 sends "Bones" as the persona and in the agents list.
   const vm = byokFirst({ p: provider({ companion: 'Bones' }), companion: 'Bones' });
   vm.slash('');
   vm.run('NS.Refresh("status")');
-  assert.equal(vm.evaluate('NS.Name()'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('NS.Name()'), 'Voxwarden');
   assert.equal(vm.evaluate('tostring(NQADB.agentNames.main)'), 'nil', 'nothing saved: the default');
-  vm.run('NS.Notify.Local(NS.P("NeverQuestAlone is hidden."))');
-  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[NeverQuestAlone]|r NeverQuestAlone is hidden.');
+  vm.run('NS.Notify.Local(NS.P("Voxwarden is hidden."))');
+  assert.equal(vm.chatLines().at(-1), '|cff7ec8ff[Voxwarden]|r Voxwarden is hidden.');
   // A renamed companion goes back to the default when the app says "Bones" again.
   apply(vm, byokSlot({ p: provider({ companion: 'Nova' }), companion: 'Nova' }));
   assert.equal(vm.evaluate('NS.Name()'), 'Nova');
   apply(vm, byokSlot({ p: provider({ companion: 'Bones' }), companion: 'Bones' }));
-  assert.equal(vm.evaluate('NS.Name()'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('NS.Name()'), 'Voxwarden');
   // Saved data from before 1.4.9 holds "Bones": it goes at load, a name of the player's own stays.
   const old = newVM({ db: 'NQADB = { agentNames = { main = "Bones", scout = "Nyx" } }' }).login();
-  assert.equal(old.evaluate('NS.Name()'), 'NeverQuestAlone');
+  assert.equal(old.evaluate('NS.Name()'), 'Voxwarden');
   assert.equal(old.evaluate('tostring(NQADB.agentNames.main)'), 'nil');
   assert.equal(old.evaluate('NQADB.agentNames.scout'), 'Nyx');
-  assert.equal(old.evaluate('NS.Notify.Prefix()'), '|cff7ec8ff[NeverQuestAlone]|r ');
+  assert.equal(old.evaluate('NS.Notify.Prefix()'), '|cff7ec8ff[Voxwarden]|r ');
 });
 
 // ---------------------------------------------------------------- the notice, the welcome, the dialog
 
-test('C-04, C-14: the window\'s notices are NeverQuestAlone\'s (C-124); the Delete dialog and tip name the desktop app; the game-data tick says no "he"', () => {
+test('C-04, C-14: the window\'s notices are Voxwarden\'s (C-124); the Delete dialog and tip name the desktop app; the game-data tick says no "he"', () => {
   const vm = byokFirst();
   vm.slash('');
   vm.slash('chat');
-  assert.equal(vm.evaluate('NS.UI.ui.notice.who.text'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('NS.UI.ui.notice.who.text'), 'Voxwarden');
   vm.slash('delete');
-  assert.equal(vm.evaluate('StaticPopupDialogs.NQA_DELETE.text'), 'Delete the chat "%s"?\n\nIts chat history is deleted here and in the NeverQuestAlone app. This can\'t be undone.');
+  assert.equal(vm.evaluate('StaticPopupDialogs.NQA_DELETE.text'), 'Delete the chat "%s"?\n\nIts chat history is deleted here and in the Voxwarden app. This can\'t be undone.');
   assert.equal(vm.evaluate('StaticPopupDialogs.NQA_DELETE.button1'), 'Delete', 'the verb on its button (STYLE §5)');
   vm.run('NS.UI.RenderContext()');
-  assert.equal(vm.evaluate('NS.UI.ui.ctx.detail'), 'Sent with your messages, so NeverQuestAlone knows what you know.');
+  assert.equal(vm.evaluate('NS.UI.ui.ctx.detail'), 'Sent with your messages, so Voxwarden knows what you know.');
   assert.equal(vm.evaluate('NS.UI.ui.ctx.text.text'), 'Game Data', 'a check box\'s label, in Title Case (CF-UX-15)');
   // The delete button's tooltip: where the history goes, and that it asks first.
   vm.run('NS.UI.SetListShown(true); NS.UI.RenderList(); STUB.tip = {}; function GameTooltip:AddLine(t) table.insert(STUB.tip, t) end; local d = NS.UI.ui.rows[1].del; d.scripts.OnEnter(d)');
-  assert.deepEqual(vm.list('STUB.tip').slice(0, 2), ['Deletes this chat and its history, here and in the NeverQuestAlone app.', 'It asks first.']);
+  assert.deepEqual(vm.list('STUB.tip').slice(0, 2), ['Deletes this chat and its history, here and in the Voxwarden app.', 'It asks first.']);
 });
 
 // ---------------------------------------------------------------- the words scan
 
-test('C-04, C-05, C-14: the public build\'s player-facing words never say NeverQuestAlone, bridge or gateway, pairing or a private term, nor he or his (every text drawn, printed, flashed, tooltipped, in a menu, a popup or Settings)', async (t) => {
+test('C-04, C-05, C-14: the public build\'s player-facing words never say Voxwarden, bridge or gateway, pairing or a private term, nor he or his (every text drawn, printed, flashed, tooltipped, in a menu, a popup or Settings)', async (t) => {
   const SPY = `
 STUB.tips, STUB.menu = {}, {}
 function GameTooltip:AddLine(t) table.insert(STUB.tips, tostring(t)) end
@@ -376,9 +376,9 @@ function CreateSettingsButtonInitializer(name, text, click, tip) return { name =
   await t.test('nor a private term in any of them (SCRUB_TERMS)', { skip: PRIVATE_SKIP }, async () => {
     assert.deepEqual((await privateTerms()).hits(said), [], 'player-facing words');
   });
-  assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'NeverQuestAlone');
-  assert.equal(vm.evaluate('STUB.compartment.text'), 'NeverQuestAlone');
-  assert.equal(vm.evaluate('STUB.category.name'), 'NeverQuestAlone');
+  assert.equal(vm.evaluate('BINDING_HEADER_NQA'), 'Voxwarden');
+  assert.equal(vm.evaluate('STUB.compartment.text'), 'Voxwarden');
+  assert.equal(vm.evaluate('STUB.category.name'), 'Voxwarden');
   // The scan reaches what it looks for: a line that says "the bridge" is found.
   const probe = confirmHello(newVM({ extra: SPY, db: 'NQADB = { hudIntro = true }' }).login());
   probe.run('NS.UI.Toggle(true)'); // its notices are drawn while the window shows (code health AD-05)
@@ -409,11 +409,11 @@ function CreateSettingsButtonInitializer(name, text, click, tip) return { name =
   app.advance(3.1);
   app.slot(byokSlot({ p: provider({ companion: 'Nova' }), companion: 'Nova', nonce: app.evaluate('NS.R.nonce') }));
   ring(app);
-  assert.equal(app.evaluate('STUB.category.name'), 'NeverQuestAlone');
+  assert.equal(app.evaluate('STUB.category.name'), 'Voxwarden');
   assert.ok(app.list('STUB.headers').includes('What Nova Knows'));
   const quiet = appVM({ extra: API });
   quiet.advance(10.5);
-  assert.equal(quiet.evaluate('STUB.category.name'), 'NeverQuestAlone', '10 s without a slot');
+  assert.equal(quiet.evaluate('STUB.category.name'), 'Voxwarden', '10 s without a slot');
   const plainVM = newVM({ extra: API }).login();
   assert.equal(plainVM.evaluate('STUB.category'), null, 'not at login, whatever installed it');
 });

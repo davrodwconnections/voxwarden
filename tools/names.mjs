@@ -22,11 +22,11 @@ export const PROJECT = new RegExp(`${WORDS.p1}${SEP}?${WORDS.p2}`, 'gi');
 export const PRODUCT = new RegExp(`${WORDS.b1}${SEP}?${WORDS.b2}`, 'gi');
 // The owner's personal GitHub login: no file a player or visitor gets may carry it (update A).
 export const HANDLE = new RegExp(rot13('gbzzltrbpb'), 'gi');
-// Except as the public repo's owner: the owner moved neverquestalone to his own account (2026-10-05), so the
-// login is public there. Its address (<login>/neverquestalone, also .git or \/ as a regex writes it) and an owner
+// Except as the public repo's owner: the owner moved voxwarden to his own account (2026-10-05), so the
+// login is public there. Its address (<login>/voxwarden, also .git or \/ as a regex writes it) and an owner
 // field naming it (owner: <login>, "owner": "<login>") are masked letter for letter before a scan, so no column
 // moves. The login anywhere else is still a hit: a home path, another repo, a bundle id, an email, prose.
-export const PUBLIC_HOME = new RegExp(String.raw`(?<![\w.-])${rot13('gbzzltrbpb')}(?=\\?\/neverquestalone(?:\.git)?(?![\w-]|\.\w))|(?<=\bowner["']?[ \t]*:[ \t]*["']?)${rot13('gbzzltrbpb')}(?![\w.-])`, 'gi');
+export const PUBLIC_HOME = new RegExp(String.raw`(?<![\w.-])${rot13('gbzzltrbpb')}(?=\\?\/voxwarden(?:\.git)?(?![\w-]|\.\w))|(?<=\bowner["']?[ \t]*:[ \t]*["']?)${rot13('gbzzltrbpb')}(?![\w.-])`, 'gi');
 export const maskPublicHome = text => text.replace(PUBLIC_HOME, m => '#'.repeat(m.length));
 // "/bones companion on|off" is the check-ins command, not the product.
 export const isCommand = (text, at, m) => m === `${WORDS.b1} ${WORDS.b2}` && text[at - 1] === '/';
@@ -49,7 +49,7 @@ export function hits(text) {
   return out;
 }
 export const handleHits = text => [...maskPublicHome(text).matchAll(HANDLE)].map(m => ({ id: 'handle', at: m.index, m: m[0] }));
-// The retired gateway's name, the build NeverQuestAlone replaced (2026-09-27): history in this repo's notes,
+// The retired gateway's name, the build Voxwarden replaced (2026-09-27): history in this repo's notes,
 // never in a file a player or visitor gets, the source export's among them (its own guard, with the handle's).
 export const RETIRED = new RegExp(`${rot13('bcra')}${SEP}?${rot13('pynj')}`, 'gi');
 export const retiredHits = text => [...fold(text).matchAll(RETIRED)].map(m => ({ id: 'retired', at: m.index, m: m[0] }));

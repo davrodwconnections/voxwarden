@@ -3,7 +3,7 @@
 // with the Claude Code CLI (`claude -p`, your Claude Pro/Max login) or the Codex CLI
 // (`codex exec`, your ChatGPT login) instead of an API key.
 //
-// Connect it in the NeverQuestAlone app as Other:
+// Connect it in the Voxwarden app as Other:
 //   Base URL  http://localhost:8787/v1     (no key)
 //   Model     claude-code                  Claude Code, its default model (Sonnet)
 //             claude-code:opus             Claude Code with another model alias or id
