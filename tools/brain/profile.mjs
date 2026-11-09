@@ -11,7 +11,8 @@
 import { sanitizeGameString } from '../../bridge/byok/runtime/sanitize.mjs';
 
 export const SAID_MAX = 2000; // characters kept per row
-export const PROFILE_KEYS = ['class', 'race', 'level', 'professions', 'talents', 'zone', 'role', 'goal', 'style'];
+export const PROFILE_KEYS = ['class', 'race', 'level', 'professions', 'talents', 'gear', 'quests', 'zone', 'role', 'goal', 'style'];
+const SLOT = { 1: 'head', 2: 'neck', 3: 'shoulder', 5: 'chest', 6: 'waist', 7: 'legs', 8: 'feet', 9: 'wrist', 10: 'hands', 11: 'finger', 12: 'finger', 13: 'trinket', 14: 'trinket', 15: 'back', 16: 'main hand', 17: 'off hand', 18: 'ranged' };
 
 export function charKey(state) {
   const c = state?.char;
@@ -21,8 +22,8 @@ export function charKey(state) {
   return realm ? `${name}-${realm}` : name;
 }
 
-const put = (db, key, k, value, source, now) => db.prepare('INSERT INTO fact (char_key, key, value, source, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(char_key, key) DO UPDATE SET value = excluded.value, source = excluded.source, at = excluded.at')
-  .run(key, k, String(value).slice(0, 300), source, now);
+const put = (db, key, k, value, source, now, max = 300) => db.prepare('INSERT INTO fact (char_key, key, value, source, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(char_key, key) DO UPDATE SET value = excluded.value, source = excluded.source, at = excluded.at')
+  .run(key, k, String(value).slice(0, max), source, now);
 
 /** What the game state says about the character. */
 export function updateFromState(db, state, now = Date.now()) {
@@ -35,6 +36,12 @@ export function updateFromState(db, state, now = Date.now()) {
   if (Array.isArray(state.prof) && state.prof.length) put(db, key, 'professions', state.prof.map(p => `${p.name} ${p.rank}/${p.max}`).join(', '), 'game', now);
   if (Array.isArray(state.talents) && state.talents.length) put(db, key, 'talents', state.talents.map(t => `${t.name} ${t.points}`).join(' / '), 'game', now);
   if (state.loc?.zone) put(db, key, 'zone', state.loc.zone, 'game', now);
+  // What they wear (names from the brain's item table when the strip sent ids only) and their quest log.
+  if (Array.isArray(state.gear) && state.gear.length) {
+    const nameOf = id => { try { return db.prepare('SELECT name FROM item WHERE id = ?').get(id)?.name ?? null; } catch { return null; } };
+    put(db, key, 'gear', state.gear.filter(g => SLOT[g?.slot]).map(g => `${SLOT[g.slot]} ${sanitizeGameString(String(g.name || nameOf(g.id) || `item ${g.id}`), 40)}${g.ilvl ? ` (${g.ilvl})` : ''}`).join(', '), 'game', now, 600);
+  }
+  if (Array.isArray(state.quests) && state.quests.length) put(db, key, 'quests', state.quests.map(q => `${q.id} ${sanitizeGameString(String(q.title || ''), 40)}`).join('; '), 'game', now, 1500);
   return key;
 }
 
@@ -72,7 +79,8 @@ export function recordSaid(db, key, who, channel, text, now = Date.now()) {
 export function profileLines(db, key) {
   if (!key) return [];
   let rows = [];
-  try { rows = db.prepare('SELECT key, value, source FROM fact WHERE char_key = ?').all(key); } catch { return []; }
+  try { rows = db.prepare('SELECT key, value, source, at FROM fact WHERE char_key = ?').all(key); } catch { return []; }
   const order = k => { const i = PROFILE_KEYS.indexOf(k); return i < 0 ? 99 : i; };
-  return rows.filter(r => PROFILE_KEYS.includes(r.key)).sort((a, b) => order(a.key) - order(b.key)).map(r => `[${r.source}] ${r.key}: ${r.value}`);
+  const live = new Set(['gear', 'quests']); // the turn's game data has them fresh
+  return rows.filter(r => PROFILE_KEYS.includes(r.key) && !live.has(r.key)).sort((a, b) => order(a.key) - order(b.key)).map(r => `[${r.source} ${new Date(r.at).toISOString().slice(0, 10)}] ${r.key}: ${r.value}`);
 }

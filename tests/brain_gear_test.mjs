@@ -180,5 +180,5 @@ test('brain (Astra review): lowercase names, reviewed boss abilities with their 
   assert.match(old.messages.at(-1).content, /^GAME DATA \(from the game, 2 hours ago: it may be out of date\):/);
   P.updateFromState(db, { char: { name: 'Other', realm: 'R', class: 'MAGE', level: 30 } });
   const keyed = await brainRequest({ question: 'hola', state: { loc: STATE.loc }, db, key: 'Other-R' });
-  assert.match(keyed.messages.at(-1).content, /\[game\] class: MAGE/, 'the profile comes from the key given, not the identity-free state');
+  assert.match(keyed.messages.at(-1).content, /\[game \d{4}-\d{2}-\d{2}\] class: MAGE/, 'the profile comes from the key given, not the identity-free state');
 });

@@ -143,12 +143,21 @@ test('brain (B4): the profile comes from the game and from the player\'s own wor
   assert.deepEqual(P.learnFromPlayer(db, key, '¿quiero ir a Wailing Caverns?'), [], 'a question is not a goal');
   P.recordSaid(db, key, 'brain', 'chat', 'Islen Waterseer está en Orgrimmar.');
   const lines = P.profileLines(db, key);
-  assert.deepEqual(lines.slice(0, 3), ['[game] class: SHAMAN', '[game] race: Orc', '[game] level: 22']);
-  assert.ok(lines.includes('[player] role: healer'));
-  assert.ok(lines.some(l => l.startsWith('[player] goal: llegar a 40')));
+  // Each line with its source and the day it was learned (S2a).
+  const bare = l => l.replace(/^\[(\w+) \d{4}-\d{2}-\d{2}\]/, '[$1]');
+  assert.deepEqual(lines.slice(0, 3).map(bare), ['[game] class: SHAMAN', '[game] race: Orc', '[game] level: 22']);
+  assert.match(lines[0], /^\[game \d{4}-\d{2}-\d{2}\] class: SHAMAN$/);
+  assert.ok(lines.map(bare).includes('[player] role: healer'));
+  assert.ok(lines.map(bare).some(l => l.startsWith('[player] goal: llegar a 40')));
+  // Gear and the quest log are kept per character too, from the game; a turn gets them live instead.
+  const kept = Object.fromEntries(db.prepare('SELECT key, value, source FROM fact WHERE char_key = ?').all(key).map(r => [r.key, r]));
+  assert.equal(kept.gear.source, 'game');
+  assert.match(kept.gear.value, /^chest item 15304 \(16\)$/);
+  assert.match(kept.quests.value, /^1536 Call of Water; 1486 Deviate Hides$/);
+  assert.ok(!lines.some(l => /\] (gear|quests):/.test(l)));
   assert.ok(!lines.some(l => /Orgrimmar/.test(l)), 'what the model said is not a fact');
   assert.equal(db.prepare('SELECT count(*) n FROM said WHERE char_key = ?').get(key).n, 1);
   const r = await brainRequest({ db, question: '¿qué hago ahora?', state: STATE });
-  assert.match(r.messages.at(-1).content, /PLAYER \(what we know about them[\s\S]*\[player\] role: healer/);
+  assert.match(r.messages.at(-1).content, /PLAYER \(what we know about them[\s\S]*\[player \d{4}-\d{2}-\d{2}\] role: healer/);
   assert.doesNotMatch(r.messages.at(-1).content, /Arystar|CAMWOW/, 'the key never reaches the model');
 });
