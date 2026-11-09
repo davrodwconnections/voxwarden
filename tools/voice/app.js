@@ -281,7 +281,7 @@
   let pendingTip = false;
   function askTips() {
     pendingTip = false;
-    send({ type: 'response.create', response: { instructions: 'The player pressed Tips in the game. Call get_game_state for what you need (quests, location, gear, bags, character), then recommend the two or three most useful things to do right now: the closest quest steps, a turn-in, repairs or selling, training or an upgrade. Short and spoken, in their language, in your character.' } });
+    send({ type: 'response.create', response: { instructions: 'The player pressed Tips in the game. Say two or three words, then call the tool you have to ask the brain (ask_brain, or get_game_state without the brain) for the two or three most useful things to do right now (the closest quest steps, a turn-in, repairs or selling, training or an upgrade), and say its answer: short and spoken, in their language, in your character.' } });
   }
   function apply(cmd, c) {
     if (cmd === 'tip') { if (pc && dc && dc.readyState === 'open') askTips(); else { pendingTip = true; if (!pc && !connecting) connect(); } return; }

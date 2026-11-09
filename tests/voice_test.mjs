@@ -162,7 +162,7 @@ test('voice: the persona sets who speaks and the voice it sounds best with; --vo
 });
 
 test('voice: the session the page gets: the mini model, Spanish, interruptible voice turns, read-only tools (Wowhead only when turned on), and instructions from the spoken prompt', () => {
-  const s = sessionConfig({ ...DEFAULTS });
+  const s = sessionConfig({ ...DEFAULTS, brain: false }); // the voice's own tools (--no-brain); the brain mode is checked below
   assert.equal(s.type, 'realtime');
   assert.equal(s.model, 'gpt-realtime-2.1-mini');
   assert.equal(s.audio.input.turn_detection.interrupt_response, true);
@@ -646,4 +646,35 @@ test('voice read-aloud (T16): with read on, new non-voice replies queue their su
   assert.deepEqual(takeVoiceSay(dir), { text: 'first' });
   assert.deepEqual(takeVoiceSay(dir), { text: 'second' });
   assert.equal(takeVoiceSay(dir), null);
+});
+
+// ---- the brain answers for the voice (odd/tasks/nqa-brain.md B7, S3) --------------------------------
+
+test('voice + brain: by default the voice has only ask_brain and the brain prompt; ask_brain sends the brain turn to the proxy, puts its pins on the map, keeps them out of the spoken answer', async () => {
+  const s = sessionConfig({ ...DEFAULTS });
+  assert.deepEqual(s.tools.map(t => t.name), ['ask_brain'], 'no game tools of its own: it cannot answer facts from memory with data');
+  assert.match(s.instructions, /call `ask_brain`/);
+  assert.match(s.instructions, /Never answer a game fact from your own memory/);
+  assert.match(s.instructions, /never move, fight, target, buy, sell, cast, press keys or post in chat/);
+  assert.equal(parseArgs(['--no-brain']).brain, false);
+  assert.equal(parseArgs(['--brain-model', 'claude-code:haiku']).brainModel, 'claude-code:haiku');
+  const dir = appDir();
+  fs.mkdirSync(path.join(dir, 'bridge'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'bridge', 'companion.json'), JSON.stringify({ states: { tok: { sid: SID, seq: 1, at: Date.now(), state: { v: 1, char: { name: 'Arystar', level: 22, class: 'SHAMAN', race: 'Orc' }, loc: { zone: 'Thunder Bluff', map: 1456 }, quests: [] } } } }));
+  let sent = null;
+  const fetchFn = async (url, init) => { sent = { url, body: JSON.parse(init.body) }; return new Response(JSON.stringify({ choices: [{ message: { content: 'Está en Thunder Bluff, 22,5 20,9.\n\n```wowmap\n{"op":"set","layer":"brain","title":"Islen","points":[{"m":1456,"x":22.5,"y":20.9,"label":"Islen"}]}\n```' } }] }), { status: 200 }); };
+  const out = await runTool('ask_brain', { question: '¿Dónde está Islen Waterseer?' }, { ...DEFAULTS, appData: dir }, { fetchFn });
+  assert.equal(sent.url, 'http://127.0.0.1:8787/v1/chat/completions');
+  assert.equal(sent.body.model, 'claude-code:sonnet');
+  assert.match(sent.body.messages[0].content, /Never make up names, places, coordinates/);
+  assert.doesNotMatch(JSON.stringify(sent.body), /Arystar/, 'no character name to the brain');
+  assert.equal(out.answer, 'Está en Thunder Bluff, 22,5 20,9.');
+  assert.equal(out.pins, true);
+  assert.equal(inboxEntries(dir).at(-1).kind, 'pins');
+  // The next question carries this exchange as history.
+  await runTool('ask_brain', { question: '¿Y cómo llego?' }, { ...DEFAULTS, appData: dir }, { fetchFn });
+  assert.ok(sent.body.messages.some(m => m.role === 'assistant' && m.content.startsWith('Está en Thunder Bluff')));
+  // No proxy: it says so instead of making something up.
+  const down = await runTool('ask_brain', { question: 'hola?' }, { ...DEFAULTS, appData: dir }, { fetchFn: async () => { throw new Error('ECONNREFUSED'); } });
+  assert.match(down.error, /not reachable/);
 });
