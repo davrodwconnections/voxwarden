@@ -49,14 +49,16 @@ export function learnFromPlayer(db, key, text, now = Date.now()) {
   if (!key || typeof text !== 'string') return [];
   const learned = [];
   const t = text.slice(0, 1000);
+  // A negation right before the claim ("no soy sanador", "I'm not a healer", "no quiero…") teaches nothing.
+  const negated = m => m && (/\b(no|nunca|jam[aá]s|not|never)\s+$/i.test(t.slice(Math.max(0, m.index - 12), m.index)) || /\b(not|no)\b/i.test(m[0]));
   const role = t.match(ROLE_RE);
-  if (role) { put(db, key, 'role', ROLE[role[1].toLowerCase()] || role[1], 'player', now); learned.push('role'); }
+  if (role && !negated(role)) { put(db, key, 'role', ROLE[role[1].toLowerCase()] || role[1], 'player', now); learned.push('role'); }
   // A goal or a preference only when it isn't a question ("¿quiero...?" is asking, not telling).
   if (!/[?¿]/.test(t)) {
     const goal = t.match(GOAL_RE);
-    if (goal) { put(db, key, 'goal', goal[1].trim(), 'player', now); learned.push('goal'); }
+    if (goal && !negated(goal)) { put(db, key, 'goal', goal[1].trim(), 'player', now); learned.push('goal'); }
     const style = t.match(STYLE_RE);
-    if (style) { put(db, key, 'style', style[1].trim(), 'player', now); learned.push('style'); }
+    if (style && !negated(style)) { put(db, key, 'style', style[1].trim(), 'player', now); learned.push('style'); }
   }
   return learned;
 }

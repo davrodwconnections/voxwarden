@@ -47,12 +47,16 @@ export function compactGame(raw, db = null) {
       return `${q.id} ${sanitizeGameString(q.title || '', 40)}${q.complete ? ' [ready]' : prog}`;
     }).join('; ')}`);
   }
-  if (s.hearth?.location || s.hearth?.bind) lines.push(`Hearthstone: ${s.hearth.location || s.hearth.bind}${Number.isFinite(s.hearth.cooldown) ? `, cooldown ${s.hearth.cooldown}s` : ''}`);
+  const left = Number.isFinite(s.hearth?.left) ? s.hearth.left : s.hearth?.cooldown;
+  if (s.hearth?.location || s.hearth?.bind) lines.push(`Hearthstone: ${s.hearth.location || s.hearth.bind}${Number.isFinite(left) ? (left > 0 ? `, ready in ${Math.ceil(left / 60)} min` : ', ready') : ''}`);
   return lines;
 }
 
+// How old the game data is, said plainly: an old read can be out of date (the player moved, looted…).
+const ageText = s => (!Number.isFinite(s) ? 'now' : s < 90 ? 'now' : s < 3600 ? `${Math.round(s / 60)} minutes ago` : `${Math.round(s / 3600)} hours ago: it may be out of date`);
+
 /** The request for one brain turn. db may be passed (tests); otherwise the app's brain file. */
-export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'NeverQuestAlone', maxHistory = 4 } = {}) {
+export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'NeverQuestAlone', maxHistory = 4, ageSeconds = null, key = null } = {}) {
   let own = null;
   if (!db) {
     const file = brainFile(appData);
@@ -65,8 +69,8 @@ ${heard}` : question;
     const found = db ? retrieve({ db, question: asked, state }) : { lines: [], facts: [], ms: 0 };
     const game = compactGame(state, db);
     const user = [
-      'GAME DATA (from the game, now):', ...(game.length ? game : ['(none)']),
-      ...(db ? (() => { const who = profileLines(db, charKey(state)); return who.length ? ['', 'PLAYER (what we know about them, with its source):', ...who] : []; })() : []),
+      `GAME DATA (from the game, ${ageText(ageSeconds)}):`, ...(game.length ? game : ['(none)']),
+      ...(db ? (() => { const who = profileLines(db, key || charKey(state)); return who.length ? ['', 'PLAYER (what we know about them, with its source):', ...who] : []; })() : []),
       '', 'FACTS (sourced, for this question):', ...(found.lines.length ? found.lines : ['(nothing found for this question)']),
       '', `QUESTION: ${String(question || '').slice(0, 1000)}`,
       ...(heard && heard !== question ? [`(spoken: the transcription heard "${String(heard).slice(0, 500)}"; names may be misheard in both)`] : []),

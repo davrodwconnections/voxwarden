@@ -260,7 +260,7 @@ export function farmFact(db, question, state, max = 4) {
   let rows = [];
   try {
     rows = db.prepare(`SELECT p.item_id, p.copper, p.seen_at, s.id AS npc, s.chance, n.name AS npc_name, n.min_level, n.max_level, i.name AS item_name
-      FROM price p JOIN item_source s ON s.item_id = p.item_id AND s.kind = 'npc' JOIN npc n ON n.id = s.id JOIN item i ON i.id = p.item_id
+      FROM price p CROSS JOIN item_source s ON s.item_id = p.item_id AND s.kind = 'npc' JOIN npc n ON n.id = s.id JOIN item i ON i.id = p.item_id
       WHERE s.chance >= 2 AND n.max_level BETWEEN ? AND ? AND (n.friendly IS NULL OR n.friendly = 0)
       ORDER BY p.copper * s.chance DESC LIMIT 60`).all(Math.max(1, lvl - 6), lvl + 1);
   } catch { return null; }

@@ -6,7 +6,22 @@
 //   retrieve({ db, question, state, now }) → { facts: [{ kind, id, name, text, source }], lines, ms }
 //
 // lines is what goes to the model: one fact per line, "[source] text", at most MAX_FACTS.
+import fs from 'node:fs';
 import { tooltipFact } from './web.mjs';
+
+// Reviewed boss abilities, each with its source page and dates (tools/brain/mechanics.json).
+let mechanicsData = null;
+export function mechanics() {
+  if (mechanicsData) return mechanicsData;
+  try { mechanicsData = JSON.parse(fs.readFileSync(new URL('./mechanics.json', import.meta.url), 'utf8')); } catch { mechanicsData = {}; }
+  return mechanicsData;
+}
+function mechanicsFact(id) {
+  const m = mechanics()[String(id)];
+  if (!m || !Array.isArray(m.abilities)) return null;
+  const text = `${m.name} abilities (from ${m.url}, updated ${m.updated}, read ${m.read}): ` + m.abilities.map(a => `${a.name} (spell ${a.spell}): ${a.text}`).join(' | ') + (m.advice ? `. The guide's advice: ${m.advice}` : '');
+  return { kind: 'mechanics', id, name: m.name, text, source: m.source || 'reviewed' };
+}
 import { bossLoot, dungeonFact, factionOf, farmFact, isInstance, questForMe, slotFact } from './gear.mjs';
 export { factionOf };
 
@@ -50,7 +65,7 @@ export function soundsLike(question, title) {
 }
 
 /** The names a question may be about: quoted phrases, runs of capitalised words, quest titles from the log. */
-export function candidates(question, state) {
+export function candidates(question, state, db = null) {
   const q = String(question || '');
   const out = new Set();
   for (const m of q.matchAll(QUOTED_RE)) out.add(m[1].trim());
@@ -62,6 +77,25 @@ export function candidates(question, state) {
   for (const quest of Array.isArray(state?.quests) ? state.quests : []) {
     const t = typeof quest?.title === 'string' ? quest.title : '';
     if (t.length >= 4 && (low.includes(t.toLowerCase()) || soundsLike(low, t))) out.add(t);
+  }
+  // Names typed or dictated without capitals ("dónde está islen waterseer"): runs of 1-4 words that are
+  // exactly a name in the brain (single words only when long: "nalpak", not "agua").
+  if (db && out.size < 8) {
+    const words = low.normalize('NFC').split(/[^\p{L}\p{N}'’-]+/u).filter(Boolean);
+    const small = new Set([...STOP].map(w => w.toLowerCase()));
+    const check = db.prepare('SELECT name FROM name_index WHERE name_index MATCH ? LIMIT 20');
+    for (let k = 4; k >= 1 && out.size < 8; k--) {
+      for (let i = 0; i + k <= words.length && out.size < 8; i++) {
+        const run = words.slice(i, i + k);
+        if (small.has(run[0]) || small.has(run[k - 1]) || (k === 1 && run[0].length < 5)) continue;
+        const phraseText = run.join(' ');
+        if ([...out].some(n => n.toLowerCase().includes(phraseText))) continue;
+        let rows = [];
+        try { rows = check.all(phrase(phraseText)); } catch { rows = []; }
+        const hit = rows.find(r => String(r.name).toLowerCase() === phraseText);
+        if (hit) out.add(hit.name);
+      }
+    }
   }
   return [...out].slice(0, 8);
 }
@@ -169,9 +203,10 @@ function npcFact(db, id, state = null) {
   // Each quest with its id, only the ones open to this character, and which are in their log: several
   // quests can share a name ("Call of Water" is a chain of them).
   const mine = new Set((Array.isArray(state?.quests) ? state.quests : []).map(q => q?.id).filter(Number.isInteger));
+  const logNames = new Set((Array.isArray(state?.quests) ? state.quests : []).map(q => q?.title).filter(Boolean));
   const list = col => db.prepare(`SELECT q.id, q.name FROM quest q, json_each(q.${col}, '$.npc') j WHERE j.value = ? LIMIT 12`).all(id)
     .filter(r => !state || questForMe(db, r.id, state)).slice(0, 4)
-    .map(r => `${r.name} (quest ${r.id}${mine.has(r.id) ? ', in your log' : ''})`);
+    .map(r => `${r.name} (quest ${r.id}${mine.has(r.id) ? ', in your log' : logNames.has(r.name) ? ', not the one in your log' : ''})`);
   const starts = list('starts');
   const ends = list('ends');
   if (starts.length) parts.push(`gives: ${starts.join(', ')}`);
@@ -244,7 +279,7 @@ export function retrieve({ db, question, state = null, now = Date.now() } = {}) 
   // Questions about gear for a slot or what to farm come first: they name no entity.
   try { add(slotFact(db, question, state)); } catch { /* a missing column or table: no gear fact */ }
   try { add(farmFact(db, question, state)); } catch { /* idem */ }
-  for (const name of candidates(question, state)) {
+  for (const name of candidates(question, state, db)) {
     for (const hit of findByName(db, name, 3)) {
       // A quest in the player's log wins over a same-named one they can't have.
       if (hit.kind === 'quest') {
@@ -254,7 +289,7 @@ export function retrieve({ db, question, state = null, now = Date.now() } = {}) 
         add(f);
         // "¿Cuál es el siguiente paso?": the next quest in the chain, with its giver and place.
         if (f?.next && NEXT_RE.test(String(question || ''))) add(questFact(db, f.next, mineIds.has(f.next), state));
-      } else if (hit.kind === 'npc') add(npcFact(db, hit.id, state));
+      } else if (hit.kind === 'npc') { add(npcFact(db, hit.id, state)); add(mechanicsFact(hit.id)); }
       else if (hit.kind === 'item') add(itemFact(db, hit.id));
       else if (hit.kind === 'zone') { zoneHit = zoneHit ?? hit.id; add(zoneFact(db, hit.id, state)); }
     }

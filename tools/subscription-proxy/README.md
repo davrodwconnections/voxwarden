@@ -75,7 +75,7 @@ Before any text has been emitted, a technical failure retries once through the o
 
 ### What the installed CLI permits
 
-Checked installed `C:\Users\davro\.local\bin\claude.exe`, version **2.1.319**, using `--help`, `-p --help` and subscription calls:
+Checked installed `%USERPROFILE%\.local\bin\claude.exe`, version **2.1.319**, using `--help`, `-p --help` and subscription calls:
 
 - Streaming input keeps conversation state: a two-turn probe returned the first turn's marker in the second answer. `--max-turns 1` was accepted, but limits the agent loop per user turn; it does **not** erase history between user turns. Therefore workers are never reused after a request.
 - `--resume` and `--continue` explicitly restore conversation history. They are unsuitable for independent HTTP requests and conflict with the route's `--no-session-persistence` policy. They were not exercised against personal sessions.

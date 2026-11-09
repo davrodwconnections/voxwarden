@@ -159,3 +159,26 @@ test('brain retrieval: a spoken, misheard quest name still finds the quest in th
   const r = retrieve({ db, question: '¿Quién recibe la misión de Viet Hides?', state: STATE });
   assert.match(r.lines[0], /Quest 1486 "Deviate Hides"/);
 });
+
+test('brain (Astra review): lowercase names, reviewed boss abilities with their source, negations, data age', async () => {
+  const db = seed();
+  const low = retrieve({ db, question: 'dónde está nalpak', state: STATE });
+  assert.equal(low.facts[0]?.name, 'Nalpak', 'a name typed without capitals');
+  assert.equal(retrieve({ db, question: 'hola que tal', state: STATE }).facts.length, 0);
+  const m = retrieve({ db, question: '¿qué mecánicas tiene mutanus the devourer?', state: STATE });
+  const line = m.lines.find(l => l.startsWith('[wowhead-guide]'));
+  assert.match(line, /Thundercrack \(spell 8150\).*Terrify \(spell 7399\).*Naralex's Nightmare \(spell 7967\)/);
+  assert.match(line, /updated 2026-10-27, read 2026-11-09/);
+  const P = await import('../tools/brain/profile.mjs');
+  assert.deepEqual(P.learnFromPlayer(db, 'k', 'no soy sanador'), []);
+  assert.deepEqual(P.learnFromPlayer(db, 'k', 'no quiero hacer mazmorras'), []);
+  assert.deepEqual(P.learnFromPlayer(db, 'k', 'soy sanador'), ['role']);
+  const { brainRequest, compactGame } = await import('../tools/brain/turn.mjs');
+  assert.ok(compactGame({ ...STATE, hearth: { bind: 'The Crossroads', left: 0 } }).includes('Hearthstone: The Crossroads, ready'));
+  assert.ok(compactGame({ ...STATE, hearth: { bind: 'The Crossroads', left: 600 } }).includes('Hearthstone: The Crossroads, ready in 10 min'));
+  const old = await brainRequest({ question: 'hola', state: STATE, db, ageSeconds: 7200 });
+  assert.match(old.messages.at(-1).content, /^GAME DATA \(from the game, 2 hours ago: it may be out of date\):/);
+  P.updateFromState(db, { char: { name: 'Other', realm: 'R', class: 'MAGE', level: 30 } });
+  const keyed = await brainRequest({ question: 'hola', state: { loc: STATE.loc }, db, key: 'Other-R' });
+  assert.match(keyed.messages.at(-1).content, /\[game\] class: MAGE/, 'the profile comes from the key given, not the identity-free state');
+});

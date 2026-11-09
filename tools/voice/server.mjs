@@ -210,14 +210,25 @@ async function mintSecret(o, key, fetchFn = fetch) {
 // The brain (odd/tasks/nqa-brain.md B7): the voice's questions go to the subscription model through the
 // proxy, with the sourced facts tools/brain retrieves; the last few exchanges are its history.
 export const BRAIN_TIMEOUT_MS = 45000;
-const brainHistory = [];
+const brainHistories = new Map(); // per character key (local only), so two characters never share a conversation
 const WOWMAP_RE = /```wowmap[ \t]*\r?\n([\s\S]*?)\n```/;
 export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData || appDataDir(), heard = '' } = {}) {
   if (!question) return { error: 'No question.' };
   const t0 = Date.now();
   const game = readGame(dir);
-  const { brainRequest } = await import('../brain/turn.mjs');
-  const req = await brainRequest({ appData: dir, question, heard, state: game.ok ? game.state : null, history: brainHistory });
+  // The character, fixed at the start of the turn from the app's own file (the state the voice reads has
+  // no identity). It stays on this computer.
+  let raw = null;
+  try {
+    const comp = JSON.parse(fs.readFileSync(path.join(dir, 'bridge', 'companion.json'), 'utf8'));
+    raw = Object.values(comp.states || {}).filter(x => x && x.state).sort((a, b) => (b.at || 0) - (a.at || 0))[0]?.state ?? null;
+  } catch { raw = null; }
+  const [{ brainRequest }, P] = await Promise.all([import('../brain/turn.mjs'), import('../brain/profile.mjs')]);
+  const key = raw ? P.charKey(raw) : null;
+  const hkey = key || '-';
+  if (!brainHistories.has(hkey)) brainHistories.set(hkey, []);
+  const brainHistory = brainHistories.get(hkey);
+  const req = await brainRequest({ appData: dir, question, heard, state: game.ok ? game.state : null, history: brainHistory, ageSeconds: game.ok ? game.ageSeconds : null, key });
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), BRAIN_TIMEOUT_MS);
   let r, j;
@@ -240,12 +251,10 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
   // The brain remembers (B4): the character's profile, what the player said about themselves, both sides
   // of the exchange as said rows. The character key is read from the app's own file and stays local.
   try {
-    const comp = JSON.parse(fs.readFileSync(path.join(dir, 'bridge', 'companion.json'), 'utf8'));
-    const raw = Object.values(comp.states || {}).filter(x => x && x.state).sort((a, b) => (b.at || 0) - (a.at || 0))[0]?.state;
-    const [{ openBrain, brainFile }, P] = await Promise.all([import('../brain/db.mjs'), import('../brain/profile.mjs')]);
+    const { openBrain, brainFile } = await import('../brain/db.mjs');
     const db = openBrain(brainFile(dir));
     try {
-      const key = P.updateFromState(db, raw) || P.charKey(raw);
+      if (raw && P.charKey(raw) === key) P.updateFromState(db, raw);
       if (key) { P.learnFromPlayer(db, key, question); P.recordSaid(db, key, 'player', 'voice', question); P.recordSaid(db, key, 'brain', 'voice', answer); }
     } finally { db.close(); }
   } catch { /* the brain is a help, never a reason to fail the answer */ }

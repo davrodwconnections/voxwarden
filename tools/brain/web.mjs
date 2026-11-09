@@ -41,16 +41,21 @@ export function idsFromState(state) {
 
 /** Fetch up to `limit` tooltips the cache lacks (or has old), one a second; errors are skipped. */
 export async function warmFromState(db, state, { lookup = lookupWowhead, limit = WARM_LIMIT, gapMs = WARM_GAP_MS, now = Date.now, sleep = pause, gear = true } = {}) {
-  let fetched = 0;
+  let fetched = 0, tried = 0;
   // Then usable gear near the player's level with a known source, so "a better chest" can be answered.
   let more = [];
   if (gear) { try { more = gearCandidates(db, state).map(id => ['item', id]); } catch { more = []; } }
   for (const [kind, id] of [...idsFromState(state), ...more]) {
-    if (fetched >= limit) break;
+    if (tried >= limit) break;
     const row = db.prepare('SELECT read_at FROM web_cache WHERE kind = ? AND id = ?').get(kind, id);
     if (row && now() - row.read_at < WEB_MAX_AGE_MS) continue;
     const r = await cachedTooltip(db, kind, id, { lookup, now: now() });
-    if (!r.error && !r.cached) { fetched += 1; await sleep(gapMs); }
+    if (r.cached) continue;
+    // Every request counts and waits, failed or not (polite to the site, bounded per round).
+    tried += 1;
+    if (!r.error) fetched += 1;
+    if (tried >= limit) break;
+    await sleep(gapMs);
   }
   return fetched;
 }
@@ -58,9 +63,10 @@ export async function warmFromState(db, state, { lookup = lookupWowhead, limit =
 /** One retrieval line from the cache (no network), or null. */
 export function tooltipFact(db, kind, id, max = 320) {
   let row;
-  try { row = db.prepare('SELECT text FROM web_cache WHERE kind = ? AND id = ?').get(kind, id); } catch { return null; }
+  try { row = db.prepare('SELECT text, read_at FROM web_cache WHERE kind = ? AND id = ?').get(kind, id); } catch { return null; }
   if (!row?.text) return null;
-  return `[wowhead] ${kind} ${id}: ${String(row.text).replace(/\s+/g, ' ').trim().slice(0, max)}`;
+  const day = Number.isFinite(row.read_at) ? new Date(row.read_at).toISOString().slice(0, 10) : '?';
+  return `[wowhead ${day}] ${kind} ${id}: ${String(row.text).replace(/\s+/g, ' ').trim().slice(0, max)}`;
 }
 
 // node tools/brain/web.mjs warm [--limit N] [--gap ms]: warm the cache now from the latest game state.

@@ -121,9 +121,9 @@ test('brain (B9): Wowhead tooltips are fetched once by id, kept, warmed from the
   const a = await cachedTooltip(db, 'item', 6443, { lookup });
   const b = await cachedTooltip(db, 'item', 6443, { lookup });
   assert.deepEqual([a.cached, b.cached, calls.length], [false, true, 1]);
-  assert.match(tooltipFact(db, 'item', 6443), /^\[wowhead\] item 6443: Deviate Hide Quest Item Drops in Wailing Caverns/);
+  assert.match(tooltipFact(db, 'item', 6443), /^\[wowhead \d{4}-\d{2}-\d{2}\] item 6443: Deviate Hide Quest Item Drops in Wailing Caverns/, 'with the day it was read');
   const r = retrieve({ db, question: '¿Para qué es el Deviate Hide?', state: STATE });
-  assert.ok(r.lines.some(l => l.startsWith('[wowhead] item 6443')), r.lines.join('\n'));
+  assert.ok(r.lines.some(l => /^\[wowhead \d{4}-\d{2}-\d{2}\] item 6443:/.test(l)), r.lines.join('\n'));
   assert.deepEqual(idsFromState(STATE), [['quest', 1536], ['quest', 1486], ['item', 15304]]);
   const slept = [];
   const n = await warmFromState(db, STATE, { lookup, sleep: async ms => { slept.push(ms); } });

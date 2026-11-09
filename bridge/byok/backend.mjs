@@ -450,18 +450,19 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   // that comes before it, or any error, simply goes without facts.
   const brain = { retrieve: null, db: null, tried: false };
   const brainFacts = (question, state) => {
-    if (opts.brain === false || !question) return [];
+    if (opts.brain === false) return [];
     if (!brain.tried) {
-      brain.tried = true;
       const file = path.join(dataDir, 'brain', 'brain.sqlite');
+      // Not there yet (not imported): try again on a later turn.
       if (fs.existsSync(file)) {
+        brain.tried = true;
         Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/retrieve.mjs'), import('../../tools/brain/profile.mjs')])
           .then(([d, r, p]) => { brain.db = d.openBrain(file, { readOnly: true }); brain.retrieve = r.retrieve; brain.profile = p; log('byok-brain', { ready: true }); })
           .catch(e => log('byok-brain', { ready: false, error: short(e) }));
       }
       return [];
     }
-    if (!brain.retrieve || !brain.db) return [];
+    if (!question || !brain.retrieve || !brain.db) return [];
     try {
       const r = brain.retrieve({ db: brain.db, question, state });
       if (r.lines.length) log('byok-brain-facts', { facts: r.lines.length, ms: r.ms });
