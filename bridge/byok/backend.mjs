@@ -731,6 +731,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   let notice = null; // {kind: 'model_switched', from, to, at} | {kind: 'model_retired', model, at}
   let noticeLine = null; // the §10 line the next turn's chat gets once
   let modelCheck = null; // {at, ok, models?, errorKind?, code?}
+  let discoveredModels = []; // current service only; populated by the existing /models check
   let checkBusy = null;
   let checkFor = -1; // the generation the running check is for
   const modelLabel = (manifest, id) => manifest.models?.list?.find(e => e.id === id)?.label || id;
@@ -758,6 +759,9 @@ export function createLocalBackend(handlers = {}, opts = {}) {
           return { ok: false };
         }
         modelCheck = { at: clock(), ok: true, models: r.models.length };
+        const previous = JSON.stringify(modelChoices(p));
+        discoveredModels = r.models;
+        if (JSON.stringify(modelChoices(p)) !== previous) on.change({ push: true });
         const res = resolveModel(p.manifest, r.models, p.model);
         if (res.model && !res.switched) {
           log('byok-model-check', { reason, provider: p.id, model: p.model, available: true });
@@ -790,6 +794,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   // A new provider, model or key: what was read about the old one goes, and the check runs again.
   function providerChanged({ keyChanged = false } = {}) {
     provGen += 1;
+    discoveredModels = [];
     if (keyChanged) modelCheck = null;
     checkModel({ reason: keyChanged ? 'key' : 'provider' });
   }
@@ -1554,6 +1559,23 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   }
 
   // ---------------------------------------------------------------- what the slot and the app read
+  // An optional, small list for the in-game picker. Custom services publish the IDs their own
+  // /models endpoint returned; bundled providers use only the supported manifest entries.
+  function modelChoices(p) {
+    const entries = p.manifest.models?.list ?? [];
+    const ids = [p.model, ...(p.manifest.models?.allowAny ? discoveredModels : entries.map(e => e.id))];
+    const seen = new Set(), out = [];
+    for (const id of ids) {
+      if (typeof id !== 'string' || !MODEL_ID_RE.test(id) || looksLikeKey(id) || seen.has(id)) continue;
+      seen.add(id);
+      const named = entries.find(e => e.id === id)?.label;
+      const label = typeof named === 'string' && !looksLikeKey(named) ? named.replace(/[\x00-\x1f\x7f|]/g, '').slice(0, 60) : id;
+      const item = { id, label };
+      if (out.length >= 24 || Buffer.byteLength(JSON.stringify([...out, item])) > 2048) break;
+      out.push(item);
+    }
+    return out;
+  }
   function providerView() {
     const p = current();
     const effort = (() => { try { return resolveEffort(settings.effort, p.manifest, p.model); } catch { return null; } })();
@@ -1561,6 +1583,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     const levels = supported ? effortLevels(p.manifest, p.model) : [];
     return {
       id: p.id, name: p.name, model: p.model || '', modelName: p.modelName || p.model || '',
+      models: modelChoices(p),
       // effort: the level the next turn goes at (the player's, as the model's nearest level); efforts:
       // the model's levels, cheapest first, space-separated (chatSlot's).
       effort: effort ?? undefined, effortSupported: supported, ...(levels.length ? { efforts: levels.join(' ') } : {}),
@@ -1755,7 +1778,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
         slowedBy = null;
       }
       // Another provider: the chats' own models were its ids, so every chat goes back to the new one's.
-      if (next.provider !== before.provider) {
+      if (next.provider !== before.provider || (next.provider === 'custom' && next.custom?.baseUrl !== before.custom?.baseUrl)) {
         let n = 0;
         for (const id of Object.keys(side.chats)) if (dropOwnModel(id)) n += 1;
         if (n) log('byok-chat-model', { dropped: 'provider_changed', chats: n });

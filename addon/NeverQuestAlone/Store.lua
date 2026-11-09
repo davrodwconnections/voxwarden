@@ -403,7 +403,7 @@ function ns.Str(v, max)
 end
 
 -- bridge.provider { id, name, model, modelName, effort, effortSupported, efforts,
--- auth, keyState, privacy, product, companion }, with the provider cap.
+-- auth, keyState, privacy, product, companion, models? [{id,label}] }, with the provider cap.
 -- efforts: the model's thinking levels, cheapest first, space-separated.
 function ns.Provider()
 	if not ns.HasCap("provider") then return nil end

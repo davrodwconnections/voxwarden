@@ -256,6 +256,8 @@ If either part fails, or both push bells are dead, the addon runs in **slot-only
 
 Every slot's `Inbox.lua` and `NeverQuestAlone/Inbox.lua` hold the same table, for the token that said hello most recently:
 
+With the `model` and `provider` capabilities, `bridge.provider.models` optionally lists `{ id, label }` entries for the in-game model picker. The backend publishes supported manifest entries for built-in providers and discovered `/models` IDs for custom services, with the default first, no duplicates or credential-shaped IDs, at most 24 entries and 2,048 JSON bytes. A service change clears discovered choices. Older addons ignore the field; without it the existing thinking menu still works. Choosing an entry sends the existing per-chat `patch` with `model=<id>`; `model=default` clears the override. The addon shows the selection as pending until a chat snapshot or reply confirms it.
+
 ```lua
 NQA_SlotData = {
   v = 2, ts = "2026-09-25T18:04:00Z", now = 1790359440,
