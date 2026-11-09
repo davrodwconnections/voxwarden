@@ -19,7 +19,7 @@ import crypto from 'node:crypto';
 import { sanitizeState, sanitizeGameString } from '../../bridge/byok/runtime/sanitize.mjs';
 
 export const STALE_SECONDS = 120;
-export const SECTIONS = Object.freeze(['character', 'location', 'quests', 'gear', 'talents', 'professions', 'bags', 'buffs', 'reputation', 'target', 'group', 'milestones']);
+export const SECTIONS = Object.freeze(['character', 'location', 'quests', 'gear', 'professions', 'bags', 'buffs', 'reputation', 'target', 'group', 'milestones']);
 // The voice inbox (bridge/service.mjs drainVoiceInbox reads it): one small JSON file per entry, written
 // under a temporary name and renamed into place, so the bridge never reads half an entry, and an entry
 // can't be lost between a write and a read; each carries an id the bridge publishes once.
@@ -79,7 +79,6 @@ const PICK = {
   location: s => ({ loc: s.loc, poi: s.poi }),
   quests: s => ({ questCount: s.questCount, questMax: s.questMax, questUnread: s.questUnread, quests: s.quests }),
   gear: s => ({ gear: s.gear }),
-  talents: s => ({ talents: s.talents ?? s.talent }),
   professions: s => ({ prof: s.prof }),
   bags: s => ({ bags: s.bags }),
   buffs: s => ({ auras: s.auras }),
@@ -144,24 +143,81 @@ export function wowmapBlock({ title, ordered = false, points } = {}) {
 // doing to <bridge>/voice-status.json ({v:1, state, at}), which the bridge shows in the addon.
 export const CONTROL_FILE = 'voice-control.json';
 export const STATUS_FILE = 'voice-status.json';
-export const VOICE_COMMANDS = Object.freeze(['talk', 'mute', 'unmute', 'pause', 'resume']);
+export const VOICE_COMMANDS = Object.freeze(['talk', 'tip', 'mute', 'unmute', 'pause', 'resume', 'persona']);
 export const VOICE_STATES = Object.freeze(['listening', 'muted', 'paused', 'connecting']);
+
+// Bags and gear on demand (odd/tasks/nqa-voice-controls.md T15, S7): the strip often leaves bags out to
+// fit a long quest log, and gear comes without names. Asked for them, the voice writes a growing number
+// to <bridge>/voice-want.json; the bridge shows it to the addon (bridge.voice.want), which answers at
+// once with a state that keeps bags and named gear. The voice also remembers the last ones it saw.
+export const WANT_FILE = 'voice-want.json';
+
+/** Ask the addon for bags and gear now; returns the request's number, or 0 without the app. */
+export function askInventory(dir, { now = Date.now() } = {}) {
+  const bridgeDir = path.join(dir, 'bridge');
+  if (!fs.existsSync(bridgeDir)) return 0;
+  const file = path.join(bridgeDir, WANT_FILE);
+  const n = (Number(readJson(file)?.n) || 0) + 1;
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify({ v: 1, n, at: now }), { mode: 0o600 });
+  fs.renameSync(tmp, file);
+  return n;
+}
+
+/** Whether a state lacks what an inventory question needs: no bags, or gear with no names. */
+export function lacksInventory(state) {
+  if (!isObj(state)) return true;
+  const gear = Array.isArray(state.gear) ? state.gear : [];
+  return !isObj(state.bags) || (gear.length > 0 && !gear.some(g => isObj(g) && typeof g.name === 'string'));
+}
+
+/** The last bags and named gear seen, per app folder: { bags: {value, at}, gear: {value, at} }. */
+const seen = new Map();
+export function rememberInventory(dir, game) {
+  if (!game?.ok || !isObj(game.state)) return seen.get(dir) || {};
+  const mem = seen.get(dir) || {};
+  if (isObj(game.state.bags)) mem.bags = { value: game.state.bags, at: game.at };
+  const gear = Array.isArray(game.state.gear) ? game.state.gear : [];
+  if (gear.some(g => isObj(g) && typeof g.name === 'string')) mem.gear = { value: gear, at: game.at };
+  seen.set(dir, mem);
+  return mem;
+}
+
+// Replies to read aloud (T16): the bridge writes one file per reply summary in <bridge>/voice-say/
+// while the player has /nqa voice read on; the page takes them oldest first. Old ones are dropped.
+export const SAY_DIR = 'voice-say';
+export const SAY_MAX_AGE_MS = 90000;
+
+/** The oldest reply still worth saying, taken from the queue (or null). */
+export function takeVoiceSay(dir, { now = Date.now() } = {}) {
+  const q = path.join(dir, 'bridge', SAY_DIR);
+  let names = [];
+  try { names = fs.readdirSync(q).filter(f => /^\d{14}-[0-9a-f-]{36}\.json$/.test(f)).sort(); } catch { return null; }
+  for (const name of names) {
+    const file = path.join(q, name);
+    const j = readJson(file);
+    try { fs.rmSync(file, { force: true }); } catch { /* taken next time; its id is new each time anyway */ }
+    if (isObj(j) && j.v === 1 && typeof j.text === 'string' && j.text.trim() && now - Number(j.at) <= SAY_MAX_AGE_MS) return { text: j.text.slice(0, 600) };
+  }
+  return null;
+}
 
 /** The newest command from the game, or null. */
 export function readVoiceControl(dir) {
   const j = readJson(path.join(dir, 'bridge', CONTROL_FILE));
   if (!isObj(j) || j.v !== 1 || !Number.isInteger(j.n) || j.n < 1 || !VOICE_COMMANDS.includes(j.cmd)) return null;
-  return { n: j.n, cmd: j.cmd, at: Number(j.at) || 0 };
+  return { n: j.n, cmd: j.cmd, at: Number(j.at) || 0, ...(j.cmd === 'persona' && typeof j.persona === 'string' ? { persona: j.persona } : {}) };
 }
 
 /** What the voice is doing now, for the addon (written aside, renamed in). */
-export function writeVoiceStatus(dir, state, { now = Date.now() } = {}) {
+export function writeVoiceStatus(dir, state, { now = Date.now(), persona = null, personas = null } = {}) {
   if (!VOICE_STATES.includes(state)) return { ok: false, reason: 'bad_state' };
+  if (persona !== null && !(personas || []).includes(persona)) persona = null;
   const bridgeDir = path.join(dir, 'bridge');
   if (!fs.existsSync(bridgeDir)) return { ok: false, reason: 'no_app' };
   const file = path.join(bridgeDir, STATUS_FILE);
   const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify({ v: 1, state, at: now }), { mode: 0o600 });
+  fs.writeFileSync(tmp, JSON.stringify({ v: 1, state, at: now, ...(persona ? { persona } : {}) }), { mode: 0o600 });
   fs.renameSync(tmp, file);
   return { ok: true };
 }

@@ -11,15 +11,16 @@
 //             codex:gpt-reserve            Codex with another model id (the fastest a ChatGPT login takes)
 //
 // It listens on 127.0.0.1 only, so nothing else on the network can spend your subscription.
-// The CLIs run with no tools (Claude: --tools ""; Codex: read-only sandbox, told not to use any)
-// in an empty working folder, and nothing is kept between turns: the app sends the whole chat
+// Claude runs with no tools (--tools ""). Codex is disabled unless NQA_PROXY_CODEX_TOOLS=accept:
+// its read-only sandbox is NOT a no-tools guarantee. Both run in a fresh scratch working folder,
+// and no conversation is kept between turns: the app sends the whole chat
 // each time, as it does to any provider.
 //
 // Personal use only. Your subscription's own terms apply; don't share or host this for others.
 //
 //   node tools/subscription-proxy/proxy.mjs [--port 8787]
 //   env: NQA_PROXY_PORT, NQA_CLAUDE_BIN, NQA_CODEX_BIN, NQA_CLAUDE_EFFORT, NQA_CODEX_EFFORT (both default low),
-//        NQA_CODEX_MODEL (the model plain `codex` uses; default: Codex's own),
+//        NQA_CODEX_MODEL (the model plain `codex` uses; default: Codex's own), NQA_PROXY_CODEX_TOOLS,
 //        NQA_PROXY_MAX_RUNS (default 2), NQA_PROXY_TIMEOUT_MS (default 170000), NQA_PROXY_LOG
 import http from 'node:http';
 import { spawn } from 'node:child_process';
@@ -39,6 +40,8 @@ const CODEX_EFFORT = process.env.NQA_CODEX_EFFORT || 'low';
 // Low effort: a quest answer needs little thinking, and hidden thinking is most of the wait.
 const CLAUDE_EFFORT = process.env.NQA_CLAUDE_EFFORT || 'low';
 const CODEX_MODEL = process.env.NQA_CODEX_MODEL || '';
+// Operator-only, captured at startup. Neither request text nor a request option can opt in.
+const CODEX_TOOLS_ACCEPTED = process.env.NQA_PROXY_CODEX_TOOLS === 'accept';
 const MAX_RUNS = Math.max(1, Number(process.env.NQA_PROXY_MAX_RUNS || 2));
 // Below the app's own 180 s run limit, so the app hears a clean error rather than cutting us off.
 const RUN_TIMEOUT_MS = Number(process.env.NQA_PROXY_TIMEOUT_MS || 170000);
@@ -137,7 +140,16 @@ function runCli({ cli, model }, { system, prompt }, onText) {
   } else {
     bin = CODEX_BIN;
     argv = ['exec', '--json', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '--ignore-rules',
-      '--sandbox', 'read-only', '-C', dir, '-c', `model_reasoning_effort="${CODEX_EFFORT}"`, '-c', 'web_search="disabled"'];
+      '--sandbox', 'read-only', '--strict-config', '-C', dir,
+      '-c', `model_reasoning_effort="${CODEX_EFFORT}"`, '-c', 'approval_policy="never"',
+      '-c', 'web_search="disabled"', '-c', 'mcp_servers={}',
+      '-c', 'features.shell_tool=false', '-c', 'features.view_image=false',
+      '-c', 'features.apps=false', '-c', 'features.plugins=false', '-c', 'features.remote_plugin=false',
+      '-c', 'features.hooks=false', '-c', 'features.skill_mcp_dependency_install=false'];
+    // Read-only keeps sandboxed command networking off; approval_policy="never" rejects escalation.
+    // Empty MCP config
+    // plus disabled apps/plugins prevents those integrations bypassing the command sandbox.
+    // These are defense in depth, NOT a verified way to remove every built-in tool or local read.
     if (model || CODEX_MODEL) argv.push('-m', model || CODEX_MODEL);
     argv.push('-');
     // Codex always loads the user's global AGENTS.md (no flag skips it, and a second CODEX_HOME
@@ -276,6 +288,12 @@ async function chat(req, res) {
   try { body = JSON.parse(await readBody(req)); } catch { return apiError(res, 400, 'invalid JSON body', 'invalid_request_error'); }
   const r = route(body.model);
   if (!r) return apiError(res, 404, `unknown model ${body.model}; use one of ${MODELS.map(m => m.id).join(', ')}`, 'model_not_found');
+  if (r.cli === 'codex' && !CODEX_TOOLS_ACCEPTED) {
+    return apiError(res, 403, 'Codex is disabled: its CLI has no verified no-tools mode. '
+      + 'Running it is unsafe with untrusted game or web text and may expose local files. '
+      + 'Use claude-code, or explicitly accept this risk by setting NQA_PROXY_CODEX_TOOLS=accept '
+      + 'in the proxy environment before starting it.', 'codex_tools_not_accepted');
+  }
   const flat = flatten(body.messages);
   const id = 'chatcmpl-' + crypto.randomUUID();
   const created = Math.floor(Date.now() / 1000);

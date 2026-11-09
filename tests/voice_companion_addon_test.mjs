@@ -276,3 +276,68 @@ test('T11 live: the real QueueState produces a standalone state record without a
   assert.match(vm.evaluate('NS.R.stateRec.wire'),/state/);
   assert.equal(vm.history().filter(e=>e.role==='user').length,0);
 });
+
+// The voice companion's controls (odd/tasks/nqa-voice-controls.md T2, T5, T9, T10, T12).
+const VOICE = `STUB.played = {}
+PlaySound = function(id) STUB.played[#STUB.played + 1] = id end
+SOUNDKIT = SOUNDKIT or {}; SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON = 856`;
+function voiceVM(caps = ['state', 'voice']) {
+  const vm = newVM({ extra: VOICE }).login();
+  vm.run(`NQADB.linked = true; NS.R.nonce = 'ab12'; NS.R.bridge = { caps = ${JSON.stringify(caps).replace('[', '{').replace(/]$/, '}')}, voice = { state = 'muted' } }`);
+  return vm;
+}
+
+test('voice controls: talk, toggles and personas send a vc record with the time pressed; none without cap voice or for an unknown voice', () => {
+  const none = voiceVM(['state']);
+  none.slash('voice talk');
+  assert.match(none.chatLines().join(' '), /voice support/);
+  assert.equal(none.num('(function() local n = 0 for _, o in pairs(NS.R.out) do if o.type == "vc" then n = n + 1 end end return n end)()'), 0);
+  const vm = voiceVM();
+  vm.slash('voice talk');
+  assert.match(vm.chatLines().join(' '), /Getting the microphone ready/);
+  vm.run('NS.Companion.VoiceToggleMute()'); // muted → unmute
+  vm.slash('voice persona orc-shaman');
+  vm.slash('voice persona dragon');
+  assert.match(vm.chatLines().join(' '), /No voice called dragon/);
+  const wires = vm.json(`(function() local t = {} for _, o in pairs(NS.R.out) do if o.type == 'vc' then t[#t + 1] = o.wire end end table.sort(t) return t end)()`);
+  assert.equal(wires.length, 3);
+  const all = wires.join('\n');
+  assert.match(all, /cmd=talk/);
+  assert.match(all, /cmd=unmute/);
+  assert.match(all, /cmd=persona;name=orc-shaman/);
+  for (const w of wires) assert.match(w, /;at=\d{9,}/, 'each carries the time it was pressed');
+  assert.equal(vm.evaluate('NQADB.settings.voicePersona'), 'orc-shaman');
+});
+
+test('voice controls: a vc record left from before a reload is not drawn again; the persona choice survives', () => {
+  const vm = voiceVM();
+  vm.slash('voice pause');
+  vm.slash('voice persona troll');
+  const next = reloadVM(vm, { extra: VOICE }).login();
+  assert.equal(next.num('(function() local n = 0 for _, o in pairs(NS.R.out) do if o.type == "vc" then n = n + 1 end end return n end)()'), 0);
+  assert.equal(next.evaluate('NQADB.settings.voicePersona'), 'troll');
+  const forged = newVM({ db: `NQADB={settings={voicePersona='x; rm -rf',voiceBar=1,voiceBarX=1/0}}` }).login();
+  assert.equal(forged.evaluate('NQADB.settings.voicePersona'), null);
+  assert.equal(forged.bool('NQADB.settings.voiceBar'), true);
+  assert.equal(forged.evaluate('NQADB.settings.voiceBarX'), null);
+});
+
+test('voice controls: after Talk, the first "listening" plays one short UI sound; the bar shows only with cap voice', () => {
+  const vm = voiceVM();
+  vm.slash('voice talk');
+  vm.run(`NS.R.bridge.voice = { state = 'connecting' }; NS.Companion.VoiceHeard()`);
+  assert.equal(vm.num('#STUB.played'), 0);
+  vm.run(`NS.R.bridge.voice = { state = 'listening', persona = 'orc-shaman' }; NS.Companion.VoiceHeard(); NS.Companion.VoiceHeard()`);
+  assert.equal(vm.num('#STUB.played'), 1);
+  vm.run('NS.VoiceBar.Refresh()');
+  assert.ok(vm.bool('NQAVoiceBar ~= nil and NQAVoiceBar:IsShown()'));
+  assert.match(vm.evaluate('NQAVoiceBar.status:GetText()'), /Listening/);
+  assert.match(vm.evaluate('NQAVoiceBar.who:GetText()'), /Orc/);
+  assert.equal(vm.evaluate('NQAVoiceBar.mute:GetText()'), 'Close mic', 'listening: the mic button closes it');
+  assert.equal(vm.evaluate('NQAVoiceBar.read:GetText()'), 'Read: off');
+  vm.slash('voice bar off');
+  assert.equal(vm.bool('NQAVoiceBar:IsShown()'), false);
+  const old = voiceVM(['state']);
+  old.run('NS.VoiceBar.Refresh()');
+  assert.equal(old.bool('NQAVoiceBar ~= nil and NQAVoiceBar:IsShown()'), false);
+});

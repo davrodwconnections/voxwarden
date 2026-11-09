@@ -77,8 +77,12 @@ local LIMITS = { obj = 5, poi = 40, prof = 6, gear = 19, pending = 10, zones = 2
 -- with cap qlog puts back the ones it has seen whole), and titles last of
 -- all: every quest's id and ready flag, the least that goes. A quest itself
 -- never goes.
-local DROP_ORDER = { "bags", "auras", "rep", "target", "group", "gear", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
+local DROP_ORDER = { "bags", "auras", "rep", "target", "group", "rewards", "rested", "hearth", "talents", "durability", "gear", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
 	"prof", "pending", "quests.title.short", "quests.title.tiny", "quests.title" }
+-- When the voice companion asks for bags and gear (odd/tasks/nqa-voice-controls.md T15): they stay
+-- until the quests' detail has gone, so a long quest log can't push them out of the frame.
+local INV_DROP_ORDER = { "rested", "hearth", "talents", "auras", "rep", "target", "group", "poi", "rewards", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
+	"prof", "pending", "bags", "gear", "durability", "quests.title.short", "quests.title.tiny", "quests.title" }
 local FIRED_MAX = 300
 local LEVEL_SETTLE = 2 -- s: during PLAYER_LEVEL_UP the unit's level and XP can still be the old ones
 local QUEUE_STALE = 1800 -- s: a queued event older than this (a long fight, a relog) is dropped
@@ -332,14 +336,16 @@ local function ItemLevel(slot, link)
 end
 P.ItemLevel = ItemLevel
 
-function P.Gear()
-	if type(GetInventoryItemID) ~= "function" then return nil end
+function P.Gear(withNames)
+	if ns.InCombat() or type(GetInventoryItemID) ~= "function" then return nil end
 	local out = {}
 	for slot = 1, 19 do
 		local id = Try(GetInventoryItemID, "player", slot)
 		if type(id) == "number" and id > 0 then
 			local link = Try(GetInventoryItemLink, "player", slot)
-			out[#out + 1] = O("slot", slot, "id", id, "ilvl", ItemLevel(slot, link))
+			local info = P.ItemData(id)
+			out[#out + 1] = O("slot", slot, "id", id, "name", withNames and info.name or nil, "ilvl", ItemLevel(slot, link),
+				"quality", info.quality, "sell", info.sell)
 		end
 	end
 	if #out == 0 then return nil end
@@ -352,6 +358,100 @@ end
 local function Int(v, max)
 	if type(v) ~= "number" or v ~= v or v < 0 or v > (max or 2147483647) then return nil end
 	return math.floor(v)
+end
+
+-- ns.Try keeps only seven returns. Item info's equip location and vendor price
+-- are returns nine and eleven, so keep them with a guarded pcall here instead.
+-- Cached metadata only: no tooltip, request/load call or UI change.
+function P.ItemData(id)
+	if ns.InCombat() then return {} end
+	local fn = C_Item and C_Item.GetItemInfo
+	if type(fn) ~= "function" then fn = GetItemInfo end
+	if type(fn) ~= "function" then return {} end
+	local ok, name, _, quality, ilvl, minLevel, _, _, _, equipLoc, _, sell = pcall(fn, id)
+	if not ok or type(name) ~= "string" or name == "" then return {} end
+	return { name = Clean(name), quality = Int(quality, 8), sell = Int(sell),
+		equipLoc = type(equipLoc) == "string" and equipLoc ~= "" and Clean(equipLoc) or nil,
+		ilvl = Int(ilvl, 10000), minLevel = Int(minLevel, 1000) }
+end
+
+function P.Rewards(quests)
+	if ns.InCombat() then return nil end
+	-- These legacy reward readers use the CURRENT selection. Do not select even
+	-- temporarily: that could alter the player's quest pane. Read only the already
+	-- selected quest, if it is in the first 20 log quests; other rewards are unknown.
+	local selected = Int(Try(C_QuestLog and C_QuestLog.GetSelectedQuest))
+	if not selected or selected == 0 then return nil end
+	local inLog = false
+	for i, q in ipairs(quests or {}) do
+		if i > 20 then break end
+		if q.id == selected then inLog = true; break end
+	end
+	if not inLog then return nil end
+	local items = {}
+	for _, choice in ipairs({ false, true }) do
+		local n = Int(Try(choice and GetNumQuestLogChoices or GetNumQuestLogRewards))
+		for i = 1, math.min(n or 0, 6 - #items) do
+			local name, _, count, quality, _, id = Try(choice and GetQuestLogChoiceInfo or GetQuestLogRewardInfo, i)
+			id = Int(id)
+			if id and id > 0 then
+				local info = P.ItemData(id)
+				name = type(name) == "string" and Clean(name) or info.name
+				items[#items + 1] = O("id", id, "name", name, "quality", Int(quality, 8) or info.quality,
+					"equipLoc", info.equipLoc, "ilvl", info.ilvl, "minLevel", info.minLevel,
+					"count", Int(count, 1000000), "choice", choice)
+			end
+		end
+	end
+	if #items > 0 then return { O("id", selected, "items", items) } end
+end
+
+function P.Durability()
+	if ns.InCombat() then return nil end
+	local rows, out = {}, {}
+	for slot = 1, 19 do
+		local current, maximum = Try(GetInventoryItemDurability, slot)
+		current, maximum = Int(current), Int(maximum)
+		if current and maximum and maximum > 0 and current <= maximum then
+			rows[#rows + 1] = { slot = slot, pct = math.floor(current * 100 / maximum) }
+		end
+	end
+	table.sort(rows, function(a, b) return a.pct < b.pct or (a.pct == b.pct and a.slot < b.slot) end)
+	for _, row in ipairs(rows) do out[#out + 1] = O("slot", row.slot, "pct", row.pct) end
+	if #out > 0 then return out end
+end
+
+function P.Rested()
+	if ns.InCombat() then return nil end
+	return Int(Try(GetXPExhaustion))
+end
+
+function P.Hearth()
+	if ns.InCombat() then return nil end
+	local bind = Try(GetBindLocation)
+	bind = type(bind) == "string" and bind ~= "" and Clean(bind) or nil
+	local fn = C_Container and C_Container.GetItemCooldown
+	if type(fn) ~= "function" then fn = C_Item and C_Item.GetItemCooldown end
+	if type(fn) ~= "function" then fn = GetItemCooldown end
+	local start, duration, enabled = Try(fn, 6948)
+	local now, left = Try(GetTime), nil
+	if Int(start) and Int(duration) and Int(now) and (enabled == 1 or enabled == true) then
+		left = Int(math.max(0, math.ceil(start + duration - now)))
+	end
+	if bind or left then return O("bind", bind, "left", left) end
+end
+
+function P.Talents()
+	if ns.InCombat() then return nil end
+	local n, out = Int(Try(GetNumTalentTabs)), {}
+	for i = 1, math.min(n or 0, 5) do
+		local name, _, points = Try(GetTalentTabInfo, i)
+		points = Int(points, 1000)
+		if type(name) == "string" and points then
+			out[#out + 1] = O("tree", i, "name", Clean(name), "points", points)
+		end
+	end
+	if #out > 0 then return out end
 end
 
 function P.Bags()
@@ -384,8 +484,8 @@ function P.Bags()
 					if byId[key] then
 						byId[key].count = math.min(1000000, byId[key].count + count)
 					elseif #items < 32 then
-						local name = Clean(Try((C_Item and C_Item.GetItemInfo) or GetItemInfo, id))
-						local item = { id = id, name = name ~= "" and name or nil, count = count, kind = kind }
+						local info = P.ItemData(id)
+						local item = { id = id, name = info.name, count = count, kind = kind, quality = info.quality, sell = info.sell }
 						items[#items + 1], byId[key] = item, item
 					else partial = true end
 				end
@@ -394,7 +494,7 @@ function P.Bags()
 	end
 	if not known then return nil end
 	local out = {}
-	for _, i in ipairs(items) do out[#out + 1] = O("id", i.id, "name", i.name, "count", i.count, "kind", i.kind) end
+	for _, i in ipairs(items) do out[#out + 1] = O("id", i.id, "name", i.name, "count", i.count, "kind", i.kind, "quality", i.quality, "sell", i.sell) end
 	return O("free", freeKnown and free or nil, "slots", slots, "items", out, "partial", partial and true or nil)
 end
 
@@ -543,7 +643,7 @@ end
 -- Which droppable parts the state has at all: only those count as omitted.
 local function Present(g)
 	local has = { gear = g.gear ~= nil, poi = g.poi ~= nil, chainStarts = g.chainStarts ~= nil, prof = g.prof ~= nil and #g.prof > 0, pending = g.pending ~= nil and #g.pending > 0 } -- [QL-F-14] none in P.ListOnlyOf's
-	for _, k in ipairs({ "bags", "auras", "rep", "target", "group" }) do has[k] = g[k] ~= nil end
+	for _, k in ipairs({ "bags", "auras", "rep", "target", "group", "rewards", "durability", "rested", "hearth", "talents" }) do has[k] = g[k] ~= nil end
 	for _, q in ipairs(g.quests) do
 		local len = #(q.title or "")
 		if len > 0 then has["quests.title"] = true end
@@ -608,7 +708,10 @@ local function Encode(g, drop, seq, t)
 		"pending", (not drop.pending) and g.pending or nil,
 		"bags", (not drop.bags) and g.bags or nil, "auras", (not drop.auras) and g.auras or nil,
 		"rep", (not drop.rep) and g.rep or nil, "target", (not drop.target) and g.target or nil,
-		"group", (not drop.group) and g.group or nil, "omitted", Omitted(g, drop)))
+		"group", (not drop.group) and g.group or nil,
+		"rewards", (not drop.rewards) and g.rewards or nil, "durability", (not drop.durability) and g.durability or nil,
+		"rested", (not drop.rested) and g.rested or nil, "hearth", (not drop.hearth) and g.hearth or nil,
+		"talents", (not drop.talents) and g.talents or nil, "omitted", Omitted(g, drop)))
 end
 P.Encode = Encode
 
@@ -634,6 +737,7 @@ function P.Gather()
 		chainStarts = ChainStarts(Get(char, "level"), quests),
 		prof = prof, gear = P.Gear(), pending = PendingList(ch), pendingIds = pendingIds,
 		bags = P.Bags(), auras = P.Auras(), rep = P.Reputations(), target = P.Target(), group = P.Group(),
+		rewards = P.Rewards(quests), durability = P.Durability(), rested = P.Rested(), hearth = P.Hearth(), talents = P.Talents(),
 	}
 end
 
@@ -651,24 +755,25 @@ end
 -- the strip, and the step it ended at.
 function P.Fit(g, seq, t, how)
 	how = how or {}
+	local ORDER = how.order or DROP_ORDER
 	local jsonMax = how.qlog and STATE_BUDGET.JSON or STATE_BUDGET.LEGACY_JSON
 	local has = Present(g)
 	-- Empty objective lists go with that step too (unnamed in omitted: nothing was in them).
 	has["quests.obj"] = has["quests.obj"] or #g.quests > 0
 	local drop = {}
-	local i = math.max(0, math.min(#DROP_ORDER, (tonumber(how.from) or 0) - 1))
-	for k = 1, i do drop[DROP_ORDER[k]] = has[DROP_ORDER[k]] or nil end
+	local i = math.max(0, math.min(#ORDER, (tonumber(how.from) or 0) - 1))
+	for k = 1, i do drop[ORDER[k]] = has[ORDER[k]] or nil end
 	while true do
 		local json = Encode(g, drop, seq, t)
 		if #json <= jsonMax then
 			local packed = how.z and ns.Transport.Deflate(json) or nil
 			if #(packed or json) <= STATE_BUDGET.BODY then return json, drop, false, packed, i end
 		end
-		repeat i = i + 1 until i > #DROP_ORDER or has[DROP_ORDER[i]]
-		if i > #DROP_ORDER then break end
-		drop[DROP_ORDER[i]] = true
+		repeat i = i + 1 until i > #ORDER or has[ORDER[i]]
+		if i > #ORDER then break end
+		drop[ORDER[i]] = true
 	end
-	return J.encode(O("v", 1, "sid", g.sid, "seq", seq, "state", "too_large")), drop, true, nil, #DROP_ORDER
+	return J.encode(O("v", 1, "sid", g.sid, "seq", seq, "state", "too_large")), drop, true, nil, #ORDER
 end
 
 -- Build the state now. seq goes up only when the body (all but seq and t) changed.
@@ -676,15 +781,17 @@ function P.Build()
 	if not ns.db then return nil end
 	local c = DB()
 	local g = P.Gather()
+	local inv = R.statePreferInv == true -- the voice asked for bags and gear (P.VoiceWanted)
+	if inv then g.gear = P.Gear(true) end
 	local listOnly = P.ListOnly() -- [QL-F-14] the app's companion switch off: the quest log alone
 	if listOnly then g = P.ListOnlyOf(g) end
 	local caps = P.Caps()
 	local nextSeq = math.max(c.seq, R.bridgeStateSeq or 0) + 1
 	-- The fit starts from where the last one ended, for the same caps.
-	local fitKey = (caps.z and "z" or "") .. (caps.qlog and "q" or "") .. (listOnly and "l" or "") -- [QL-F-14]
+	local fitKey = (caps.z and "z" or "") .. (caps.qlog and "q" or "") .. (listOnly and "l" or "") .. (inv and "i" or "") -- [QL-F-14]
 	local from = R.fitStep and R.fitStep.key == fitKey and R.fitStep.i or 0
 	if listOnly then from = math.max(from, #DROP_ORDER - 2) end -- [QL-F-14] at the title steps, the last three
-	local json, drop, tooLarge, packed, step = P.Fit(g, nextSeq, time(), { z = caps.z, qlog = caps.qlog, from = from })
+	local json, drop, tooLarge, packed, step = P.Fit(g, nextSeq, time(), { z = caps.z, qlog = caps.qlog, from = from, order = inv and INV_DROP_ORDER or nil })
 	R.fitStep = { key = fitKey, i = step }
 	local core = tooLarge and ("too_large:" .. g.sid) or Encode(g, drop, 0, 0)
 	if core ~= c.stateCore or type(c.stateJson) ~= "string" then
@@ -866,6 +973,8 @@ end
 
 function P.SpeakSummary(summary)
 	if not ns.db or ns.db.settings.speak ~= true or type(summary) ~= "string" then return end
+	-- The voice companion reads replies aloud instead (/nqa voice read on): the game's TTS stays quiet.
+	if ns.db.settings.voiceRead == true then return end
 	local id = VoiceID()
 	if not id then return end
 	local text = Clean((summary:gsub("[<>&]", "")), 300)
@@ -888,7 +997,7 @@ end
 -- is a keyed vc record on the strip (cap voice), which the app passes to the voice; the voice's own
 -- state comes back in the slot (bridge.voice.state: listening, muted, paused, connecting or off).
 -- Nothing here touches the game: the record is read by the app, never by WoW.
-local VOICE_CMDS = { talk = true, mute = true, unmute = true, pause = true, resume = true }
+local VOICE_CMDS = { talk = true, mute = true, unmute = true, pause = true, resume = true, tip = true }
 local VOICE_WORDS = {
 	listening = "listening", muted = "microphone off", paused = "paused", connecting = "connecting", off = "not running",
 }
@@ -903,12 +1012,44 @@ end
 function P.VoiceCommand(cmd)
 	if not VOICE_CMDS[cmd] then return nil end
 	if not ns.HasCap("voice") then return "Voice controls need the NeverQuestAlone app with voice support running." end
-	local key = ns.Transport.NewKeyed("vc", "", { { "cmd", cmd } }, "")
+	-- at: when it was pressed (time(), the computer's clock, which the app shares), so a late one is dropped.
+	local key = ns.Transport.NewKeyed("vc", "", { { "cmd", cmd }, { "at", time() } }, "")
 	if not key then return "The app isn't connected yet." end
-	R.voiceAsked = { cmd = cmd, at = GetTime() }
+	R.voiceAsked = { cmd = cmd, at = GetTime(), from = P.VoiceState() }
 	ns.Transport.AfterSend("", "vc", key)
 	if P.VoiceState() == "off" then return "Sent. The voice companion isn't running: start it with the app (tools/voice)." end
-	return cmd == "talk" and "Talk now: the voice is listening for one question." or ("Voice: " .. cmd .. ".")
+	-- Talk isn't open yet: the voice says so (a short sound) once it really listens (Astra review 7).
+	if cmd == "tip" then return "Asking the voice what to do next…" end
+	return cmd == "talk" and "Getting the microphone ready… speak after the sound." or ("Voice: " .. cmd .. ".")
+end
+
+-- The voice companion asked for bags and gear (bridge.voice.want grows): the addon answers with a
+-- state fitted with them kept, right away (not in combat, and only as the companion switches allow).
+function P.VoiceWanted()
+	local b = R.bridge
+	local want = type(b) == "table" and type(b.voice) == "table" and tonumber(b.voice.want) or nil
+	if not want or want == R.voiceWantSeen then return end
+	R.voiceWantSeen = want
+	if ns.InCombat() then return end
+	R.statePreferInv = true
+	local ok = pcall(P.QueueState, STATE_DWELL)
+	R.statePreferInv = nil
+	return ok
+end
+
+-- Called when a slot brings bridge.voice: after a Talk, the first "listening" plays a short sound,
+-- so the first word isn't lost. A UI sound only: nothing in the game happens.
+function P.VoiceHeard()
+	local a = R.voiceAsked
+	if not a or a.cmd ~= "talk" or a.done then return end
+	if GetTime() - a.at > 20 then a.done = true return end
+	if P.VoiceState() == "listening" and (a.from ~= "listening" or a.sawOther) then
+		a.done = true
+		if type(PlaySound) == "function" and SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON then pcall(PlaySound, SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) end
+		if ns.Refresh then ns.Refresh() end
+	elseif P.VoiceState() ~= "listening" then
+		a.sawOther = true
+	end
 end
 
 function P.VoiceToggleMute()
@@ -920,10 +1061,74 @@ function P.VoiceTogglePause()
 	return P.VoiceCommand((st == "paused" or st == "off") and "resume" or "pause")
 end
 
--- /nqa voice [talk|mute|unmute|pause|resume]
+-- Who speaks (S4): a fixed list, the same as the voice server's PERSONAS (tools/voice/server.mjs) and
+-- the bridge's VOICE_PERSONAS; the choice is saved and sent as a vc record (cmd persona).
+P.VOICE_PERSONAS = { "skeleton", "orc-shaman", "troll", "forsaken", "tauren" }
+local PERSONA_WORDS = { skeleton = "Bones the skeleton", ["orc-shaman"] = "an old orc shaman", troll = "a troll witch doctor",
+	forsaken = "a Forsaken apothecary", tauren = "a tauren druid" }
+
+function P.VoicePersona()
+	local b = ns.R and ns.R.bridge
+	local v = type(b) == "table" and type(b.voice) == "table" and b.voice.persona
+	return PERSONA_WORDS[v] and v or nil
+end
+
+function P.VoicePickPersona(name)
+	if not PERSONA_WORDS[name] then return nil end
+	if not ns.HasCap("voice") then return "Voice controls need the NeverQuestAlone app with voice support running." end
+	local key = ns.Transport.NewKeyed("vc", "", { { "cmd", "persona" }, { "name", name }, { "at", time() } }, "")
+	if not key then return "The app isn't connected yet." end
+	ns.db.settings.voicePersona = name
+	ns.Transport.AfterSend("", "vc", key)
+	return "Voice: switching to " .. PERSONA_WORDS[name] .. " (it reconnects in a few seconds)."
+end
+
+-- The voice companion reads new replies aloud (S6, T16): saved here, told to the app (vc read),
+-- which hands each reply's summary to the voice; the game's own TTS stays quiet while it's on.
+function P.VoiceRead(on)
+	if not ns.HasCap("voice") then return "Voice controls need the NeverQuestAlone app with voice support running." end
+	local key = ns.Transport.NewKeyed("vc", "", { { "cmd", "read" }, { "on", on and 1 or 0 }, { "at", time() } }, "")
+	if not key then return "The app isn't connected yet." end
+	ns.db.settings.voiceRead = on == true
+	ns.Transport.AfterSend("", "vc", key)
+	return "Voice reads replies aloud: " .. (on and "on (the game's own voice stays quiet)." or "off.")
+end
+
+-- /nqa voice [talk|mute|unmute|pause|resume|persona <name>|read on|off|bar on|off]
 function P.VoiceSlash(rest)
-	if rest == "" or rest == "status" then return "Voice: " .. VOICE_WORDS[P.VoiceState()] .. "." end
-	return P.VoiceCommand(rest) or "Use /nqa voice talk, mute, unmute, pause or resume."
+	if rest == "" or rest == "status" then
+		local who = P.VoicePersona()
+		return "Voice: " .. VOICE_WORDS[P.VoiceState()] .. (who and (", " .. PERSONA_WORDS[who]) or "") .. "."
+	end
+	local readOn = rest:match("^read%s*(%S*)$")
+	if readOn then
+		if readOn == "" then return "Voice reads replies aloud: " .. (ns.db.settings.voiceRead == true and "on." or "off.") end
+		if readOn ~= "on" and readOn ~= "off" then return "Use /nqa voice read on or off." end
+		return P.VoiceRead(readOn == "on")
+	end
+	local barOn = rest:match("^bar%s*(%S*)$")
+	if barOn then
+		if barOn ~= "on" and barOn ~= "off" then return "Use /nqa voice bar on or off." end
+		return ns.VoiceBar and ns.VoiceBar.Command(barOn == "on") or "The voice bar isn't loaded."
+	end
+	local name = rest:match("^persona%s*(%S*)$")
+	if name then
+		if name == "" then return "Voices: " .. table.concat(P.VOICE_PERSONAS, ", ") .. ". Pick one: /nqa voice persona orc-shaman" end
+		return P.VoicePickPersona(name) or ("No voice called " .. name .. ". Voices: " .. table.concat(P.VOICE_PERSONAS, ", ") .. ".")
+	end
+	return P.VoiceCommand(rest) or "Use /nqa voice talk, tip, mute, unmute, pause, resume, persona, read or bar."
+end
+
+-- The keys (Bindings.xml): talk, and the two toggles.
+NeverQuestAlone.Voice = function(what)
+	local msg
+	if what == "talk" or what == "tip" then msg = P.Call("VoiceCommand", what)
+	elseif what == "toggle_mute" then msg = P.Call("VoiceToggleMute")
+	elseif what == "toggle_pause" then msg = P.Call("VoiceTogglePause") end
+	if msg and ns.Chats and ns.Chats.Notice and ns.Chats.Active then
+		local chat = ns.Chats.Active()
+		if chat then ns.Chats.Notice(chat, msg) end
+	end
 end
 
 -- For a typed message: the seq its st= names, with that state queued (F1),

@@ -11,7 +11,8 @@ if (input.includes('SLOW')) await new Promise(r => setTimeout(r, 1500));
 if (argv[0] === 'exec') {
   if (input.includes('FAIL')) { out({ type: 'turn.failed', error: { message: 'You have hit your usage limit' } }); process.exit(1); }
   out({ type: 'thread.started', thread_id: 't' });
-  out({ type: 'item.completed', item: { type: 'agent_message', text: `codex saw ${input.length} chars; args ${argv.join(' ')}; env ${JSON.stringify(env)}` } });
+  const context = { cwd: process.cwd(), cd: argv[argv.indexOf('-C') + 1], files: fs.readdirSync(process.cwd()) };
+  out({ type: 'item.completed', item: { type: 'agent_message', text: `codex saw ${input.length} chars; args ${argv.join(' ')}; env ${JSON.stringify(env)}; context ${JSON.stringify(context)}` } });
   out({ type: 'turn.completed', usage: { input_tokens: 100, cached_input_tokens: 40, output_tokens: 7, reasoning_output_tokens: 2 } });
 } else {
   const sysFile = argv[argv.indexOf('--system-prompt-file') + 1];

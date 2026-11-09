@@ -12,6 +12,7 @@
 # -Persona: who the voice companion is (tools/voice/server.mjs PERSONAS); orc-shaman uses a deeper voice.
 # -Companion: turns on the app's companion switch (byok.privacy.companion), which the addon needs to send
 #   full game data on its own (/nqa live on) and which also allows automatic check-in turns. Off by default.
+# -ShowVoice: open the voice page as a normal browser tab instead of the hidden off-screen window.
 # Quit the NeverQuestAlone app first: the app and this never serve one AddOns folder at once.
 param(
   [ValidateSet('openai', 'anthropic', 'proxy')] [string]$Ai = 'openai',
@@ -19,7 +20,8 @@ param(
   [switch]$InstallAddon,
   [switch]$NoVoice,
   [ValidateSet('skeleton', 'orc-shaman')] [string]$Persona = 'skeleton',
-  [switch]$Companion
+  [switch]$Companion,
+  [switch]$ShowVoice
 )
 $ErrorActionPreference = 'Stop'
 $repo = Resolve-Path (Join-Path $PSScriptRoot '..\..')
@@ -74,7 +76,23 @@ if (-not $NoVoice) {
   $env:NQA_APP_DATA = $data
   Start-Process -WindowStyle Minimized -FilePath 'node' -ArgumentList @((Join-Path $repo 'tools\voice\server.mjs'), '--key-file', $keys, '--app-data', $data, '--persona', $Persona)
   Start-Sleep 2
-  Start-Process 'http://localhost:8790/'
+  # The voice page (odd/tasks/nqa-voice-controls.md T1): a Chrome app window off screen, with a profile of
+  # its own that only ever opens this page, so nothing covers the game's top-left strip and the addon's
+  # buttons drive it. --use-fake-ui-for-media-stream answers the microphone prompt (that profile only
+  # visits localhost:8790); autoplay lets its answers play with no click. -ShowVoice opens it normally.
+  $voiceUrl = 'http://localhost:8790/?auto=1'
+  $chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+  $profileDir = Join-Path $data 'voice-chrome'
+  $running = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($profileDir) }
+  if ($ShowVoice -or -not $chrome) {
+    if (-not $chrome) { Write-Warning 'Chrome not found: opening the voice page in the default browser (keep it off the game''s top-left corner).' }
+    Start-Process $voiceUrl
+  } elseif ($running) {
+    Write-Host 'The hidden voice window is already open.'
+  } else {
+    Start-Process -FilePath $chrome -ArgumentList @("--user-data-dir=`"$profileDir`"", "--app=$voiceUrl", '--window-position=-32000,-32000', '--window-size=480,640',
+      '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required', '--no-first-run', '--no-default-browser-check')
+  }
 }
 
 & node (Join-Path $repo 'bridge\nqa.mjs') start --wow $flavor --data $data

@@ -10,6 +10,7 @@
 // else is dropped unread and never logged.
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { parsePayload, parseRecord, inflateBody } from './transport/records.mjs';
 import { createSignals, ALIVE_EVERY_MS } from './transport/signals.mjs';
 import { createPublisher } from './transport/publisher.mjs';
@@ -17,6 +18,7 @@ import { createSlotWorker } from './write-queue.mjs';
 import { slotWindow, SLOT_COUNT, WINDOW_MARGIN, SLOT_JOB } from './transport/slots.mjs';
 import { newestSavedVariables } from './transport/savedvars.mjs';
 import { createCaptureHealth } from './transport/capture-health.mjs';
+import { createRetrier } from './transport/fsretry.mjs';
 import { openStore } from './app/store.mjs';
 import { renderReply, systemLine } from './app/render.mjs';
 import { withState, parseContextLines, staleContext } from './app/context.mjs';
@@ -50,9 +52,20 @@ export const VOICE_TEXT_MAX = 6000;
 // CONTROL_FILE/STATUS_FILE): the newest command for the voice page, and what the voice says it is doing.
 export const VOICE_CONTROL = 'voice-control.json';
 export const VOICE_STATUS = 'voice-status.json';
-export const VOICE_COMMANDS = Object.freeze(['talk', 'mute', 'unmute', 'pause', 'resume']);
+export const VOICE_COMMANDS = Object.freeze(['talk', 'tip', 'mute', 'unmute', 'pause', 'resume', 'persona', 'read']);
+// The voice reading replies aloud (T16): its switch, and the queue of summaries for it to say.
+export const VOICE_READ = 'voice-read.json';
+export const VOICE_SAY = 'voice-say';
+export const VOICE_SAY_MAX = 20;
+export const VOICE_SAY_TEXT_MAX = 600;
+// Who the voice is (S4): the same fixed list as tools/voice/server.mjs PERSONAS and the addon's VOICE_PERSONAS.
+export const VOICE_PERSONAS = Object.freeze(['skeleton', 'orc-shaman', 'troll', 'forsaken', 'tauren']);
 export const VOICE_STATES = Object.freeze(['listening', 'muted', 'paused', 'connecting']);
 export const VOICE_STATUS_FRESH_MS = 15000;
+// The voice asking for bags and gear (tools/voice/game.mjs WANT_FILE): {v:1, n, at}, honoured for VOICE_WANT_FRESH_MS.
+export const VOICE_WANT = 'voice-want.json';
+export const VOICE_WANT_FRESH_MS = 20000;
+export const VOICE_COMMAND_MAX_AGE_S = 30; // a voice command older than this is never applied (it was meant for then)
 export const STATE_WAIT_MS = 2000; // a turn naming a state (st=) waits this long for it (companion F1)
 export const RECAP_EXIT_WINDOW_MS = 60000; // lastSession and the game's exit within this: a quit (F6)
 export const RELOAD_GRACE_MS = 2000; // the same session heard this long after a lastSession write: that write was a /reload's
@@ -789,32 +802,90 @@ export function createBridge(config, deps) {
 
   // A voice command from the addon's buttons or keys (cap voice; odd/tasks/nqa-voice-controls.md T2):
   // the newest goes to <bridge>/voice-control.json, numbered, where the voice companion's page reads it.
-  // One read from SavedVariables after a reload is old news: acked, never applied.
+  // A command is only for now: one read from SavedVariables after a reload, or one the addon stamped
+  // (at=, its time()) more than VOICE_COMMAND_MAX_AGE_S ago, is acked and never applied (Astra review 6).
+  // The file is written (retried on Windows' passing locks) before the ack, so a failed write is
+  // logged with the command instead of lost behind an ack (review 4).
   let voiceCmdN = 0;
+  const voiceRetry = createRetrier();
   function onVoiceCommand(r, via) {
+    const cmd = String(r.args.cmd || '');
+    const at = Number(r.args.at);
+    const stale = via === 'reload' || !Number.isFinite(at) || Math.abs(now() / 1000 - at) > VOICE_COMMAND_MAX_AGE_S;
+    // persona carries a name from the fixed list; any other name isn't a command.
+    const persona = cmd === 'persona' ? String(r.args.name || '') : undefined;
+    const known = VOICE_COMMANDS.includes(cmd) && (cmd !== 'persona' || VOICE_PERSONAS.includes(persona));
+    // read on|off (T16) is the bridge's own switch: new replies' summaries go to the voice to be said.
+    if (cmd === 'read' && !stale) {
+      const on = r.args.on === '1';
+      try {
+        const file = path.join(stateDir, VOICE_READ);
+        const tmp = `${file}.tmp`;
+        voiceRetry.run(() => fs.writeFileSync(tmp, JSON.stringify({ v: 1, on, at: now() }), { mode: 0o600 }));
+        voiceRetry.run(() => fs.renameSync(tmp, file));
+        voiceReadOn = on;
+        log('voice-command', { cmd, on });
+      } catch (e) { log('voice-command', { cmd, applied: false, error: e.code || String(e.message || e) }); }
+    } else if (known && cmd !== 'read' && !stale) {
+      const file = path.join(stateDir, VOICE_CONTROL);
+      if (!voiceCmdN) { try { voiceCmdN = Number(JSON.parse(fs.readFileSync(file, 'utf8')).n) || 0; } catch { voiceCmdN = 0; } }
+      try {
+        const tmp = `${file}.tmp`;
+        voiceRetry.run(() => fs.writeFileSync(tmp, JSON.stringify({ v: 1, n: voiceCmdN + 1, cmd, persona, at: now() }), { mode: 0o600 }));
+        voiceRetry.run(() => fs.renameSync(tmp, file));
+        voiceCmdN += 1;
+        log('voice-command', { cmd, n: voiceCmdN });
+      } catch (e) { log('voice-command', { cmd, applied: false, error: e.code || String(e.message || e) }); }
+    } else {
+      log('voice-command', { cmd: known ? cmd : 'bad', applied: false, via, stale: stale || undefined });
+    }
     noteAck(r.token, r.key);
     store.saveState();
-    const cmd = String(r.args.cmd || '');
-    if (!VOICE_COMMANDS.includes(cmd) || via === 'reload') { log('voice-command', { cmd: VOICE_COMMANDS.includes(cmd) ? cmd : 'bad', applied: false, via }); publisher.publish({}); return; }
-    const file = path.join(stateDir, VOICE_CONTROL);
-    if (!voiceCmdN) { try { voiceCmdN = Number(JSON.parse(fs.readFileSync(file, 'utf8')).n) || 0; } catch { voiceCmdN = 0; } }
-    voiceCmdN += 1;
+    publisher.publish({ push: true });
+  }
+  // Whether the voice reads replies aloud (T16), from <bridge>/voice-read.json, kept across restarts.
+  let voiceReadOn = null;
+  function voiceReads() {
+    if (voiceReadOn === null) { try { voiceReadOn = JSON.parse(fs.readFileSync(path.join(stateDir, VOICE_READ), 'utf8')).on === true; } catch { voiceReadOn = false; } }
+    return voiceReadOn;
+  }
+  // A reply's summary for the voice to say (only while it reads replies, never a voice reply itself):
+  // one small JSON file each in <bridge>/voice-say/, written aside and renamed in; at most VOICE_SAY_MAX.
+  function queueVoiceSay(summary) {
+    if (!voiceReads()) return;
+    const text = String(summary || '').replace(/\|c[0-9a-fA-F]{8}|\|r/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VOICE_SAY_TEXT_MAX);
+    if (!text) return;
     try {
-      const tmp = `${file}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify({ v: 1, n: voiceCmdN, cmd, at: now() }), { mode: 0o600 });
-      fs.renameSync(tmp, file);
-      log('voice-command', { cmd, n: voiceCmdN });
-    } catch (e) { log('voice-command', { cmd, error: e.code || String(e.message || e) }); }
-    publisher.publish({});
+      const dir = path.join(stateDir, VOICE_SAY);
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+      const names = fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort();
+      for (const old of names.slice(0, Math.max(0, names.length - VOICE_SAY_MAX + 1))) fs.rmSync(path.join(dir, old), { force: true });
+      const id = crypto.randomUUID();
+      const name = `${String(now()).padStart(14, '0')}-${id}.json`;
+      const tmp = path.join(dir, `.${name}.tmp`);
+      fs.writeFileSync(tmp, JSON.stringify({ v: 1, id, text, at: now() }), { mode: 0o600 });
+      fs.renameSync(tmp, path.join(dir, name));
+    } catch (e) { log('voice-say', { error: e.code || String(e.message || e) }); }
   }
   // What the voice companion says it is doing ({state, at}), for the addon; old or missing is off.
   function voiceStatus() {
+    let out = { state: 'off' };
     try {
       const j = JSON.parse(fs.readFileSync(path.join(stateDir, VOICE_STATUS), 'utf8'));
       const age = now() - Number(j.at);
-      if (VOICE_STATES.includes(j.state) && age >= -5000 && age <= VOICE_STATUS_FRESH_MS) return { state: j.state };
+      if (VOICE_STATES.includes(j.state) && age >= -5000 && age <= VOICE_STATUS_FRESH_MS) {
+        out = VOICE_PERSONAS.includes(j.persona) ? { state: j.state, persona: j.persona } : { state: j.state };
+      }
     } catch { /* no voice companion */ }
-    return { state: 'off' };
+    // The voice asked for bags and gear (odd/tasks/nqa-voice-controls.md T15, S7): a growing number the
+    // addon answers once with a state that keeps them; only while the request is fresh.
+    try {
+      const w = JSON.parse(fs.readFileSync(path.join(stateDir, VOICE_WANT), 'utf8'));
+      const age = now() - Number(w.at);
+      if (Number.isInteger(w.n) && w.n > 0 && age >= -5000 && age <= VOICE_WANT_FRESH_MS) out.want = w.n;
+    } catch { /* nothing asked */ }
+    if (voiceReads()) out.read = true; // the voice reads replies aloud (T16): the bar shows it
+    return out;
   }
 
   // A stop finds a turn in one of two places (code health BR-22): still in the outbox, where it's taken
@@ -1108,7 +1179,8 @@ export function createBridge(config, deps) {
     const token = S.lastToken;
     if (!token) return 0;
     // The voice companion's state changed (muted, paused, talking again): the addon's buttons follow.
-    if (lastVoice && voiceStatus().state !== lastVoice.state) publisher.publish({});
+    const vs = lastVoice && voiceStatus();
+    if (vs && (vs.state !== lastVoice.state || vs.persona !== lastVoice.persona || vs.want !== lastVoice.want)) publisher.publish({ push: true }); // rung, so the addon reads it soon (review 5)
     let names = [];
     try { names = fs.readdirSync(voiceDir).filter(f => /^\d{14}-[0-9a-f-]{36}\.json$/.test(f)).sort().slice(0, VOICE_PER_DRAIN); } catch { return 0; }
     let n = 0, bad = 0;
@@ -1500,6 +1572,8 @@ export function createBridge(config, deps) {
     const rec = store.addRecord({ t: 'reply', chat: c.id, mid: mid || undefined, run: runId || undefined, agent: c.agent, text: r.text, summary: r.summary, more: r.more,
       chips: chips || undefined, refs: r.refs || undefined, weights: r.weights || undefined, drew: drew || undefined, usage: u || undefined,
       voice: voice ? 1 : undefined }, now());
+    // The voice says it too while it reads replies (T16); what the voice itself said is never said twice.
+    if (!voice) queueVoiceSay(r.summary || r.text);
     // A map block that failed to draw says so in game, once, and the log says why (RT-3).
     // Looking at the block never loses the reply: a throw there is logged, and the reply stands.
     try {

@@ -76,6 +76,10 @@ local HELP_ALL = table.concat({
 	"/nqa echo summary|full|short|off  Set chat frame replies",
 	"/nqa speak on|off|stop  Read reply summaries aloud",
 	"/nqa live on|off  Keep game data current between messages",
+	"/nqa voice talk|tip|mute|pause  Control the voice",
+	"/nqa voice persona [name]  Pick who speaks",
+	"/nqa voice read on|off  The voice reads replies aloud",
+	"/nqa voice bar on|off  Show or hide the voice bar",
 	"/nqa context [on|off]  Show game data, or turn it on or off",
 	"/nqa companion  List the kinds of check-in",
 	"/nqa companion on|off  Turn all check-ins on or off",
@@ -145,6 +149,7 @@ local COMMAND_ARGS = {
 	new = true, rename = true, chat = ChatArgument, chats = ChatArgument, pin = ChatArgument, unpin = ChatArgument,
 	echo = { [""] = true, summary = true, full = true, short = true, off = true },
 	speak = { [""] = true, on = true, off = true, stop = true }, live = ONOFF,
+	voice = true, -- talk|mute|unmute|pause|resume|persona <name> (Companion.VoiceSlash checks it)
 	context = ONOFF, dnd = DndArgument, map = MapArgument,
 	stream = ONOFF, reading = ONOFF, mode = { [""] = true, reload = true, pixel = true }, window = { reset = true },
 	paste = 0, replies = { [""] = true, auto = true, paste = true }, app = 0,
@@ -796,6 +801,8 @@ local function Handle(msg)
 		Perf(chat)
 	elseif cmd == "speak" then
 		Tell(chat, ns.Companion and ns.Companion.Call("SpeechCommand", rest:lower()) or "TTS isn't available in this client.")
+	elseif cmd == "voice" then
+		Tell(chat, ns.Companion and ns.Companion.Call("VoiceSlash", rest:lower()) or "Voice controls hit an error. /nqa diag shows it for a bug report.")
 	elseif cmd == "live" then
 		if rest:lower() == "on" or rest:lower() == "off" then
 			if ns.Companion then ns.Companion.Call("LiveSwitch", rest:lower() == "on") end

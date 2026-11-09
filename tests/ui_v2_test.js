@@ -2868,7 +2868,7 @@ test('C-127: the keys have a Keybindings section of their own, named as the AddO
   const bindings = bindingsXml(fs.readFileSync(path.join(ADDON, 'Bindings.xml'), 'utf8'));
   // The binding names stay, so keys bound before keep working; each is in the addon's own category, as
   // Blizzard_PingUI's keys are in theirs, and none has a header.
-  assert.deepEqual(bindings.map(b => b.name), ['NQA_OPEN_AND_TYPE', 'NQA_ASK_NEXT', 'NQA_ASK_TARGET', 'NQA_ASK_ITEM', 'NQA_OKAY']);
+  assert.deepEqual(bindings.map(b => b.name), ['NQA_OPEN_AND_TYPE', 'NQA_ASK_NEXT', 'NQA_ASK_TARGET', 'NQA_ASK_ITEM', 'NQA_VOICE_TALK', 'NQA_VOICE_TIP', 'NQA_VOICE_MUTE', 'NQA_VOICE_PAUSE', 'NQA_OKAY']);
   for (const b of bindings) {
     assert.equal(b.category, 'BINDING_HEADER_NQA', `${b.name}: its category`);
     assert.equal(b.header, undefined, `${b.name}: no header (the page draws one as a blank row)`);

@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { appDataDir, readGame, gameSections, wowmapBlock, appendVoiceInbox, readVoiceControl, writeVoiceStatus, SECTIONS } from './game.mjs';
+import { appDataDir, readGame, gameSections, wowmapBlock, appendVoiceInbox, readVoiceControl, writeVoiceStatus, takeVoiceSay, askInventory, lacksInventory, rememberInventory, SECTIONS } from './game.mjs';
 import { lookupWowhead, WOWHEAD_TYPES } from './wowhead.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +33,7 @@ export const PRICES = Object.freeze({
   'gpt-realtime-2.1': { audioIn: 32, audioOut: 64, textIn: 4, textOut: 16, cachedIn: 0.4 },
 });
 const MAX_BODY = 64 * 1024;
+export const LOOPBACK_HOSTS = Object.freeze(['127.0.0.1', 'localhost', '::1']);
 
 export function parseArgs(argv, env = process.env) {
   const o = { ...DEFAULTS, port: Number(env.NQA_VOICE_PORT) || DEFAULTS.port };
@@ -63,6 +64,9 @@ export function readKey({ keyFile, env = process.env } = {}) {
 // Who the companion is (the prompt's {{persona}}), and the voice each one sounds best with.
 export const PERSONAS = Object.freeze({
   skeleton: { voice: 'marin', text: "You are {{name}}, a skeleton who guides one player through World of Warcraft: Forever, talking with them by voice while they play. You've walked every road in Azeroth at least twice. Dry humor, warm, practical: the answer first, no filler, no lectures." },
+  troll: { voice: 'verse', text: "You are {{name}}, a troll witch doctor of the Darkspear who guides one player through World of Warcraft: Forever, talking with them by voice while they play. You've seen every jungle and swamp in Azeroth and you laugh easy. Speak relaxed and playful, a sing-song lilt, warm and a bit mischievous; now and then, at most once an answer, a troll touch (\"mon\", \"stay away from da voodoo\"), never in place of the answer. Practical: the answer first, no filler, no lectures." },
+  forsaken: { voice: 'echo', text: "You are {{name}}, a Forsaken apothecary who guides one player through World of Warcraft: Forever, talking with them by voice while they play. Death didn't stop you from knowing every road in Azeroth. Speak dry, raspy and darkly amused, never cruel; now and then, at most once an answer, a grim little joke about being dead, never in place of the answer. Practical: the answer first, no filler, no lectures." },
+  tauren: { voice: 'ballad', text: "You are {{name}}, a tauren druid who guides one player through World of Warcraft: Forever, talking with them by voice while they play. You've walked every road in Azeroth under the Earth Mother's sky. Speak calm, deep and kind, unhurried, like an elder who has time for you; now and then, at most once an answer, a nod to the Earth Mother or the land, never in place of the answer. Practical: the answer first, no filler, no lectures." },
   'orc-shaman': { voice: 'cedar', text: "You are {{name}}, an old orc shaman who guides one player through World of Warcraft: Forever, talking with them by voice while they play. You've walked every road in Azeroth and listened to the spirits of earth, fire, water and air on all of them. Speak like an orc elder by the fire: a deep, rough, unhurried voice, short plain sentences, gruff warmth and a little dry humor. Now and then, at most once an answer, an orcish word or a nod to the elements (\"Lok'tar\", \"Zug zug\", \"the spirits say\"), never in place of the answer. Practical: the answer first, no filler, no lectures." },
 });
 /** The persona asked for, else the skeleton (an unknown name too). */
@@ -82,7 +86,7 @@ export function tools({ web = false } = {}) {
   const list = [
     {
       type: 'function', name: 'get_game_state',
-      description: 'Read the player\'s current game data from the NeverQuestAlone app: only the sections needed. Read-only.',
+      description: 'Read the player\'s current game data from the NeverQuestAlone app: only the sections needed. Read-only. Asking for "bags" or "gear" fetches them fresh from the game (a few seconds: say you are checking); they come with item names. A *AgeSeconds field means that part is from an earlier look.',
       parameters: { type: 'object', properties: { sections: { type: 'array', items: { type: 'string', enum: [...SECTIONS] } } }, required: ['sections'], additionalProperties: false },
     },
     {
@@ -171,10 +175,40 @@ async function mintSecret(o, key, fetchFn = fetch) {
 }
 
 /** Runs one tool call for the page. Never throws: errors come back as {error}. */
-export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now() } = {}) {
+// Asked for bags or gear the state lacks, the tool asks the addon and waits this long for them (S7).
+export const INVENTORY_WAIT_MS = 5000;
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now(), sleep = pause, clock = Date.now } = {}) {
   const dir = o.appData || appDataDir();
   try {
-    if (name === 'get_game_state') return gameSections(readGame(dir, { now }), args?.sections);
+    if (name === 'get_game_state') {
+      const asked = Array.isArray(args?.sections) ? args.sections : [];
+      let game = readGame(dir, { now });
+      let waited = false;
+      // Bags or gear asked for by name and missing: ask the addon, and wait a few seconds for them.
+      if (game.ok && (asked.includes('bags') || asked.includes('gear')) && lacksInventory(game.state) && askInventory(dir, { now: clock() })) {
+        const until = clock() + INVENTORY_WAIT_MS, before = game.at;
+        waited = true;
+        while (clock() < until) {
+          await sleep(250);
+          const next = readGame(dir, { now: clock() });
+          if (next.ok && next.at > before) { game = next; if (!lacksInventory(next.state)) break; }
+        }
+      }
+      const mem = rememberInventory(dir, game);
+      const out = gameSections(game, args?.sections);
+      // What the newest state left out, from the last one that had it, with its age.
+      if (out.available) {
+        const ageOf = at => Math.max(0, Math.round((clock() - at) / 1000));
+        const wantAll = !asked.length;
+        if ((wantAll || asked.includes('bags')) && !out.bags && mem.bags) { out.bags = mem.bags.value; out.bagsAgeSeconds = ageOf(mem.bags.at); }
+        if ((wantAll || asked.includes('gear')) && mem.gear && !(Array.isArray(out.gear) && out.gear.some(g => g && g.name))) { out.gear = mem.gear.value; out.gearAgeSeconds = ageOf(mem.gear.at); }
+        if (Array.isArray(out.missing)) { out.missing = out.missing.filter(m => !((m === 'bags' || m === 'gear') && out[m])); if (!out.missing.length) delete out.missing; }
+        if (waited && lacksInventory(game.state) && !out.bags) out.inventoryNote = 'Asked the game for bags and gear but they did not arrive in time (in combat, or the addon is busy): say you could not see them right now.';
+      }
+      return out;
+    }
     if (name === 'place_map_pins') {
       const b = wowmapBlock(args || {});
       if (b.error) return { error: b.error };
@@ -231,9 +265,12 @@ export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
     try { body = JSON.parse((await readBody(req)) || '{}'); } catch { return json(res, 400, { error: 'bad json' }); }
     if (url.pathname === '/session') {
       if (!key) return json(res, 500, { error: 'No OpenAI key: set OPENAI_API_KEY or --key-file.' });
-      const r = await mintSecret(o, key, fetchFn).catch(e => ({ ok: false, status: 502, error: String(e?.message || e) }));
+      // The page may name a persona from the fixed list (the game's picker, S4); anything else keeps the server's.
+      const asked = typeof body.persona === 'string' && PERSONAS[body.persona] ? body.persona : null;
+      const so = asked && asked !== o.persona ? { ...o, persona: asked, voiceSet: false } : o;
+      const r = await mintSecret(so, key, fetchFn).catch(e => ({ ok: false, status: 502, error: String(e?.message || e) }));
       log('session', r.ok ? 'ok' : `fail ${r.status} ${r.error}`);
-      return r.ok ? json(res, 200, { value: r.value, expiresAt: r.expiresAt, model: r.model }) : json(res, 502, { error: r.error });
+      return r.ok ? json(res, 200, { value: r.value, expiresAt: r.expiresAt, model: r.model, persona: so.persona }) : json(res, 502, { error: r.error });
     }
     if (url.pathname === '/tool') {
       const out = await runTool(String(body.name || ''), body.args, o, { fetchFn });
@@ -253,8 +290,12 @@ export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
     if (url.pathname === '/control') {
       return json(res, 200, readVoiceControl(o.appData || appDataDir()) || {});
     }
+    // A reply for the voice to read aloud (T16), oldest first; {} when none.
+    if (url.pathname === '/say') {
+      return json(res, 200, takeVoiceSay(o.appData || appDataDir()) || {});
+    }
     if (url.pathname === '/status') {
-      const r = writeVoiceStatus(o.appData || appDataDir(), String(body.state || ''));
+      const r = writeVoiceStatus(o.appData || appDataDir(), String(body.state || ''), { persona: typeof body.persona === 'string' ? body.persona : null, personas: Object.keys(PERSONAS) });
       return json(res, r.ok ? 200 : 400, r);
     }
     if (url.pathname === '/usage') {
@@ -278,6 +319,12 @@ export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const o = parseArgs(process.argv.slice(2));
+  // Localhost only, whatever --host says (a hard rule: the server spends the key and the mic needs a
+  // secure context; Astra review 9): a remote client could fake Host and Origin.
+  if (!LOOPBACK_HOSTS.includes(String(o.host).toLowerCase())) {
+    console.error(`--host ${o.host}: the voice companion only listens on this computer (127.0.0.1, localhost or ::1).`);
+    process.exit(2);
+  }
   const key = readKey({ keyFile: o.keyFile });
   const log = (...a) => console.log(new Date().toISOString(), ...a);
   if (!key) log('warning: no OpenAI key (OPENAI_API_KEY or --key-file); the page will say so');

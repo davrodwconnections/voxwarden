@@ -229,10 +229,23 @@ const sectionList = (v, cap, read) => Array.isArray(v) ? v.slice(0, cap).map(rea
 const identitySection = (v, fields) => sectionObject(v) && sectionInt(v.id, 1) !== undefined
   ? compactSection({ id: v.id, ...fields(v) }) : undefined;
 const GAME_SECTIONS = {
+  rewards: v => sectionList(v, 20, q => identitySection(q, q => ({
+    items: sectionList(q.items, 6, i => identitySection(i, i => ({ name: sectionText(i.name), quality: sectionInt(i.quality, 0, 8),
+      equipLoc: sectionText(i.equipLoc), ilvl: sectionInt(i.ilvl, 0, 10000), minLevel: sectionInt(i.minLevel, 0, 1000),
+      count: sectionInt(i.count, 1, 1000000), choice: typeof i.choice === 'boolean' ? i.choice : undefined }))),
+  }))),
+  durability: v => sectionList(v, 19, i => sectionObject(i) && sectionInt(i.slot, 1, 19) !== undefined && sectionInt(i.pct, 0, 100) !== undefined
+    ? { slot: i.slot, pct: i.pct } : undefined),
+  rested: v => sectionInt(v),
+  hearth: v => sectionObject(v) ? compactSection({ bind: sectionText(v.bind), left: sectionInt(v.left) }) : undefined,
+  talents: v => sectionList(v, 5, t => sectionObject(t) && sectionInt(t.tree, 1, 5) !== undefined
+    ? compactSection({ tree: t.tree, name: sectionText(t.name), points: sectionInt(t.points, 0, 1000) }) : undefined),
+  gear: v => sectionList(v, 19, i => identitySection(i, i => ({ slot: sectionInt(i.slot, 1, 19), name: sectionText(i.name),
+    ilvl: sectionInt(i.ilvl, 0, 10000), quality: sectionInt(i.quality, 0, 8), sell: sectionInt(i.sell) }))),
   bags: v => sectionObject(v) ? compactSection({
     free: sectionInt(v.free, 0, 1000), slots: sectionInt(v.slots, 0, 1000), partial: v.partial === true ? true : undefined,
     items: sectionList(v.items, 32, i => identitySection(i, i => ({ name: sectionText(i.name), count: sectionInt(i.count, 1, 1000000),
-      kind: sectionEnum(i.kind, ['quest', 'foodDrink', 'potion', 'reagent']) }))),
+      kind: sectionEnum(i.kind, ['quest', 'foodDrink', 'potion', 'reagent']), quality: sectionInt(i.quality, 0, 8), sell: sectionInt(i.sell) }))),
   }) : undefined,
   auras: v => sectionList(v, 32, a => identitySection(a, a => ({ name: sectionText(a.name), kind: sectionEnum(a.kind, ['buff', 'debuff']),
     count: sectionInt(a.count, 0, 1000000), duration: sectionInt(a.duration), left: sectionInt(a.left) }))),
