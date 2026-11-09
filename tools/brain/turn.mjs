@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openBrain, brainFile } from './db.mjs';
 import { retrieve } from './retrieve.mjs';
+import { charKey, profileLines } from './profile.mjs';
 import { sanitizeState, sanitizeGameString } from '../../bridge/byok/runtime/sanitize.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -62,6 +63,7 @@ export async function brainRequest({ appData, question, state, history = [], db 
     const game = compactGame(state, db);
     const user = [
       'GAME DATA (from the game, now):', ...(game.length ? game : ['(none)']),
+      ...(db ? (() => { const who = profileLines(db, charKey(state)); return who.length ? ['', 'PLAYER (what we know about them, with its source):', ...who] : []; })() : []),
       '', 'FACTS (sourced, for this question):', ...(found.lines.length ? found.lines : ['(nothing found for this question)']),
       '', `QUESTION: ${String(question || '').slice(0, 1000)}`,
     ].join('\n');

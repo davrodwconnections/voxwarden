@@ -455,8 +455,8 @@ export function createLocalBackend(handlers = {}, opts = {}) {
       brain.tried = true;
       const file = path.join(dataDir, 'brain', 'brain.sqlite');
       if (fs.existsSync(file)) {
-        Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/retrieve.mjs')])
-          .then(([d, r]) => { brain.db = d.openBrain(file, { readOnly: true }); brain.retrieve = r.retrieve; log('byok-brain', { ready: true }); })
+        Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/retrieve.mjs'), import('../../tools/brain/profile.mjs')])
+          .then(([d, r, p]) => { brain.db = d.openBrain(file, { readOnly: true }); brain.retrieve = r.retrieve; brain.profile = p; log('byok-brain', { ready: true }); })
           .catch(e => log('byok-brain', { ready: false, error: short(e) }));
       }
       return [];
@@ -465,10 +465,36 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     try {
       const r = brain.retrieve({ db: brain.db, question, state });
       if (r.lines.length) log('byok-brain-facts', { facts: r.lines.length, ms: r.ms });
-      return r.lines;
+      const who = brain.profile && brain.profile.profileLines(brain.db, brain.profile.charKey(state));
+      return [...(who || []).slice(0, 6), ...r.lines];
     } catch (e) { log('byok-brain', { error: short(e) }); return []; }
   };
   brainFacts('', null); // start loading it now
+  // After a typed turn (B4): the character's profile from the game, what the player said about
+  // themselves, and both sides of the exchange as said rows (the model's words never become facts).
+  const brainW = { db: null, profile: null, tried: false };
+  const brainRemember = (state, typed, replyText) => {
+    if (opts.brain === false) return;
+    if (!brainW.tried) {
+      brainW.tried = true;
+      const file = path.join(dataDir, 'brain', 'brain.sqlite');
+      if (fs.existsSync(file)) {
+        Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/profile.mjs')])
+          .then(([d, p]) => { brainW.db = d.openBrain(file); brainW.profile = p; })
+          .catch(e => log('byok-brain', { write: false, error: short(e) }));
+      }
+    }
+    if (!brainW.db || !brainW.profile) return;
+    try {
+      const P = brainW.profile;
+      const key = P.updateFromState(brainW.db, state) || P.charKey(state);
+      if (!key) return;
+      const learned = typed ? P.learnFromPlayer(brainW.db, key, typed) : [];
+      if (typed) P.recordSaid(brainW.db, key, 'player', 'chat', typed);
+      if (replyText) P.recordSaid(brainW.db, key, 'brain', 'chat', replyText);
+      if (learned.length) log('byok-brain-learned', { keys: learned });
+    } catch (e) { log('byok-brain', { write: false, error: short(e) }); }
+  };
   const manifests = opts.manifests ?? loadManifests({ onWarning: w => log('byok-manifest-warn', { provider: w.id, reason: String(w.reason).slice(0, 160) }) });
   const priceBook = opts.priceBook ?? createPriceBook();
   let settings = settingsOf(opts.config);
@@ -1293,6 +1319,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
       const kept = replyTranscript(wire, pseudonymizer);
       transcripts.append(t.chatId, { ...kept, text: redactKeys(kept.text), t: replyT, run: t.idem, usage });
     } catch (e) { log('byok-transcript-error', { chat: t.chatId, error: short(e) }); }
+    if (t.wowKind === 'msg') brainRemember(t.wow?.state, t.typed, redactKeys(String(wire ?? '')));
 
     t.booked = true;
     noteUsage(t, p, { micros, exact, inTokens: usage.in, outTokens: usage.out });

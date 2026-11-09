@@ -133,3 +133,22 @@ test('brain (B9): Wowhead tooltips are fetched once by id, kept, warmed from the
   const err = await cachedTooltip(db, 'npc', 1, { lookup: async () => ({ error: 'Wowhead answered 404' }) });
   assert.match(err.error, /404/);
 });
+
+test('brain (B4): the profile comes from the game and from the player\'s own words; a model\'s words only ever go to said', async () => {
+  const P = await import('../tools/brain/profile.mjs');
+  const db = seed();
+  const key = P.updateFromState(db, { ...STATE, prof: [{ name: 'Skinning', rank: 150, max: 150 }], talents: [{ name: 'Elemental', points: 10 }] });
+  assert.equal(key, 'Arystar-CAMWOW');
+  assert.deepEqual(P.learnFromPlayer(db, key, 'Soy sanador y mi meta es llegar a 40 antes del domingo.'), ['role', 'goal']);
+  assert.deepEqual(P.learnFromPlayer(db, key, '¿quiero ir a Wailing Caverns?'), [], 'a question is not a goal');
+  P.recordSaid(db, key, 'brain', 'chat', 'Islen Waterseer está en Orgrimmar.');
+  const lines = P.profileLines(db, key);
+  assert.deepEqual(lines.slice(0, 3), ['[game] class: SHAMAN', '[game] race: Orc', '[game] level: 22']);
+  assert.ok(lines.includes('[player] role: healer'));
+  assert.ok(lines.some(l => l.startsWith('[player] goal: llegar a 40')));
+  assert.ok(!lines.some(l => /Orgrimmar/.test(l)), 'what the model said is not a fact');
+  assert.equal(db.prepare('SELECT count(*) n FROM said WHERE char_key = ?').get(key).n, 1);
+  const r = await brainRequest({ db, question: '¿qué hago ahora?', state: STATE });
+  assert.match(r.messages.at(-1).content, /PLAYER \(what we know about them[\s\S]*\[player\] role: healer/);
+  assert.doesNotMatch(r.messages.at(-1).content, /Arystar|CAMWOW/, 'the key never reaches the model');
+});

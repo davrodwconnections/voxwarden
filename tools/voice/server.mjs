@@ -218,6 +218,18 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
     pins = put.ok;
   }
   brainHistory.push({ role: 'user', content: question }, { role: 'assistant', content: answer });
+  // The brain remembers (B4): the character's profile, what the player said about themselves, both sides
+  // of the exchange as said rows. The character key is read from the app's own file and stays local.
+  try {
+    const comp = JSON.parse(fs.readFileSync(path.join(dir, 'bridge', 'companion.json'), 'utf8'));
+    const raw = Object.values(comp.states || {}).filter(x => x && x.state).sort((a, b) => (b.at || 0) - (a.at || 0))[0]?.state;
+    const [{ openBrain, brainFile }, P] = await Promise.all([import('../brain/db.mjs'), import('../brain/profile.mjs')]);
+    const db = openBrain(brainFile(dir));
+    try {
+      const key = P.updateFromState(db, raw) || P.charKey(raw);
+      if (key) { P.learnFromPlayer(db, key, question); P.recordSaid(db, key, 'player', 'voice', question); P.recordSaid(db, key, 'brain', 'voice', answer); }
+    } finally { db.close(); }
+  } catch { /* the brain is a help, never a reason to fail the answer */ }
   while (brainHistory.length > 8) brainHistory.shift();
   return { answer, pins, ms: Date.now() - t0, facts: req.meta.facts, note: pins ? 'Pins for this are on their map now.' : undefined };
 }
