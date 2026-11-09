@@ -678,3 +678,43 @@ test('voice + brain: by default the voice has only ask_brain and the brain promp
   const down = await runTool('ask_brain', { question: 'hola?' }, { ...DEFAULTS, appData: dir }, { fetchFn: async () => { throw new Error('ECONNREFUSED'); } });
   assert.match(down.error, /not reachable/);
 });
+
+test('voice nudges (B10, S6): with read on, a reply to the player is said; of the check-ins only the important ones, at most one every 25 minutes', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'nqa-voice-nudge-'));
+  const addons = path.join(tmp, 'AddOns');
+  const state = path.join(tmp, 'state');
+  fs.mkdirSync(addons, { recursive: true });
+  installSlots(addons, { count: 3, iface: '16001' });
+  const be = await startRealBackend({ respond: () => ({ text: 'Do this.\n\nTL;DR: Short tip.' }) });
+  let clock = Date.now();
+  const bridge = createBridge({ transport: { slots: 3 }, companion: { enabled: true } }, {
+    stateDir: state, addonsDir: addons, log: () => {}, now: () => clock, publisherOpts: { coalesceMs: 5, progressMs: 0 },
+    signalsOpts: { pulseMs: { push: 30, alive: 25, act: 5 }, actGapMs: 5 }, gatewayFactory: be.factory, voiceEveryMs: 3600e3,
+  });
+  const sayDir = path.join(state, 'voice-say');
+  const said = () => (fs.existsSync(sayDir) ? fs.readdirSync(sayDir).filter(f => f.endsWith('.json')).length : 0);
+  const replies = () => readSlotRecords(addons).filter(r => r.t === 'reply').length;
+  let n = 0;
+  const key = () => `${nonce}_${++n}`;
+  const evt = (kind, args = {}) => encodeRecord({ token: TOKEN, key: key(), type: 'evt', chat: 'c0ffee0', args: { cur: 0, kind, agent: 'main', name: 'Companion', sid: SID, ...args }, body: '' });
+  try {
+    bridge.start();
+    await waitFor(() => bridge.status().gateway.state === 'ready', 5000, 'backend ready');
+    bridge.handlePayload(encodeRecord({ token: TOKEN, key: nonce, type: 'hello', chat: '', args: { cur: 0, ver: '1.4.19', ctx: 0, sid: SID }, body: '' }));
+    bridge.handlePayload(encodeRecord({ token: TOKEN, key: key(), type: 'vc', chat: '', args: { cur: 0, cmd: 'read', on: 1, at: Math.floor(clock / 1000) }, body: '' }));
+    bridge.handlePayload(evt('bags_full', { free: 1 }));
+    await waitFor(() => replies() >= 1, 8000, 'the bags_full reply');
+    assert.equal(said(), 1, 'an important check-in is said');
+    clock += 60_000;
+    bridge.handlePayload(evt('gear_breaking', { slots: '5', pct: 12 }));
+    await waitFor(() => replies() >= 2, 8000, 'the gear_breaking reply');
+    assert.equal(said(), 1, 'a second one within 25 minutes is not');
+    clock += 26 * 60_000;
+    bridge.handlePayload(evt('zone_first', { zone: 'Durotar' }));
+    await waitFor(() => replies() >= 3, 8000, 'the zone_first reply');
+    assert.equal(said(), 1, 'a first visit to a zone is not important enough');
+  } finally {
+    await bridge.stop();
+    await be.close();
+  }
+});

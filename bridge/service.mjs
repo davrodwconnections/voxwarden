@@ -58,6 +58,9 @@ export const VOICE_READ = 'voice-read.json';
 export const VOICE_SAY = 'voice-say';
 export const VOICE_SAY_MAX = 20;
 export const VOICE_SAY_TEXT_MAX = 600;
+// The check-ins the voice says by itself, and how far apart (S6: important ones only, one every 20-30 min).
+export const VOICE_NUDGE_KINDS = Object.freeze(['level_up', 'gear_breaking', 'bags_full']);
+export const VOICE_NUDGE_GAP_MS = 25 * 60 * 1000;
 // Who the voice is (S4): the same fixed list as tools/voice/server.mjs PERSONAS and the addon's VOICE_PERSONAS.
 export const VOICE_PERSONAS = Object.freeze(['skeleton', 'orc-shaman', 'troll', 'forsaken', 'tauren']);
 export const VOICE_STATES = Object.freeze(['listening', 'muted', 'paused', 'connecting']);
@@ -851,8 +854,20 @@ export function createBridge(config, deps) {
   }
   // A reply's summary for the voice to say (only while it reads replies, never a voice reply itself):
   // one small JSON file each in <bridge>/voice-say/, written aside and renamed in; at most VOICE_SAY_MAX.
-  function queueVoiceSay(summary) {
+  // Which check-ins the voice says by itself (odd/tasks/nqa-brain.md B10, S6): only the important ones
+  // (training at a level-up, gear about to break, bags full), at most one every VOICE_NUDGE_GAP_MS; a reply
+  // to something the player asked is always said. Recaps and the rest stay in the window.
+  let lastNudgeAt = 0;
+  function voiceSays({ turn, event } = {}) {
+    if (turn === 'msg' || turn == null) return true;
+    if (turn !== 'evt' || !VOICE_NUDGE_KINDS.includes(event)) return false;
+    if (now() - lastNudgeAt < VOICE_NUDGE_GAP_MS) { log('voice-say', { skipped: event, reason: 'gap' }); return false; }
+    lastNudgeAt = now();
+    return true;
+  }
+  function queueVoiceSay(summary, why = {}) {
     if (!voiceReads()) return;
+    if (!voiceSays(why)) return;
     const text = String(summary || '').replace(/\|c[0-9a-fA-F]{8}|\|r/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VOICE_SAY_TEXT_MAX);
     if (!text) return;
     try {
@@ -1463,7 +1478,7 @@ export function createBridge(config, deps) {
       const res = gateway.send({ chatId: c.id, idem, turn, ...(think ? { thinking: think } : {}) });
       const runId = res?.runId || idem;
       c.started = true;
-      S.inflight[runId] = { chat: c.id, key: item.key, token: item.token, sentAt: now(), actions: 0, kind: item.kind };
+      S.inflight[runId] = { chat: c.id, key: item.key, token: item.token, sentAt: now(), actions: 0, kind: item.kind, event: item.event || undefined };
       // A typed message's run (its reply is a first reply) and Say Hi's (its one chip).
       if ((item.kind || 'msg') === 'msg') {
         S.inflight[runId].msg = true;
@@ -1584,7 +1599,7 @@ export function createBridge(config, deps) {
       chips: chips || undefined, refs: r.refs || undefined, weights: r.weights || undefined, drew: drew || undefined, usage: u || undefined,
       voice: voice ? 1 : undefined }, now());
     // The voice says it too while it reads replies (T16); what the voice itself said is never said twice.
-    if (!voice) queueVoiceSay(r.summary || r.text);
+    if (!voice) queueVoiceSay(r.summary || r.text, { turn: run?.kind || (run?.msg ? 'msg' : null), event: run?.event });
     // A map block that failed to draw says so in game, once, and the log says why (RT-3).
     // Looking at the block never loses the reply: a throw there is logged, and the reply stands.
     try {
