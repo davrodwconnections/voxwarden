@@ -71,7 +71,7 @@ export const API_METHODS = Object.freeze([
   'recordTerms', 'connect', 'useSavedKey', 'setupInstall', 'armInstall', 'cancelInstall', 'launcher',
   'requestScreenPermission', 'screenPermission',
   // Main-process companion runtime only; never add voiceRuntimeKey to renderer IPC.
-  'voiceRuntimeKey', 'askVoice', 'warmKnowledge',
+  'voiceRuntimeKey', 'setVoiceKey', 'deleteVoiceKey', 'askVoice', 'warmKnowledge',
 ]);
 
 /** The bridge module main imports, relative to the bridge root (BUILD-PLAN "boot.mjs"). */

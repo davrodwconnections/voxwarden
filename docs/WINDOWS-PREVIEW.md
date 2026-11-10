@@ -12,7 +12,7 @@ The normal installed flow is:
    NPC, quest, item and map knowledge is downloaded from a pinned official
    QuestieDB archive, verified and prepared automatically on your computer.
 3. Optional: paste an OpenAI API key for voice. This checks Realtime access and
-   stores the key privately without changing your text provider. Open voice and
+   stores it in a dedicated credential slot without replacing text AI keys. Open voice and
    grant microphone access when you want to talk. Audio has separate API billing.
 4. Restart WoW after adding addon files. Open Guide on the voice bar, or use
    `/nqa companionpanel`, to inspect observations, save five personal goals,

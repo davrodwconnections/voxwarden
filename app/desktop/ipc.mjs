@@ -552,13 +552,15 @@ export const HANDLERS = {
   prepareKnowledge:{input:NONE,run:ctx=>ctx.companion?.prepareKnowledge()||{ok:false,error:'unavailable'}},
   openVoice:{input:NONE,confirm:()=>({message:'Enable Voxwarden voice?',detail:'The dedicated voice window can use your microphone when you start talking. OpenAI Realtime voice is billed separately from your selected text AI. Only local game data and your voice are used; no game actions are automated.',okLabel:'Open voice'}),run:ctx=>ctx.companion?.openVoice({approved:true})||{ok:false,error:'unavailable'}},
   closeVoice:{input:NONE,run:ctx=>ctx.companion?.closeVoice()||{ok:false,error:'unavailable'}},
+  deleteVoiceKey:{input:NONE,confirm:()=>({message:'Delete the saved voice key?',detail:'The microphone closes and only the dedicated voice key is removed. Text AI credentials stay unchanged.',okLabel:'Delete voice key',destructive:true}),run:async ctx=>{await ctx.companion?.closeVoice();return ctx.api.deleteVoiceKey();}},
   pasteVoiceKey:{input:NONE,prepare:ctx=>HANDLERS.pasteKey.prepare(ctx,{provider:'openai'}),confirm:(ctx,v,prep)=>({...connectDialog(ctx,prep),message:'Connect OpenAI voice?',detail:'Check Realtime voice access and save this key privately. Voice is billed separately; your selected text AI stays unchanged.'}),
     run:async(ctx,v,prep)=>{
       const key=ctx.keys.peek(prep.stageId,'openai');if(!key)return {ok:false,error:'stage_expired'};
       ctx.keys.approve(prep.stageId,'openai');const dialog=connectDialog(ctx,prep);
       if(dialog.showTerms){const r=await ctx.api.recordTerms('openai',prep.termsVersion);if(r?.ok===false)return r;}
       const test=await ctx.companion?.validateVoiceKey(key);if(test?.ok!==true)return test||{ok:false,error:'unavailable'};
-      const result=await ctx.api.setKey('openai',key);if(result?.ok===true){ctx.keys.drop(prep.stageId);await clearClipboard(ctx,key);}return result;
+      const fresh=ctx.keys.peek(prep.stageId,'openai');if(!fresh)return {ok:false,error:'stage_expired'};
+      const result=await ctx.api.setVoiceKey(fresh);if(result?.ok===true){ctx.keys.drop(prep.stageId);await clearClipboard(ctx,fresh);}return result;
     }},
   // The status the page gets: a model notice it already put away is left out (src/model-notice.mjs).
   status: { input: NONE, run: async ctx => withNotice(await ctx.api.status(), ctx.appState?.noticesSeen?.() ?? [], { platform: ctx.platform }) },

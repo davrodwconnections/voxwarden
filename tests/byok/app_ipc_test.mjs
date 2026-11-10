@@ -639,7 +639,7 @@ test('uninstall is confirm-gated and lists what goes', async () => {
 });
 
 test('the confirm-gated calls are exactly the risky ones, and only one dialog shows at a time', async () => {
-  assert.deepEqual([...CONFIRMED].sort(), ['choose', 'connectKey', 'deleteKey', 'forgetMemory', 'installAddon', 'installUpdateNow', 'pasteKey', 'setCaps', 'setRetention', 'connectCustom', 'tightenAddonPermissions', 'transcripts', 'uninstall', 'useSavedKey','openVoice','pasteVoiceKey'].sort());
+  assert.deepEqual([...CONFIRMED].sort(), ['choose', 'connectKey', 'deleteKey', 'forgetMemory', 'installAddon', 'installUpdateNow', 'pasteKey', 'setCaps', 'setRetention', 'connectCustom', 'tightenAddonPermissions', 'transcripts', 'uninstall', 'useSavedKey','openVoice','pasteVoiceKey','deleteVoiceKey'].sort());
   let release;
   const gate = new Promise(r => { release = r; });
   const { ipc, confirms } = makeCtx({ confirm: () => gate });

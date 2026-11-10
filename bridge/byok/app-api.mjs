@@ -948,7 +948,14 @@ export function createAppApi(opts = {}) {
     },
 
     // Trusted desktop runtime only: these are not exposed by renderer/preload IPC.
-    async voiceRuntimeKey() { return (await keystore.get('openai')) || null; },
+    async voiceRuntimeKey() { return (await keystore.get('openai-voice')) || null; },
+    async setVoiceKey(value) {
+      const key=typeof value==='string'?value.trim():null,problem=keyProblem(visible('openai'),key);
+      if(problem)return problem;
+      try{await keystore.set('openai-voice',key);}catch(e){return {ok:false,error:e.code||'keystore_error'};}
+      changed();return {ok:true,masked:maskKey(key)};
+    },
+    async deleteVoiceKey(){await keystore.delete('openai-voice');changed();return {ok:true};},
     async askVoice(v = {}) { return S.backend?.askVoice ? S.backend.askVoice(v) : { ok: false, error: 'unavailable' }; },
     async warmKnowledge() { await S.backend?.warmKnowledge?.(); return {ok:true}; },
 
@@ -1548,7 +1555,7 @@ export function createAppApi(opts = {}) {
       const removed = [];
       let keys = 0;
       // Every provider's key, and one saved for an AI Other (custom) replaced (an OpenRouter key boot couldn't move).
-      for (const id of [...manifests.filter(m => !m.local).map(m => m.id), ...Object.keys(LEGACY_CUSTOM)]) {
+      for (const id of [...manifests.filter(m => !m.local).map(m => m.id), ...Object.keys(LEGACY_CUSTOM),'openai-voice']) {
         try { if (await keystore.delete(id)) keys += 1; } catch { /* nothing saved, or the store is gone */ }
         masks.set(id, null);
       }

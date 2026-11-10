@@ -79,6 +79,16 @@ test('the rig never searches this computer for WoW: findWow and installAddon see
   assert.equal((await r.api.installAddon()).error, 'wow_not_found');
 });
 
+test('dedicated voice credentials never replace the selected OpenAI text key',async(t)=>{
+ const voice=CANARY_KEYS.openai,original=voice+'original';
+ const r=await rig(t,{provider:'openai',keys:['openai']});await r.keystore.set('openai',original);
+ const before=r.config.byok.provider;
+ const saved=await r.api.setVoiceKey(voice);assert.equal(saved.ok,true);
+ assert.equal(await r.keystore.get('openai'),original);assert.equal(await r.api.voiceRuntimeKey(),voice);assert.equal(r.config.byok.provider,before);
+ await r.api.deleteVoiceKey();assert.equal(await r.api.voiceRuntimeKey(),null);assert.equal(await r.keystore.get('openai'),original);
+ await r.api.setVoiceKey(voice);await r.api.uninstall({removeAddon:false});assert.equal(await r.keystore.get('openai-voice'),null,'explicit complete removal includes the voice credential');
+});
+
 test('setRetention: saved, applied to the backend at once; regenerateSafetyId drops a pinned id and asks the backend for a new one (final review L5-5, L5-6)', async (t) => {
   const r = await rig(t, { byok: { safetyId: '11111111-2222-3333-4444-555555555555' } });
   assert.deepEqual(await r.api.setRetention(7), { ok: true, retentionDays: 7 });
