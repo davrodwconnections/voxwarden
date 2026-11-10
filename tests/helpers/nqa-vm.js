@@ -593,7 +593,8 @@ function newVM(opts = {}) {
         local parts = {}
         for _, t in ipairs(NQAStrip.textures) do
           if t.shown and t.color then
-            local c, r = math.floor(t.x / 4 + 0.5), math.floor(-t.y / 4 + 0.5)
+            local cell=NS.Transport.StripCellSize and NS.Transport.StripCellSize() or 4
+            local c, r = math.floor(t.x / cell + 0.5), math.floor(-t.y / cell + 0.5)
             local v = (t.color[1] >= 0.5 and 4 or 0) + (t.color[2] >= 0.5 and 2 or 0) + (t.color[3] >= 0.5 and 1 or 0)
             parts[#parts + 1] = (r * ${CELLS_PER_ROW} + c) .. ":" .. v
           end

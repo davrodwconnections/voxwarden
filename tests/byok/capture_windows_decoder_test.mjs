@@ -45,9 +45,9 @@ function decode(files, extra = []) {
 const US = '\x1F', RS = '\x1E';
 const record = (i, body) => ['a1b2c3d4', 'c3f9a1', String(i), '', '', 'Hyjal route', body].join(US);
 
-test('decodes Voxwarden strips (C7 2C) at 4, 5 and 6.5 px cells', { skip }, () => {
+test('decodes Voxwarden strips (C7 2C) at 3, 4, 5 and 6.5 px cells', { skip }, () => {
   const text = record(41, 'fastest way to Hyjal from here? ✓ Mulgore → Hyjal');
-  const pitches = [4, 5, 6.5];
+  const pitches = [3, 4, 5, 6.5];
   const files = pitches.map(p => fixture(`pitch-${p}`, encodeWithCodec('Voxwarden', 41, text), { pitch: p, width: 1400, height: 400 }));
   decode(files).forEach((r, i) => {
     assert.equal(r.status, 'decoded', JSON.stringify(r));

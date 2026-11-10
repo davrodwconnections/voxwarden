@@ -9,7 +9,7 @@
 // pixel (images.mjs makes them).
 
 export const MAGIC = [0xc7, 0x2c];
-// Transport.lua's live strip: 4 px cells, 200 a row, up to 48 rows.
+// Transport.lua's live strip: compact 3 px or standard 4 px cells, 200 a row, up to48 rows.
 export const LIVE = { cells: 200, rows: 48 };
 // A screenshot's strip: 8 px cells, which survive the game's JPEG compression
 // where 4 px cells don't; 100 a row, so it fits an 800 px wide screen. The

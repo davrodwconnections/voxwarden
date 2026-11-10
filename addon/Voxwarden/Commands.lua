@@ -81,6 +81,7 @@ local HELP_ALL = table.concat({
 	"/nqa voice read on|off  The voice reads replies aloud",
 	"/nqa voice bar on|off  Show or hide the voice bar",
 	"/nqa companionpanel  Open context, goals and reminders",
+	"/nqa strip compact|standard  Resize the data strip",
 	"/nqa context [on|off]  Show game data, or turn it on or off",
 	"/nqa companion  List the kinds of check-in",
 	"/nqa companion on|off  Turn all check-ins on or off",
@@ -151,7 +152,7 @@ local COMMAND_ARGS = {
 	echo = { [""] = true, summary = true, full = true, short = true, off = true },
 	speak = { [""] = true, on = true, off = true, stop = true }, live = ONOFF,
 	voice = true, -- talk|mute|unmute|pause|resume|persona <name> (Companion.VoiceSlash checks it)
-	context = ONOFF, companionpanel = 0, dnd = DndArgument, map = MapArgument,
+	context = ONOFF, companionpanel = 0, strip={ [""]=true,compact=true,standard=true }, dnd = DndArgument, map = MapArgument,
 	stream = ONOFF, reading = ONOFF, mode = { [""] = true, reload = true, pixel = true }, window = { reset = true },
 	paste = 0, replies = { [""] = true, auto = true, paste = true }, app = 0,
 	companion = function(rest)
@@ -658,6 +659,9 @@ local function Handle(msg)
 		ns.UI.Toggle()
 	elseif cmd == "companionpanel" then
 		if ns.HelperPanel then ns.HelperPanel.Toggle() end
+	elseif cmd == "strip" then
+		if rest~="" then ns.Transport.SetStripSize(rest:lower()) end
+		Say(chat,"Data strip: "..(ns.Transport.StripCellSize()==3 and "compact" or "standard")..". /nqa strip compact||standard changes it.")
 	elseif cmd == "model" then -- [UX-6]
 		if not ns.HasCap("model") then return Say(chat, NotYet()) end
 		ns.Chats.Notice(chat, Model(chat, rest))

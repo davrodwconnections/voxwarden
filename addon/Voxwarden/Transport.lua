@@ -19,7 +19,10 @@ ns.Transport = T
 local R = ns.R
 local Codec = NQA_Codec
 
-local CELL, CELLS_PER_ROW, MAX_ROWS = 4, 200, 48 -- upstream's strip geometry, unchanged
+local CELL, CELLS_PER_ROW, MAX_ROWS = 3, 200, 48 -- compact pitch; wire geometry is unchanged
+function T.StripCellSize()
+	return ns.db and ns.db.settings.stripSize=="standard" and 4 or 3
+end
 local FAST_TICK = 0.25 -- poll while a strip is up or a run is busy (PRD §7)
 local SLOW_EVERY = 8 -- ticks: the 2-second ticker
 local SELFTEST_EVERY = 60
@@ -428,6 +431,7 @@ end
 
 function T.EnsureStrip()
 	if strip then return strip end
+	CELL=T.StripCellSize()
 	strip = CreateFrame("Frame", "NQAStrip", UIParent)
 	strip:SetFrameStrata("TOOLTIP")
 	strip:SetFrameLevel(10000)
@@ -614,6 +618,23 @@ function T.HideStrip()
 	R.stripShown = false
 	R.stripPayload = nil
 	R.stripWaits = false
+end
+
+function T.SetStripSize(mode)
+	if not ns.db or (mode~="compact" and mode~="standard") then return false end
+	ns.db.settings.stripSize=mode
+	CELL=T.StripCellSize()
+	if strip then
+		strip:SetSize(CELLS_PER_ROW*CELL,MAX_ROWS*CELL)
+		for i,t in ipairs(cellPool) do
+			t:SetSize(CELL,CELL);t:ClearAllPoints()
+			t:SetPoint("TOPLEFT",strip,"TOPLEFT",((i-1)%CELLS_PER_ROW)*CELL,-math.floor((i-1)/CELLS_PER_ROW)*CELL)
+		end
+		T.UpdateStripScale()
+		R.stripPayload=nil
+		T.RefreshStrip()
+	end
+	return true
 end
 
 -- What the strip carries now: unacked keyed records, the hello until the bridge

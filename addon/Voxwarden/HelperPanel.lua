@@ -69,6 +69,7 @@ end
 function H.Refresh()
 	if not window then return end
 	window.text:SetText(table.concat(H.Lines(),"\n"))
+	if window.stripSize then window.stripSize:SetText(ns.Transport.StripCellSize()==3 and "Strip: compact" or "Strip: standard") end
 end
 function H.Toggle()
 	if not window then
@@ -83,6 +84,7 @@ function H.Toggle()
 		Button("Dungeon",222,12,90,function()H.Ask("dungeon")end)
 		Button("Crafting",320,12,82,function()H.Ask("crafting")end)
 		Button("Reminders",410,50,164,function()H.Reminders(not Saved().hints);H.Refresh()end)
+		window.stripSize=Button("Strip size",16,50,188,function()ns.Transport.SetStripSize(ns.Transport.StripCellSize()==3 and "standard" or "compact");H.Refresh()end)
 		local input=CreateFrame("EditBox",nil,window,"InputBoxTemplate");input:SetSize(290,24);input:SetPoint("BOTTOMLEFT",20,95);input:SetAutoFocus(false);input:SetMaxLetters(200)
 		Button("Add goal",320,90,90,function()H.SetGoal(input:GetText());input:SetText("");H.Refresh()end)
 		Button("Clear goals",420,90,154,function()Saved().goals={};H.Refresh()end)

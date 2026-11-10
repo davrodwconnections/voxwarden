@@ -10,6 +10,8 @@ The source repository is public; Windows installer previews are still under vali
 
 ## What it does
 
+- A compact live data strip, with a standard-size fallback in Guide.
+
 - Voice conversation with in-game Talk, microphone, pause, persona, Read and Tips controls.
 - Per-chat model selection through a local subscription proxy or a configured API service.
 - A local knowledge database for quests, NPCs, items, drops and prices, with sources and dates.

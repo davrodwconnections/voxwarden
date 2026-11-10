@@ -1,5 +1,10 @@
 # Character context
 
+The live data strip now defaults to compact size. Use Guide's Strip size button
+or `/nqa strip compact|standard` to switch. Both preserve live data and the same
+wire capacity; transparency or hiding unacknowledged data would break reading.
+Turning Screen Reading off uses the existing reload route, with less timely data.
+
 Voxwarden can use the current character's level, XP, money, professions, equipment/durability, talents, position, quest log and available nearby world facts. Expanded observations add spell samples, health/power/stats/pet, carried items, personal bank, learned recipes/materials, merchant stock/prices and available trainer services. Other players' identities and guild/account/other-character banks are excluded.
 
 To refresh observations, open your own profession, personal bank, vendor or trainer window. For crafting advice, open the relevant profession and leave its recipe list visible. The addon never changes filters, expands categories, crafts, buys, sells, trains or starts auction searches. Auctionator's installed stable v1 API supplies observed quotes when available; without it or without relevant prices, profitability remains unknown. Update quotes using your normal auction workflow.

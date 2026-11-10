@@ -69,6 +69,7 @@ const SCREENS = [
   { name: '1024 x 768', w: 1024, h: 768, ui: null },
   { name: '1024 x 768, UI scale 1.15', w: 1024, h: 768, ui: 1.15 },
   { name: '900 x 700', w: 900, h: 700, ui: null },
+  { name: '824 x 768, compact label wrapped', w: 824, h: 768, ui: null },
   { name: '800 x 600', w: 800, h: 600, ui: null },
   { name: '640 x 480, UI scale 1', w: 640, h: 480, ui: 1 },
 ];
@@ -96,7 +97,7 @@ test('the label sits in its zone, beside the strip\'s whole area or under it, an
   for (const sc of SCREENS) {
     const vm = drawn(sc);
     const zone = zoneOf(vm);
-    assert.deepEqual(zone, { x: 800 + 16, y: 192 + 16 }, 'the strip\'s whole area (200 by 48 cells of 4 pixels) and a 16-pixel gap');
+    assert.deepEqual(zone, { x: 600 + 16, y: 144 + 16 }, 'the compact strip\'s whole area (200 by 48 cells of 3 pixels) and a 16-pixel gap');
     const r = label(vm);
     const us = sc.ui ?? 768 / sc.h;
     const k = us * sc.h / 768;
@@ -119,11 +120,11 @@ test('the label sits in its zone, beside the strip\'s whole area or under it, an
 
 test('a UI scale or display change places the label again, before the strip next shows', () => {
   const vm = drawn(SCREENS[5]); // 1080p, no UI scale: beside, one line
-  assert.equal(label(vm).x, 816);
-  vm.run(`${screenLua({ w: 800, h: 600, ui: null })}; STUB.FireEvent("DISPLAY_SIZE_CHANGED")`);
-  assert.deepEqual([label(vm).x, label(vm).y], [0, 208], 'the window made narrow: under the strip\'s whole height');
+  assert.equal(label(vm).x, 616);
+  vm.run(`${screenLua({ w: 640, h: 480, ui: null })}; STUB.FireEvent("DISPLAY_SIZE_CHANGED")`);
+  assert.deepEqual([label(vm).x, label(vm).y], [0, 160], 'the window made narrow: under the strip\'s whole height');
   vm.run(`${screenLua({ w: 1920, h: 1080, ui: 1.15 })}; STUB.FireEvent("UI_SCALE_CHANGED")`);
-  assert.equal(label(vm).x, 816, 'wide again: beside');
+  assert.equal(label(vm).x, 616, 'wide again: beside');
   assert.ok(Math.abs(label(vm).k - 1.15 * 1080 / 768) < 1e-9, 'at the new UI scale');
 });
 
@@ -154,7 +155,7 @@ test('turning screen reading off: while the strip tells the app so one last time
 // 2. Nothing in the zone is ever read
 // ---------------------------------------------------------------------------
 
-const ZONE = { x: 816, y: 208 }; // checked against the addon's own numbers above
+const ZONE = { x: 616, y: 160 }; // compact geometry, checked against the addon above
 // A record of exactly `rows` strip rows: 75 bytes a row (200 cells of 3 bits), less the frame's 8 and a little.
 function cellsFor(rows, id = 300 + rows) {
   let seed = rows * 7919;
@@ -165,16 +166,16 @@ function cellsFor(rows, id = 300 + rows) {
   return { cells, text, id };
 }
 const FAKE = encodeWithCodec('Voxwarden', 999, 'not the strip: '.repeat(14)); // three rows of a valid frame
-// A capture: s is captured pixels a strip pixel (the cells' pitch over 4); x0, y0 where the strip's
+// A capture: s is captured pixels a strip pixel (the cells' pitch over 3); x0, y0 where the strip's
 // top-left is in the picture (y0 under a title bar of that height).
 const CAPTURES = [
   { name: 'native', s: 1, x0: 0, y0: 0 },
   { name: 'native, under a 28-pt title bar at 2x', s: 1, x0: 0, y0: 56, titleBar: 56 },
-  { name: '5 px cells, a pixel in', s: 1.25, x0: 1, y0: 0 },
-  { name: 'a non-native fullscreen (5.33 px cells)', s: 4 / 3, x0: 0, y0: 0 },
+  { name: '5 px cells, a pixel in', s: 5 / 3, x0: 1, y0: 0 },
+  { name: 'a non-native fullscreen (5.33 px cells)', s: 16 / 9, x0: 0, y0: 0 },
   { name: '2x, under a title bar', s: 2, x0: 0, y0: 56, titleBar: 56 },
-  { name: 'a 1728-pt Retina panel at 1280 x 800 (10.8 px cells)', s: 2.7, x0: 0, y0: 0 },
-  { name: '3 px cells', s: 0.75, x0: 0, y0: 0 },
+  { name: 'a 1728-pt Retina panel at 1280 x 800 (10.8 px cells)', s: 3.6, x0: 0, y0: 0 },
+  { name: '4 px captured cells', s: 4 / 3, x0: 0, y0: 0 },
 ];
 const zoneIn = c => {
   const zx = Math.floor(c.x0 + ZONE.x * c.s), zy = Math.floor(c.y0 + ZONE.y * c.s);
@@ -182,12 +183,12 @@ const zoneIn = c => {
 };
 function picture(c, cells) {
   const z = zoneIn(c);
-  return renderRgb(cells, { pitch: 4 * c.s, x0: c.x0, y0: c.y0, titleBar: c.titleBar || 0, width: z.zx + Math.ceil(300 * c.s), height: z.zy + Math.ceil(120 * c.s) });
+  return renderRgb(cells, { pitch: 3 * c.s, x0: c.x0, y0: c.y0, titleBar: c.titleBar || 0, width: z.zx + Math.ceil(300 * c.s), height: z.zy + Math.ceil(120 * c.s) });
 }
 // The zone filled: a fake strip tiled from its corner (beside: from the strip's top row; under: from
 // its left), or seeded noise, every channel fully on or off, as the label could never be.
 function filled(c, img, how) {
-  const z = zoneIn(c), p = 4 * c.s, rgb = Buffer.from(img.rgb);
+  const z = zoneIn(c), p = 3 * c.s, rgb = Buffer.from(img.rgb);
   let seed = 4242;
   const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
@@ -332,8 +333,8 @@ test('the zone\'s gap covers every decoder\'s reach: its search box, the widest 
   const c = read('bridge/capture/windows/decoder.c'), swift = read('bridge/capture/mac/Sources/StripDecoder/StripDecoder.swift');
   const capture = read('bridge/capture/mac/Sources/NQACapture/Capture.swift'), x11 = read('bridge/capture_x11.py'), js = read('bridge/transport/strip.mjs');
   const transport = read('addon/Voxwarden/Transport.lua');
-  // The strip's geometry: 4-pixel cells, 200 a row, 48 rows at most.
-  assert.match(transport, /local CELL, CELLS_PER_ROW, MAX_ROWS = 4, 200, 48/);
+  // Compact strip: 3-pixel cells, 200 a row, 48 rows at most.
+  assert.match(transport, /local CELL, CELLS_PER_ROW, MAX_ROWS = 3, 200, 48/);
   // Every decoder: an 80-row, 32-column search (Capture.swift scales both by the display's scale), runs
   // measured over six cells at the widest pitch (12) and 4 pixels more, and the same nudges.
   assert.match(c, /search_rows = 80;[\s\S]*search_cols = 32;[\s\S]*max_pitch = 12\.0;/);
@@ -353,7 +354,7 @@ test('the zone\'s gap covers every decoder\'s reach: its search box, the widest 
   // margin past the strip's whole area. The zone (816 and 208 strip pixels, so 204 and 52 cells) starts
   // past all of it, for every pitch a decoder reads (2.5 to 12) and a 2x display's search.
   for (let p = 2.5; p <= 12; p += 0.25) {
-    const s = p / 4;
+    const s = p / 3;
     const reachX = Math.max(0.5 + 199.5 * (p + 0.02) + 1, 200 * p + 8, (p >= 4 ? 64 : 32) + 6 * 12 + 4);
     const reachY = Math.max(2 + 47.5 * (p + 0.02) + 1, 48 * p + 8, p >= 4 ? 160 : 80);
     assert.ok(ZONE.x * s > reachX, `${p} px cells: the zone at ${ZONE.x * s}, reads reach ${reachX}`);
