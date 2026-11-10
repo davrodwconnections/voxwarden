@@ -214,7 +214,7 @@ export function createBridge(config, deps) {
   // gets its game context from it, so a message beside the state may leave its own out,
   // and qlog: it takes a state of up to 12,000 bytes of JSON and puts back whole the
   // quest titles an earlier state sent (fillTitles), so the addon sends every quest.
-  const caps = ['state', 'evt', 'think', ...(config.transport?.deflate === false ? [] : ['z']), 'ctx', 'qlog', 'voice'];
+  const caps = ['state', 'evt', 'think', ...(config.transport?.deflate === false ? [] : ['z']), 'ctx', 'qlog', 'voice', 'xctx'];
 
   if (!S.map) S.map = newMap();
   else if (fitMapBytes(S.map).changed) log('map-trimmed', { at: 'start' }); // one saved before the byte budget (DREW-SY-04)
@@ -897,7 +897,11 @@ export function createBridge(config, deps) {
     try {
       const w = JSON.parse(fs.readFileSync(path.join(stateDir, VOICE_WANT), 'utf8'));
       const age = now() - Number(w.at);
-      if (Number.isInteger(w.n) && w.n > 0 && age >= -5000 && age <= VOICE_WANT_FRESH_MS) out.want = w.n;
+      if (Number.isInteger(w.n) && w.n > 0 && age >= -5000 && age <= VOICE_WANT_FRESH_MS) {
+        out.want = w.n;
+        const allowed=['bags','gear','durability','rewards','talents','hearth','status','inventory','bank','spells','crafting','merchant','training'];
+        if(Array.isArray(w.sections))out.sections=[...new Set(w.sections.filter(s=>allowed.includes(s)))].slice(0,10);
+      }
     } catch { /* nothing asked */ }
     if (voiceReads()) out.read = true; // the voice reads replies aloud (T16): the bar shows it
     return out;

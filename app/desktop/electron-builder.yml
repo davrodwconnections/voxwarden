@@ -91,6 +91,7 @@ files:
     filter:
       - brain/**/*.mjs
       - brain/mechanics.json
+      - brain/knowledge-source.json
       - voice/**/*.mjs
       - voice/*.md
       - voice/*.html
@@ -116,6 +117,7 @@ files:
       - "**/*.xml"
       - "**/*.tga"
       - "**/*.txt"
+      - "!WorldData.lua"
 
 # The icons are glass Bones (2026-10-02: winking Bones "Ember" in smoked glass), its kit's (its ship/ folder, copied in by
 # scripts/make-icons.mjs, which pins every file): the .icns for macOS 11 to 15, the asset catalog for
@@ -213,10 +215,10 @@ nsis:
   oneClick: true
   perMachine: false
   allowElevation: false
-  deleteAppDataOnUninstall: true
+  deleteAppDataOnUninstall: false
   artifactName: "${productName}-Setup-${version}.${ext}"
   # customUnInstall: the login item, the saved keys and the update cache (§16.3).
-  include: build/installer.nsh
+  include: build/preserve-data.nsh
 
 # Linux ships from source only (systems plan D6): no AppImage or .deb, and no
 # release job. `electron-builder --linux dir` still makes a folder to try.

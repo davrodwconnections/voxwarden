@@ -373,7 +373,7 @@ export async function bootByok(opts = {}) {
     let api = null;
     const lockDir = givenLockDir ?? pub.state;
     const backendOpts = () => ({
-      config, dataDir: P.userData, keystore, manifests, priceBook, log, fetch: netFetch,
+      config, dataDir: P.userData, keystore, manifests, priceBook, log, fetch: netFetch, webEgress:egress.widen,
       ...(providerOpts ? { providerOpts } : {}), ...(backendOptions ?? {}),
     });
     // The core's handlers, with the app's status pushes beside them (every handler the core

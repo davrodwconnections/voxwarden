@@ -5,7 +5,7 @@ Voxwarden runs on your computer and talks to the AI company you choose. There’
 ## The short version
 
 - **We get nothing from the app.** No account, no server, no analytics, no crash reports. The website (voxwarden.com) counts visits with Vercel Web Analytics: no cookies, and nothing that identifies you.
-- **Your messages go only to the AI you pick**, with your own character’s game data (on by default).
+- **Typed questions go to the AI you pick**, with the game context you allow. Optional voice audio goes to OpenAI Realtime; its game questions are answered through your configured text AI.
 - **Your name, realm and guild stay out** unless you turn them on. Other players’ names from the game are swapped for stand-ins.
 - **Other players’ chat is never read.**
 - **Your key and your chat history stay on your computer.** The key goes only to its own AI company.
@@ -21,6 +21,7 @@ Voxwarden runs on your computer and talks to the AI company you choose. There’
 | **Your character’s name, realm and guild** | **Not sent.** The AI sees “your character” instead | Your data page: “Character name” (off) |
 | **Your character’s game data:** level, class, race, zone and position, money, experience, talents, professions, and your quest log (each quest’s ID and title, and which are ready to turn in) | **Sent** with each message (game data is on by default) | Your data page: “Game data”; or for one message, the Game Data box above the window’s message box |
 | **Check-in data:** quest objectives and levels, where your quests’ chains lead and the chains you could start next, gear and item levels, nearby points of interest | Sent only if you turn check-ins on (they’re **off** by default) | Settings page: “Check-ins” (off) |
+| **Expanded character observations:** known spell samples, health/power/stats, carried items, personal bank last seen, learned recipe samples and materials, observed market quotes, and open merchant/trainer data | May accompany questions when companion and game data are on; limited by capture availability and frame size. Bank/profession/vendor/trainer windows are opened by you. Cached readings retain their original date. No guild/account/other-character bank data is read | Your data: Game data; Settings: Check-ins; in-game message Game Data switch |
 | **Items you link** | The item’s tooltip text and, for gear, the matching piece you wear: its name, item level and tooltip. For now, that can include a line another addon adds to the tooltip, such as a bag addon naming your other characters | — |
 | **Other players’ names from the game:** your target, players you shift-click, “Made by” lines on items | **Swapped** for stand-ins like “Player A” before sending. The stand-in stays the same until you quit, and is swapped back in the reply on your computer | Your data page: “Other players’ names” (off) |
 | **Names you type yourself** | Sent as you typed them (the app can’t tell a name from any other word) | — |
@@ -31,6 +32,8 @@ Voxwarden runs on your computer and talks to the AI company you choose. There’
 | **Anything to us** | **Nothing.** No telemetry, analytics or crash reports | — |
 | **Update checks** | GitHub sees your IP address and the app’s version, as with any download | Settings > Show more > About: “Update checks” |
 | **Spell-check dictionaries** | Never downloaded: spell check is off in every window | — |
+| **Game-knowledge downloads** | The official pinned QuestieDB archive is downloaded from GitHub when you prepare knowledge or install the addon. GitHub sees your IP and the archive request, not character data. The archive is verified and prepared locally | Companion setup |
+| **Requested Wowhead references** | At most two current quest IDs are looked up on nether.wowhead.com for relevant online requests with game context enabled. No API keys or character identity accompany them; cached text retains source/date | Game data/privacy; standalone voice also requires its web option |
 
 **On your computer,** the app keeps your chat history, memory notes, usage totals and logs in a folder only your user account can read. On a work PC with a roaming profile, Windows also copies your chat history, memory notes and usage totals to your organization’s server with the rest of your profile, as it does your saved keys. Logs never contain your key, and the diagnostics you copy for a bug report hold no messages, replies or error text from your AI company.
 

@@ -58,3 +58,27 @@ test('typed chat: a question the brain has facts for uses the compact pack; othe
     assert.equal(body.system[0].text, loadPack().text, 'facts still go, with the full pack');
   } finally { await env2.backend.stop(); await mock2.close?.(); }
 });
+
+test('first question after knowledge is installed already contains local facts',async()=>{
+ const mock=await startMock(()=>reply('Nalpak is nearby.'));
+ const env=makeBackend({url:mock.url,keystore:await canaryKeystore()});
+ try{
+  await env.backend.start();seedBrain(env.dataDir);
+  const body=await ask(env,mock,'first_after_import','Where is Nalpak?');
+  assert.match(body.messages.at(-1).content,/questiedb-test.*Nalpak.*46\.0,35\.7/);
+ }finally{await env.backend.stop();await mock.close();}
+});
+
+test('requested quest lookup goes through fixed-host egress and enriches the actual first provider request',async()=>{
+ const mock=await startMock(()=>reply('The reference is attached.'));let webCalls=0,allowed=false,released=0;
+ const env=makeBackend({url:mock.url,keystore:await canaryKeystore(),webEgress:(hosts,feature)=>{assert.deepEqual(hosts,['nether.wowhead.com']);assert.equal(feature,'game_reference');allowed=true;return()=>{allowed=false;released++;};},
+ fetch:async(url,init)=>{if(String(url).startsWith('https://nether.wowhead.com/')){assert.equal(allowed,true);assert.equal(init.headers.authorization,undefined);webCalls++;return new Response(JSON.stringify({name:'Stepping Stones',tooltip:'Read the note.'}));}return fetch(url,init);}});
+ try{
+  seedBrain(env.dataDir);await env.backend.start();
+  await env.backend.send(sendParams('c3f9a1e','quest_web','busca donde entrego Stepping Stones',{state:{...STATE,quests:[{id:79192,title:'Stepping Stones',complete:true}]}}));
+  await waitFor(()=>env.chats('final').length===1);
+  assert.match(chatCalls(mock)[0].body.messages.at(-1).content,/wowhead.*79192.*Read the note/);assert.equal(webCalls,1);assert.equal(released,1);assert.equal(allowed,false);
+  const bare=sendParams('c3f9a1e','quest_bare','busca esa mision',{state:{...STATE,quests:[{id:999,title:'Other',complete:true}]}});bare.turn.useContext=false;
+  await env.backend.send(bare);await waitFor(()=>env.chats('final').length===2);assert.equal(webCalls,1,'no live ids sent with context off');
+ }finally{await env.backend.stop();await mock.close();}
+});

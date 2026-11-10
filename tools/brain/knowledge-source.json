@@ -1,0 +1,10 @@
+{
+  "id": "questiedb-forever",
+  "version": "1.0.13",
+  "flavor": "Forever",
+  "url": "https://github.com/Questie/QuestieDB/releases/download/v1.0.13/QuestieDB-1.0.13-Forever.zip",
+  "sha256": "f07c6cb18a723c8fba824038ffaaf5de23ab5c8ecd1d9235b122f06a59666f0c",
+  "bytes": 13702361,
+  "provenance": "https://github.com/Questie/QuestieDB/releases/tag/v1.0.13",
+  "minCounts": { "npc": 10000, "quest": 4000, "item": 10000 }
+}

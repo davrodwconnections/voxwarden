@@ -143,6 +143,9 @@ import { createPseudonymizer } from './runtime/pseudonym.mjs';
 import { createMemory, liveQuests } from './runtime/memory.mjs';
 import { applyLogbook } from './runtime/logbook.mjs';
 import { sanitizeState, sanitizeArgs, sanitizeGameString, typedLooksLikeKey } from './runtime/sanitize.mjs';
+import { craftingLines,shoppingList } from '../../tools/brain/crafting.mjs';
+import {enrichQuestQuestion,wantsWebReference} from '../../tools/brain/web.mjs';
+import {lookupWowhead} from '../../tools/voice/wowhead.mjs';
 import { createPriceBook, localPrice } from './usage/prices.mjs';
 import { estimateTurn, meterReply } from './usage/meter.mjs';
 import { createCaps, localDay } from './usage/caps.mjs';
@@ -448,27 +451,31 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   // The local brain (odd/tasks/nqa-brain.md B6): sourced facts for what the player asks, from
   // <dataDir>/brain/brain.sqlite when it exists (tools/brain). Loaded once in the background; a turn
   // that comes before it, or any error, simply goes without facts.
-  const brain = { retrieve: null, db: null, tried: false };
+  const brain = { retrieve: null, db: null, loading: null };
+  const brainW = { db: null, profile: null };
+  async function warmKnowledge() {
+    if(opts.brain===false||brain.db)return;
+    if(brain.loading)return brain.loading;
+    const file=path.join(dataDir,'brain','brain.sqlite');
+    if(!fs.existsSync(file))return;
+    brain.loading=Promise.all([import('../../tools/brain/db.mjs'),import('../../tools/brain/retrieve.mjs'),import('../../tools/brain/profile.mjs')])
+      .then(([d,r,p])=>{
+        const writer=d.openBrain(file);
+        try{brain.db=d.openBrain(file,{readOnly:true});}catch(e){writer.close();throw e;}
+        brain.retrieve=r.retrieve;brain.profile=p;brainW.db=writer;brainW.profile=p;
+        log('byok-brain',{ready:true});
+      }).catch(e=>log('byok-brain',{ready:false,error:short(e)})).finally(()=>{brain.loading=null;});
+    return brain.loading;
+  }
   const brainChat = opts.brainChat !== false && process.env.NQA_BRAIN_CHAT !== '0';
   const FAST_MAX_TOKENS = 500; // a short answer, its map block and the TL;DR
   let chatPackCache = null;
   const chatPack = () => (chatPackCache && chatPackCache.name === personaName(settings.persona) ? chatPackCache : (chatPackCache = loadChatPack({ persona: { name: settings.persona } })));
-  const brainFacts = (question, state) => {
+  const brainFacts = (question, state, history=[]) => {
     if (opts.brain === false) return [];
-    if (!brain.tried) {
-      const file = path.join(dataDir, 'brain', 'brain.sqlite');
-      // Not there yet (not imported): try again on a later turn.
-      if (fs.existsSync(file)) {
-        brain.tried = true;
-        Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/retrieve.mjs'), import('../../tools/brain/profile.mjs')])
-          .then(([d, r, p]) => { brain.db = d.openBrain(file, { readOnly: true }); brain.retrieve = r.retrieve; brain.profile = p; log('byok-brain', { ready: true }); })
-          .catch(e => log('byok-brain', { ready: false, error: short(e) }));
-      }
-      return [];
-    }
     if (!question || !brain.retrieve || !brain.db) return [];
     try {
-      const r = brain.retrieve({ db: brain.db, question, state });
+      const r = brain.retrieve({ db: brain.db, question, state, history });
       if (r.lines.length) log('byok-brain-facts', { facts: r.lines.length, ms: r.ms });
       const who = brain.profile && brain.profile.profileLines(brain.db, brain.profile.charKey(state));
       const lines = [...(who || []).slice(0, 6), ...r.lines];
@@ -476,29 +483,18 @@ export function createLocalBackend(handlers = {}, opts = {}) {
       return lines;
     } catch (e) { log('byok-brain', { error: short(e) }); return []; }
   };
-  brainFacts('', null); // start loading it now
   // After a typed turn (B4): the character's profile from the game, what the player said about
   // themselves, and both sides of the exchange as said rows (the model's words never become facts).
-  const brainW = { db: null, profile: null, tried: false };
-  const brainRemember = (state, typed, replyText) => {
+  const brainRemember = (state, typed, replyText, channel = 'chat') => {
     if (opts.brain === false) return;
-    if (!brainW.tried) {
-      brainW.tried = true;
-      const file = path.join(dataDir, 'brain', 'brain.sqlite');
-      if (fs.existsSync(file)) {
-        Promise.all([import('../../tools/brain/db.mjs'), import('../../tools/brain/profile.mjs')])
-          .then(([d, p]) => { brainW.db = d.openBrain(file); brainW.profile = p; })
-          .catch(e => log('byok-brain', { write: false, error: short(e) }));
-      }
-    }
     if (!brainW.db || !brainW.profile) return;
     try {
       const P = brainW.profile;
       const key = P.updateFromState(brainW.db, state) || P.charKey(state);
       if (!key) return;
       const learned = typed ? P.learnFromPlayer(brainW.db, key, typed) : [];
-      if (typed) P.recordSaid(brainW.db, key, 'player', 'chat', typed);
-      if (replyText) P.recordSaid(brainW.db, key, 'brain', 'chat', replyText);
+      if (typed) P.recordSaid(brainW.db, key, 'player', channel, typed);
+      if (replyText) P.recordSaid(brainW.db, key, 'brain', channel, replyText);
       if (learned.length) log('byok-brain-learned', { keys: learned });
     } catch (e) { log('byok-brain', { write: false, error: short(e) }); }
   };
@@ -883,8 +879,15 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   }
 
   // ---------------------------------------------------------------- events
+  const voiceCalls = new Map(); // trusted main-process callers; never part of the renderer IPC
   function emit(event, payload) {
     if (stopped) return;
+    const voiceId = typeof payload?.runId === 'string' ? payload.runId.replace(/^notice:/, '') : '';
+    if (voiceId.startsWith('voice:')) {
+      const call = voiceCalls.get(voiceId);
+      if (call && event === 'chat' && payload.answers !== 'none' && ['final','error','aborted'].includes(payload.state)) call.finish(payload);
+      return; // the voice page publishes its spoken exchange once through the existing inbox
+    }
     on.event({ event, payload });
   }
   const emitChat = (t, fields) => emit('chat', { chatId: t.chatId, runId: t.runId, ...fields });
@@ -993,7 +996,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   }
   function build(t, p, withHistory) {
     const w = t.wow;
-    const stateDoc = isObj(w.state) ? sanitizeState(w.state) : null; // RT-11: again, whatever the core did
+    const stateDoc = w.useContext!==false&&isObj(w.state) ? sanitizeState(w.state) : null; // RT-11: again, whatever the core did
     const game = {};
     if (w.useContext !== false && w.contextLines) {
       game.context = keyFree(Array.isArray(w.contextLines) ? w.contextLines : String(w.contextLines).split(/\r\n|\r|\n/), 'context', t.chatId);
@@ -1004,11 +1007,14 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     } else if (t.wowKind === 'recap') {
       if (stateDoc) game.recap = stateDoc;
     } else if (stateDoc) game.state = stateDoc;
+    if (game.state?.crafting) game.craftingAnalysis = craftingLines(game.state.crafting,{now:clock()});
+    if(game.state?.crafting&&/compr|material|craf|fabric|recet|shopping/i.test(t.typed||''))game.shopping=(game.state.crafting.recipes||[]).slice(0,3).map(r=>shoppingList(game.state.crafting,r.id));
     // The core's mark for a state older than the one the turn named (rawTurn): the count line says so.
     if (game.state && w.stale === true) game.stale = true;
     // Sourced facts for what the player typed (the brain): data, quoted, with their source.
     let found = 0;
-    if (t.wowKind === 'msg') { const facts = brainFacts(t.typed, w.state); if (facts.length) game.facts = facts; found = facts.found || 0; }
+    if (t.wowKind === 'msg') { const prior=t.voiceContext?t.voiceContext.history:transcripts.window(t.chatId,Math.min(settings.historyBudget,4000));const facts = brainFacts(t.typed, stateDoc, prior); if (facts.length) game.facts = facts; found = facts.found || 0; }
+    if(t.webReference){game.webReference=t.webReference;game.facts=[...new Set([...(game.facts||[]),...(t.webReference.lines||[])])];}
     const notes = keyFree(Array.isArray(w.notes) ? w.notes.filter(x => typeof x === 'string' && x) : [], 'notes', t.chatId);
     if (notes.length) game.notes = notes;
     // The first meeting (onboarding spec §9.3, §9.6): Say Hi's "hi" before any first reply. The pack's
@@ -1026,7 +1032,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     const live = withList ? null : liveQuests(w.contextLines);
     if (char) { try { mem = keyFreeDigest(memory.digest(char, { identity: settings.identity, quests: !withList, live }), t.chatId); } catch (e) { log('byok-memory-error', { error: short(e) }); } }
     // A row kept before replies were redacted goes out without its key, or not at all (keyFreePairs).
-    const history = keyFreePairs((withHistory && settings.historyBudget > 0 ? transcripts.window(t.chatId, settings.historyBudget) : [])
+    const history = keyFreePairs((withHistory && settings.historyBudget > 0 ? (t.voiceContext ? t.voiceContext.history : transcripts.window(t.chatId, settings.historyBudget)) : [])
       .map(m => ({ ...m, content: redactKeys(m.content) })), t.chatId);
     const perTurnOut = caps.config().perTurnOutput || MAX_TOKENS;
     // The first meeting's cap is the reply's (fix-102): a model that thinks gets its level's thinking
@@ -1103,6 +1109,8 @@ export function createLocalBackend(handlers = {}, opts = {}) {
 
   // ---------------------------------------------------------------- a turn
   async function execTurn(t, signal) {
+    if (t.voiceContext) signal = AbortSignal.any([signal, t.voiceContext.signal]);
+    await warmKnowledge();
     const base = current();
     // The chat's own model when it had one at send for this provider (/bones model), else the provider's.
     const p = viewFor(base, t.modelProvider === base.id ? t.model : null);
@@ -1118,6 +1126,15 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     // What ends the turn now: a stop or a forget (the turn's own signal), else the run limit.
     const cut = () => (signal.aborted ? abortedErr() : deadline.aborted ? timeoutErr() : null);
     if (signal.aborted) return finishFailed(t, abortedErr());
+    if(t.wowKind==='msg'&&t.wow.useContext!==false&&t.wow.state&&brainW.db&&wantsWebReference(t.typed)){
+      const release=opts.webEgress?.(['nether.wowhead.com'],'game_reference');
+      try{t.webReference=await enrichQuestQuestion({db:brainW.db,question:t.typed,state:sanitizeState(t.wow.state),
+        history:t.voiceContext?t.voiceContext.history:transcripts.window(t.chatId,Math.min(settings.historyBudget,4000)),
+        signal:sig,lookup:(kind,id)=>lookupWowhead(kind,id,{fetchFn:opts.fetch||fetch,timeoutMs:3000,signal:sig})});}
+      catch{t.webReference={status:'unavailable',lines:[],note:'Wowhead reference unavailable; use local facts.'};}
+      finally{release?.();}
+      if(signal.aborted)return finishFailed(t,abortedErr());
+    }
     // A model switched at the check (PV-3): this chat hears it once, before the reply. It answers
     // no message (answers: 'none'): the turn it rides with still gets its own reply, so the addon
     // keeps that message pending and the core keeps the chat busy (final review L4-2).
@@ -1337,7 +1354,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
       const kept = replyTranscript(wire, pseudonymizer);
       transcripts.append(t.chatId, { ...kept, text: redactKeys(kept.text), t: replyT, run: t.idem, usage });
     } catch (e) { log('byok-transcript-error', { chat: t.chatId, error: short(e) }); }
-    if (t.wowKind === 'msg') brainRemember(t.wow?.state, t.typed, redactKeys(String(wire ?? '')));
+    if (t.wowKind === 'msg') brainRemember(t.wow?.state, t.typed, redactKeys(String(wire ?? '')), t.voiceContext ? 'voice' : 'chat');
 
     t.booked = true;
     noteUsage(t, p, { micros, exact, inTokens: usage.in, outTokens: usage.out });
@@ -1445,6 +1462,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     const own = ownModel(chatId); // the chat's own model as the message went (/bones model)
     const t = {
       idem, runId, chatId, wow: w, wowKind, capKind: TURN_KINDS[wowKind], typed,
+      ...(voiceCalls.has(runId) ? { voiceContext: voiceCalls.get(runId) } : {}),
       effort: EFFORTS.includes(thinking) ? thinking : settings.effort, at: clock(),
       model: own, modelProvider: own ? p.id : null,
       checked: false, booked: false, est: 0, spend: newSpend(), lifecycle: false,
@@ -1473,6 +1491,33 @@ export function createLocalBackend(handlers = {}, opts = {}) {
       .catch(e => dropped(t, e))
       .finally(() => { if (turns.get(idem) === t) turns.delete(idem); });
     return { runId, status: 'started' };
+  }
+
+  /** Voice shares provider choice, privacy, queue and accounting, with private per-character history. */
+  function askVoice({ question, state = null, history = [], signal } = {}) {
+    if (typeof question !== 'string' || !question.trim() || question.length > 4000) return Promise.resolve({ ok: false, error: 'bad_question' });
+    if (stopped || holding()) return Promise.resolve({ ok: false, error: 'paused', message: 'Your AI is paused or unavailable.' });
+    const idem = `voice:${crypto.randomUUID()}`;
+    const controller = new AbortController();
+    const signals = [controller.signal, AbortSignal.timeout(45000), ...(signal ? [signal] : [])];
+    const combined = AbortSignal.any(signals);
+    if (combined.aborted) return Promise.resolve({ ok: false, error: 'cancelled' });
+    return new Promise(resolve => {
+      let settled = false;
+      const finish = payload => {
+        if (settled) return; settled = true;
+        combined.removeEventListener('abort', cancelled); voiceCalls.delete(idem);
+        const text = payload.message?.content?.filter(p => p?.type === 'text').map(p => p.text).join('\n') || '';
+        resolve(payload.state === 'final' ? { ok: true, answer: text, usage: payload.usage } : { ok: false, error: payload.errorKind || 'cancelled', message: payload.errorMessage || 'The voice question was cancelled.' });
+        on.change({ push: false });
+      };
+      const cancelled = () => finish({ state: 'error', errorKind: 'cancelled' });
+      const rows = Array.isArray(history) ? history.slice(-8).filter(r => r && ['user','assistant'].includes(r.role) && typeof r.content === 'string').map(r => ({ role: r.role, content: r.content.slice(0, 4000) })) : [];
+      voiceCalls.set(idem, { finish, signal: combined, history: rows, cancel: () => controller.abort() });
+      combined.addEventListener('abort', cancelled, { once: true });
+      try { send({ chatId: 'c0ffee0', idem, turn: { kind: 'msg', typed: question.trim(), state, useContext: true } }); }
+      catch { finish({ state: 'error', errorKind: 'unavailable', errorMessage: 'Connect your AI before asking a game question.' }); }
+    });
   }
 
   /** /bones stop: the chat's running turn stopped, its waiting ones dropped (they never ran: nothing billed). */
@@ -1692,6 +1737,7 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     try { caps.startSession(); } catch { /* totals only */ }
     await checkKey();
     await pruned;
+    await warmKnowledge();
     if (stopped) return;
     syncState();
     // What an earlier process left, settled before the core hears ready, so outcomes() answers for it.
@@ -1721,11 +1767,14 @@ export function createLocalBackend(handlers = {}, opts = {}) {
   async function stop() {
     if (stopped) return;
     stopped = true; // no more writes or events: a run cut here stays 'sending', and the next start settles it
+    for (const call of voiceCalls.values()) call.cancel();
     clearInterval(pruneTimer);
     pruneTimer = null;
     queue.abortAll();
     const until = Date.now() + STOP_WAIT_MS;
     while (queue.stats().running > 0 && Date.now() < until) await new Promise(r => setTimeout(r, 10));
+    await brain.loading;
+    for(const b of [brain,brainW]){try{b.db?.close();}catch{}b.db=null;}
   }
 
   return {
@@ -1736,6 +1785,8 @@ export function createLocalBackend(handlers = {}, opts = {}) {
     start,
     stop,
     send,
+    askVoice,
+    warmKnowledge,
     abort,
     forget,
     /** /bones model (UX-6): the chat's own model from its next turn, or the provider's again (null, 'default'). */

@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {parseShaman} from '../tools/brain/world-supplements.mjs';
+test('unreviewed conditional wrappers and expression levels fail closed',()=>{for(const source of ['[10] = {{id = 8050, cost = 400}},\nif false then\n{id = 999, cost = 1}\nend','[10] = {{id = 8050, cost = 400}},\n[20 + 10] = {{id = 999, cost = 1}},'])assert.throws(()=>parseShaman(source),/Unreviewed/);});

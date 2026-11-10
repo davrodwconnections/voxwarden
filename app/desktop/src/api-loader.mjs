@@ -70,6 +70,8 @@ export const API_METHODS = Object.freeze([
   // closes), the launcher, Screen Recording.
   'recordTerms', 'connect', 'useSavedKey', 'setupInstall', 'armInstall', 'cancelInstall', 'launcher',
   'requestScreenPermission', 'screenPermission',
+  // Main-process companion runtime only; never add voiceRuntimeKey to renderer IPC.
+  'voiceRuntimeKey', 'askVoice', 'warmKnowledge',
 ]);
 
 /** The bridge module main imports, relative to the bridge root (BUILD-PLAN "boot.mjs"). */

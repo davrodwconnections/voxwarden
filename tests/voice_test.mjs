@@ -253,9 +253,9 @@ test('voice: the local server serves the page, refuses other hosts (DNS rebindin
   });
   // No key: the page is told what to set.
   await withServer({ ...DEFAULTS, appData: dir }, { key: null }, async (base, port) => {
-    const r = await fetch(base + '/session', { method: 'POST', headers: { origin: `http://127.0.0.1:${port}` }, body: '{}' });
-    assert.equal(r.status, 500);
-    assert.match((await r.json()).error, /OPENAI_API_KEY/);
+    const r = await fetch(base + '/session', { method: 'POST', headers: { origin: `http://127.0.0.1:${port}`, 'content-type':'application/json' }, body: '{}' });
+    assert.equal(r.status, 400);
+    assert.match((await r.json()).error, /Connect an OpenAI API key for voice/);
   });
 });
 

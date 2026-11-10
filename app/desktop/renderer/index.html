@@ -32,6 +32,16 @@
     <header class="topbar" id="topbar"></header>
     <main class="main-body" id="main-body">
       <div class="banners" id="banners"></div>
+      <section id="companion-setup" class="companion-setup" hidden aria-label="Companion setup">
+        <h2>Your companion</h2><p id="companion-ready" aria-live="polite">Checking game knowledge…</p>
+        <p>Installation prepares NPC, quest and map knowledge automatically. In game, open your profession or personal bank to refresh those observations.</p>
+        <div class="companion-actions">
+          <button id="prepare-knowledge" type="button">Prepare game knowledge</button>
+          <button id="paste-voice-key" type="button">Paste OpenAI voice key</button>
+          <button id="open-voice" type="button">Open voice</button>
+          <button id="close-voice" type="button">Close microphone</button>
+        </div><p>Voice is optional and uses separately billed OpenAI API audio. Your selected text AI stays the same.</p>
+      </section>
       <div class="page" id="page" tabindex="-1"></div>
     </main>
     <div class="sheet-host" id="sheet-host"></div>
@@ -42,5 +52,6 @@
 <script src="strings.js"></script>
 <script src="format.js"></script>
 <script src="app.js"></script>
+<script src="companion.js"></script>
 </body>
 </html>

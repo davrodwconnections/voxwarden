@@ -211,7 +211,7 @@ export function luaKeyShapedSource({ table = 'C' } = {}) {
 // Per-key list limits: the addon's own (PROTOCOL §2.6), so a forged state can't be longer than a real one.
 // Quests have none of their own (every quest in the log goes): QUEST_LIST_MAX is past what a state the
 // bridge takes can hold (12,000 bytes), so it bounds only a forged list.
-const LIST_MAX = { quests: QUEST_LIST_MAX, obj: 5, poi: 40, chainStarts: 3, prof: 6, gear: 19, pending: 10, omitted: 24, zones: 25, q: 6 };
+const LIST_MAX = { quests: QUEST_LIST_MAX, obj: 5, poi: 40, chainStarts: 3, prof: 6, gear: 19, pending: 10, omitted: 40, zones: 25, q: 6, goals:5 };
 const KEY_RE = /^[A-Za-z_][A-Za-z0-9_]{0,23}$/;
 // Keys that an object literal treats specially: `out.__proto__ = x` sets the prototype instead of
 // adding a key, so attacker data would be reachable by property access and hidden from JSON.
@@ -228,7 +228,34 @@ const compactSection = fields => Object.fromEntries(Object.entries(fields).filte
 const sectionList = (v, cap, read) => Array.isArray(v) ? v.slice(0, cap).map(read).filter(v => v !== undefined) : undefined;
 const identitySection = (v, fields) => sectionObject(v) && sectionInt(v.id, 1) !== undefined
   ? compactSection({ id: v.id, ...fields(v) }) : undefined;
+const observation = v => compactSection({available:typeof v.available==='boolean'?v.available:undefined,
+  at:sectionInt(v.at),open:typeof v.open==='boolean'?v.open:undefined,partial:typeof v.partial==='boolean'?v.partial:undefined});
+const quote = v => sectionObject(v) && v.source==='auctionator' && v.scope==='current-market' && sectionInt(v.copper,1)!==undefined && sectionInt(v.ageDays,0,21)!==undefined
+  ? {source:'auctionator',scope:'current-market',copper:v.copper,ageDays:v.ageDays} : undefined;
+const observedItem = i => identitySection(i,i=>({name:sectionText(i.name),count:sectionInt(i.count,1,1000000),owned:sectionInt(i.owned,0,1000000),sell:sectionInt(i.sell),quote:quote(i.quote)}));
+const observedInventory = v => sectionObject(v) ? compactSection({...observation(v),slots:sectionInt(v.slots,0,4000),items:sectionList(v.items,32,observedItem)}) : undefined;
 const GAME_SECTIONS = {
+  inventory:observedInventory,
+  bank:observedInventory,
+  status:v=>sectionObject(v)?compactSection({at:sectionInt(v.at),combat:typeof v.combat==='boolean'?v.combat:undefined,restricted:v.restricted===true?true:undefined,
+    health:sectionInt(v.health),healthMax:sectionInt(v.healthMax),power:sectionInt(v.power),powerMax:sectionInt(v.powerMax),powerType:sectionText(v.powerType),armor:sectionInt(v.armor),role:sectionEnum(v.role,['TANK','HEALER','DAMAGER']),
+    dead:typeof v.dead==='boolean'?v.dead:undefined,resting:typeof v.resting==='boolean'?v.resting:undefined,mounted:typeof v.mounted==='boolean'?v.mounted:undefined,
+    instance:typeof v.instance==='boolean'?v.instance:undefined,instanceType:sectionEnum(v.instanceType,['none','party','raid','pvp','arena','scenario']),
+    stats:sectionList(v.stats,5,i=>identitySection(i,i=>({value:sectionInt(i.value)}))),
+    pet:sectionObject(v.pet)?compactSection({level:sectionInt(v.pet.level,0,1000),health:sectionInt(v.pet.health),healthMax:sectionInt(v.pet.healthMax)}):undefined}):undefined,
+  spells:v=>sectionObject(v)?compactSection({...observation(v),items:sectionList(v.items,48,i=>identitySection(i,i=>({name:sectionText(i.name),rank:sectionText(i.rank)}))),talents:sectionList(v.talents,24,t=>sectionObject(t)&&sectionInt(t.rank,1,10)!==undefined?compactSection({tree:sectionInt(t.tree,1,5),index:sectionInt(t.index,1,60),name:sectionText(t.name),rank:t.rank,max:sectionInt(t.max,1,10),tier:sectionInt(t.tier,1,20),column:sectionInt(t.column,1,10)}):undefined)}):undefined,
+  crafting:v=>sectionObject(v)?compactSection({...observation(v),profession:sectionText(v.profession),rank:sectionInt(v.rank,0,2000),max:sectionInt(v.max,0,2000),filtered:typeof v.filtered==='boolean'?v.filtered:undefined,
+    recipes:sectionList(v.recipes,8,r=>identitySection(r,r=>({name:sectionText(r.name),difficulty:sectionInt(r.difficulty,0,3),skillUps:sectionInt(r.skillUps,0,100),craftable:sectionInt(r.craftable,0,1000000),
+      output:sectionInt(r.output,1),min:sectionInt(r.min,1,10000),max:sectionInt(r.max,1,10000),unknown:r.unknown!==false||!Array.isArray(r.reagents)||r.reagents.length>8||r.reagents.some(i=>!sectionObject(i)||sectionInt(i.id,1)===undefined||sectionInt(i.count,1,1000000)===undefined),canSkillUp:typeof r.canSkillUp==='boolean'?r.canSkillUp:undefined,disabled:typeof r.disabled==='boolean'?r.disabled:undefined,
+      quote:quote(r.quote),reagents:sectionList(r.reagents,8,i=>sectionInt(i?.count,1,1000000)!==undefined?observedItem(i):undefined)})))}):undefined,
+  merchant:v=>sectionObject(v)?compactSection({...observation(v),repair:typeof v.repair==='boolean'?v.repair:undefined,
+    items:sectionList(v.items,12,i=>identitySection(i,i=>({name:sectionText(i.name),price:sectionInt(i.price),quantity:sectionInt(i.quantity,1,1000000),stock:sectionInt(i.stock,-1,1000000),usable:typeof i.usable==='boolean'?i.usable:undefined,extended:typeof i.extended==='boolean'?i.extended:undefined})))}):undefined,
+  training:v=>sectionObject(v)?compactSection({...observation(v),services:sectionList(v.services,12,i=>sectionObject(i)?compactSection({name:sectionText(i.name),rank:sectionText(i.rank),cost:sectionInt(i.cost)}):undefined)}):undefined,
+  world: v => sectionObject(v) && v.schema === 1 ? compactSection({schema:1,
+    map:sectionInt(v.map,1,100000),source:sectionText(v.source),coverage:sectionEnum(v.coverage,['partial','unavailable']),omitted:sectionInt(v.omitted),
+    candidates:sectionList(v.candidates,6,c => sectionObject(c) && sectionInt(c.id,1)!==undefined && sectionInt(c.map,1,100000)===v.map && [c.x,c.y].every(n=>Number.isFinite(n)&&n>=0&&n<=100) && ['turnin','quest','repair','vendor','trainer','bank','auction','inn','flight'].includes(c.kind)
+      ? compactSection({kind:c.kind,id:c.id,questID:sectionInt(c.questID,1),map:c.map,x:c.x,y:c.y,name:sectionText(c.name),title:sectionText(c.title),reason:sectionText(c.reason),eligibility:sectionEnum(c.eligibility,['ready','unknown'])}) : undefined)
+  }) : undefined,
   rewards: v => sectionList(v, 20, q => identitySection(q, q => ({
     items: sectionList(q.items, 6, i => identitySection(i, i => ({ name: sectionText(i.name), quality: sectionInt(i.quality, 0, 8),
       equipLoc: sectionText(i.equipLoc), ilvl: sectionInt(i.ilvl, 0, 10000), minLevel: sectionInt(i.minLevel, 0, 1000),

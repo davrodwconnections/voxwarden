@@ -877,3 +877,9 @@ h1 + .group, .lead + .group { margin-top: 24px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+.companion-setup { margin:18px 24px; padding:18px; border:1px solid var(--line,#384047); border-radius:10px; background:var(--panel,#171c23); font-size:13px; }
+.companion-setup h2 { margin:0 0 10px; font-size:17px; }
+.companion-setup p { line-height:1.5; }
+.companion-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.companion-actions button { padding:8px 12px; border-radius:6px; cursor:pointer; }

@@ -7,6 +7,8 @@
 //
 // lines is what goes to the model: one fact per line, "[source] text", at most MAX_FACTS.
 import fs from 'node:fs';
+import {questFocus} from './quest-focus.mjs';
+import {preparationFacts,serviceFacts} from './preparation.mjs';
 import { tooltipFact } from './web.mjs';
 
 // Reviewed boss abilities, each with its source page and dates (tools/brain/mechanics.json).
@@ -275,14 +277,21 @@ function trainerFact(db, question, state, areaHint) {
 const NEXT_RE = /siguiente|pr[oó]xim[oa]|next|despu[eé]s|luego|continuar/i;
 
 /** The facts for one question. */
-export function retrieve({ db, question, state = null, now = Date.now() } = {}) {
+export function retrieve({ db, question, state = null, history = [], now = Date.now() } = {}) {
   const t0 = performance.now();
   const facts = [];
   const seen = new Set();
   const mineIds = new Set((Array.isArray(state?.quests) ? state.quests : []).map(q => q?.id).filter(Number.isInteger));
   const add = f => { if (f && !seen.has(`${f.kind}:${f.id}`) && facts.length < MAX_FACTS) { seen.add(`${f.kind}:${f.id}`); facts.push(f); } };
   let zoneHit = null;
+  // A follow-up such as "the new quest" must not depend on an exact English
+  // title or on the current map: turn-ins are often in a different zone.
+  for(const q of questFocus(question,state,history)){
+    try{add(questFact(db,q.id,true,state));}catch{/* optional schema coverage */}
+  }
   // Questions about gear for a slot or what to farm come first: they name no entity.
+  try{for(const f of serviceFacts(db,question,state))add(f);}catch{/* optional source coverage */}
+  try{for(const f of preparationFacts(db,question,state))add(f);}catch{/* optional source coverage */}
   try { add(slotFact(db, question, state)); } catch { /* a missing column or table: no gear fact */ }
   try { add(farmFact(db, question, state)); } catch { /* idem */ }
   for (const name of candidates(question, state, db)) {

@@ -40,6 +40,15 @@ const STATE = {
   gear: [{ slot: 5, id: 15304, ilvl: 16 }],
 };
 
+test('generic turn-in questions retrieve ready quests by live id across zones, without needing exact titles',()=>{
+ const db=seed();try{
+  const state={...STATE,loc:{zone:'Westfall',map:1436},quests:STATE.quests.map(q=>({...q,complete:q.id===1486}))};
+  const result=retrieve({db,question:'busca donde se entrega la mision nueva papi',state});
+  assert.match(result.lines.join('\n'),/turned in to Nalpak.*The Barrens 46\.0,36\.2/);
+  assert.match(result.lines.join('\n'),/in your log/);
+ }finally{db.close();}
+});
+
 test('brain: candidates are the names a question is about, not its Spanish words', () => {
   assert.deepEqual(candidates('¿Dónde está Islen Waterseer?', null), ['Islen Waterseer']);
   assert.ok(candidates('¿Qué mecánicas tiene Mutanus the Devourer?', null).includes('Mutanus the Devourer'));

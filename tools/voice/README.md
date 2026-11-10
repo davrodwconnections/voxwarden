@@ -1,13 +1,15 @@
 # Voice companion
 
-Talk with Voxwarden while you play, the way ChatGPT's voice mode works: speak whenever you like, interrupt it mid-sentence, and it answers out loud in about half a second. It reads your game data from the Voxwarden app, so it knows your quests, place, gear, bags and more, and it can put pins and routes on your map.
+Talk with Voxwarden while you play: speak, interrupt a response and ask for map pins. Available game observations include quests, location, equipment and professions; coverage and freshness are explicit. Response time depends on the connection and selected providers.
+
+The Windows preview integrates voice and game-knowledge setup into the app: no separate browser or Node installation is needed in its normal flow. The commands below remain the developer/source route. See [Windows preview](../../docs/WINDOWS-PREVIEW.md).
 
 It never plays for you: its tools only read your game data and draw on your map, like the companion in the chat window.
 
 ## What you need
 
 - The Voxwarden app running, and the addon in game. For the voice to see changes between typed messages, type `/nqa live on` in game.
-- An OpenAI API key with credit. The voice uses the OpenAI Realtime API (`gpt-realtime-2.1-mini` by default), billed per use: a short question and answer costs about a cent.
+- An OpenAI API key with Realtime access and credit. Voice audio is billed separately from your text provider or subscription; cost depends on usage and model. The Windows preview checks Realtime access before saving the voice key, without changing the selected text AI.
 - Node 22.19 or later, and a browser (Chrome or Edge).
 - Headphones, so it doesn't hear itself or the game.
 

@@ -16,7 +16,11 @@ UI.lua
 Commands.lua
 Map.lua
 MinimapPins.lua
+WorldDataFallback.lua
+WorldContext.lua
 Companion.lua
+GameContext.lua
+HelperPanel.lua
 QoL.lua
 Paste.lua
 HUD.lua

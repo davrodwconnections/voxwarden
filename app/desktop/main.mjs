@@ -45,6 +45,7 @@ import { STRINGS } from './src/strings.mjs';
 import { createShellLedger, installShellGuard, UPDATER_PARTITION, guardNetworkEnv, refuseLine, EXTRA_CA_ENV, loaderVariable } from './src/net-guard.mjs';
 import { SCHEME, CSP, schemePrivileges, createSchemeHandler, isAppPage, pageUrl, PAGE_URL } from './src/scheme.mjs';
 import { loadApi, createLiveApi, bridgeRoots, wrapApi, captureHelperPaths, ownTeamId } from './src/api-loader.mjs';
+import {createCompanionRuntime} from './src/companion-runtime.mjs';
 import { addonToUpdate } from './src/addon-autoupdate.mjs';
 import { captureGate, GATE_MS } from './src/capture-gate.mjs';
 import { createQuitFlow } from './src/quit.mjs';
@@ -206,6 +207,7 @@ app.disableHardwareAcceleration();
 if (process.platform === 'win32') app.setAppUserModelId(APP_ID);
 
 let api = null;
+let companion = null;
 let live = null; // the real bridge's holder (src/api-loader.mjs createLiveApi): never a stopped boot
 let mock = null; // the screenshot mode's controllable mock
 let loaded = { mode: 'none', reason: null };
@@ -688,6 +690,12 @@ async function start() {
     });
     await live.start();
     api = SELF_TEST ? withHostileRequest(live.api) : live.api;
+    if(!SELF_TEST){
+      companion=await createCompanionRuntime({api,dataDir:userData,BrowserWindow,session,ledger,log});
+      for(const name of ['installAddon','setupInstall','armInstall']){
+        const original=api[name];api[name]=async(...args)=>{const ready=await companion.prepareKnowledge();if(!ready.ok)return ready;return original(...args);};
+      }
+    }
   }
 
   // Desktop notifications (ER-5): bridge states and update notices alike go
@@ -722,7 +730,7 @@ async function start() {
     },
   };
   const ipc = createIpc({
-    api, keys, ledger, updater: ipcUpdater, appState,
+    api, keys, ledger, updater: ipcUpdater, appState, companion,
     platform: process.platform,
     confirm: confirmNative,
     links: { open: openLinkUrl },
@@ -821,7 +829,7 @@ const quit = createQuitFlow({
     // The self-test's relaunch run (SY-102-2): a second launch while this quit is committed (SY-102-3).
     if (NO_RELAUNCH) setImmediate(() => app.emit('second-instance', { preventDefault() {} }, [], process.cwd(), {}));
   },
-  stop: () => api?.stop?.(),
+  stop: async () => { await companion?.stop?.(); await api?.stop?.(); },
   beforeExit: () => {
     if (!removeDataOnQuit) return;
     if (HEADLESS) {
@@ -914,6 +922,18 @@ async function selfTest() {
 
   try {
     const c = result.checks;
+    if(process.env.NQA_COMPANION_SELF_TEST==='1'){
+      const runtime=await createCompanionRuntime({api,dataDir:app.getPath('userData'),BrowserWindow,session,ledger,showVoiceWindow:false});
+      try{
+        const archive=process.env.NQA_COMPANION_FIXTURE_ARCHIVE;
+        if(archive){const cache=path.join(app.getPath('userData'),'cache','game-knowledge');fs.mkdirSync(cache,{recursive:true});fs.copyFileSync(archive,path.join(cache,'questiedb-1.0.13.zip'));
+          const prepared=await runtime.prepareKnowledge();if(!prepared.ok)throw Error('Native knowledge preparation failed');c.nativeKnowledge=prepared.knowledge.counts;}
+        const opened=await runtime.openVoice({approved:true});if(!opened.ok)throw Error('Native voice window failed');
+        const surface=runtime.voiceSurface();const isolated=await surface.executeJavaScript('typeof require === "undefined" && typeof process === "undefined" && typeof window.nqa === "undefined"');
+        if(!isolated||!surface.getURL().startsWith('http://127.0.0.1:'))throw Error('Native voice isolation failed');
+        c.nativeVoice={isolated:true,local:true,hidden:true};
+      }finally{await runtime.stop();}
+    }
     c.tray = !!tray && !tray.isDestroyed();
     const w = openWindow();
     await new Promise((resolve, reject) => {

@@ -12,6 +12,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 const PREFIX = 'nqa:';
 const CALLS = [
+  'companionStatus','prepareKnowledge','openVoice','closeVoice','pasteVoiceKey',
   'status', 'dismissNotice', 'providers', 'appInfo', 'notices', 'appState', 'setAppState', 'setLoginItem',
   'stageKey', 'dropStagedKey', 'testKey', 'deleteKey', 'connectCustom', 'choose',
   'caps', 'setCaps', 'privacy', 'setPrivacy',

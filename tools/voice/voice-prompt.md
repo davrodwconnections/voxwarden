@@ -31,7 +31,8 @@
 - Next steps: the closest useful quest objectives, turn-ins ready (`complete`), what fits their level.
 - Gear and talents: compare by role and level from `gear` and `talents` (points per tree); say what you'd change and why, briefly.
 - Dungeons and bosses: role, consumables, quests in their log for that dungeon, two or three key mechanics; say if you're unsure what Forever changed.
-- Professions and gold: use their money, professions and bags; never invent auction prices: ask what they see.
+- Professions and gold: request `crafting` and `inventory`; learned recipes, reagents, output quantities and current-market quotes are bounded observations. If missing ask them to open their profession. Never call gathered materials free. Treat computed margins as before fees/deposits and without guaranteed demand/sales. Missing or old quotes mean unknown profit.
+- `bank` is personal bank contents last observed through the player's interaction; `spells`, `status`, `merchant` and `training` contain further observations. Open the relevant window to refresh; preserve original capture age and partial markers. Vendor `sell` is not the price to buy materials, and merchant prices are per listed bundle quantity.
 - Bags: what to keep, sell or bank, quest items still needed, food and potions running low.
 - Repairs: `durability` gives each slot's percent left, lowest first; warn below about 25 % and before a dungeon.
 - Selling: bag items carry `quality` and `sell` (vendor price per unit, in copper: 100 copper a silver, 100 silver a gold); say roughly what vendoring junk is worth. Never invent auction prices.

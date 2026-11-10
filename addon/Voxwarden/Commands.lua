@@ -80,6 +80,7 @@ local HELP_ALL = table.concat({
 	"/nqa voice persona [name]  Pick who speaks",
 	"/nqa voice read on|off  The voice reads replies aloud",
 	"/nqa voice bar on|off  Show or hide the voice bar",
+	"/nqa companionpanel  Open context, goals and reminders",
 	"/nqa context [on|off]  Show game data, or turn it on or off",
 	"/nqa companion  List the kinds of check-in",
 	"/nqa companion on|off  Turn all check-ins on or off",
@@ -150,7 +151,7 @@ local COMMAND_ARGS = {
 	echo = { [""] = true, summary = true, full = true, short = true, off = true },
 	speak = { [""] = true, on = true, off = true, stop = true }, live = ONOFF,
 	voice = true, -- talk|mute|unmute|pause|resume|persona <name> (Companion.VoiceSlash checks it)
-	context = ONOFF, dnd = DndArgument, map = MapArgument,
+	context = ONOFF, companionpanel = 0, dnd = DndArgument, map = MapArgument,
 	stream = ONOFF, reading = ONOFF, mode = { [""] = true, reload = true, pixel = true }, window = { reset = true },
 	paste = 0, replies = { [""] = true, auto = true, paste = true }, app = 0,
 	companion = function(rest)
@@ -655,6 +656,8 @@ local function Handle(msg)
 	local s = db.settings
 	if cmd == "" then
 		ns.UI.Toggle()
+	elseif cmd == "companionpanel" then
+		if ns.HelperPanel then ns.HelperPanel.Toggle() end
 	elseif cmd == "model" then -- [UX-6]
 		if not ns.HasCap("model") then return Say(chat, NotYet()) end
 		ns.Chats.Notice(chat, Model(chat, rest))

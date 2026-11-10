@@ -511,7 +511,7 @@ function copyAddon(f, src, dst, uid, iface = null) {
  * first logout (Settings.lua P.FoldParts). running: true or false (asked already), a function
  * asked at each check, or null (this asks the system each time).
  */
-export function installAddon({ flavorDir, platform = process.platform, run = spawnSync, addonSource = ADDON_SOURCE, slots = SLOT_COUNT, tighten = false, f = fs, version = null, running = null, uid = process.getuid?.(), configFile = null } = {}) {
+export function installAddon({ flavorDir, platform = process.platform, run = spawnSync, addonSource = ADDON_SOURCE, slots = SLOT_COUNT, tighten = false, f = fs, version = null, running = null, uid = process.getuid?.(), configFile = null,worldDataFile=null } = {}) {
   const p = pathFor(platform);
   if (typeof flavorDir !== 'string' || !p.isAbsolute(flavorDir) || !isDir(f, flavorDir)) return { ok: false, error: 'wow_not_found', detail: 'That folder doesn’t have World of Warcraft in it.' };
   const gameRunning = () => (typeof running === 'function' ? !!running() : (running ?? wowRunning({ platform, flavorDir, run }).running));
@@ -527,6 +527,7 @@ export function installAddon({ flavorDir, platform = process.platform, run = spa
   let iface = interfaceFromVersion(version) || clientInterface(flavorDir, { platform, run, f })?.iface || null;
   iface = iface && clientFits(iface, tocIface, p.basename(flavorDir)) ? iface : tocIface;
   step('Addon folder', () => copyAddon(f, addonSource, p.join(addonsDir, ADDON_NAME), uid, iface) > 0);
+  if(worldDataFile)step('World knowledge',()=>{if(gameRunning())return false;const st=f.lstatSync(worldDataFile);if(!st.isFile()||st.isSymbolicLink()||st.size>32*1024*1024)return false;f.copyFileSync(worldDataFile,p.join(addonsDir,ADDON_NAME,'WorldDataFallback.lua'));return true;});
   step(`${slots} slot folders`, () => { installSlots(addonsDir, { count: slots, iface }); return true; });
   const sig = signalPaths(addonsDir);
   step('Doorbell folder', () => [sig.present(), ...BELLS.map(sig.bell)].every(file => isRegular(f, file)));

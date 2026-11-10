@@ -1,0 +1,9 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {openBrain}from'../tools/brain/db.mjs';import{preparationFacts,serviceFacts}from'../tools/brain/preparation.mjs';
+const state={char:{class:'SHAMAN',race:'Orc',level:22},loc:{map:1413,x:50,y:50},quests:[{id:1}]};
+function seed(){const db=openBrain(':memory:');db.exec(`INSERT INTO zone(area_id,name,ui_map_id,source)VALUES(17,'The Barrens',1413,'fixture'),(718,'Wailing Caverns',279,'fixture');
+ INSERT INTO npc(id,name,min_level,max_level,friendly,raw,source,read_at)VALUES(2,'Banker',20,20,'H','{"npcFlags":256}','fixture',1),(3,'Hostile banker',20,20,'A','{"npcFlags":256}','fixture',1),(4,'Dungeon NPC',20,22,NULL,'{}','fixture',1);
+ INSERT INTO spawn(kind,id,area_id,x,y,source)VALUES('npc',2,17,51,51,'fixture'),('npc',3,17,50,50,'fixture'),('npc',4,718,-1,-1,'fixture');
+ INSERT INTO quest(id,name,zone_area,req_level,level,raw,source,read_at)VALUES(1,'Dungeon quest',718,15,20,'{}','fixture',1),(8,'Alliance quest',718,15,20,'{"requiredRaces":77}','fixture',1);`);return db;}
+test('preparation uses captured level and sourced instance/quest data, excludes wrong-faction quests',()=>{const db=seed();try{const facts=preparationFacts(db,'prepare for a dungeon',state);assert.equal(facts[0].name,'Wailing Caverns');assert.match(facts[0].text,/Dungeon quest \[in your log\]/);assert.doesNotMatch(facts[0].text,/Alliance quest/);assert.match(facts[0].text,/not verified entry requirements/);}finally{db.close();}});
+test('requested services use actual Vanilla flags and exclude hostile services',()=>{const db=seed();try{const facts=serviceFacts(db,'donde esta el banco',state);assert.equal(facts.length,1);assert.match(facts[0].text,/Banker.*51,51/);assert.match(facts[0].text,/availability unknown/);}finally{db.close();}});

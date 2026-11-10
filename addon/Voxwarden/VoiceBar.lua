@@ -74,14 +74,16 @@ function V.Ensure()
 	bar.mute:SetPoint("LEFT", bar.tip, "RIGHT", 4, 0)
 	bar.pause = Btn("Pause", 62, function() Say(Comp("VoiceTogglePause")) end)
 	bar.pause:SetPoint("LEFT", bar.mute, "RIGHT", 4, 0)
-	bar.who = Btn("Voice", 128, function(_, button)
+	bar.who = Btn("Voice", 86, function(_, button)
 		local name = NextPersona(button == "RightButton" and -1 or 1)
 		if name then Say(Comp("VoicePickPersona", name)) end
 	end)
 	bar.who:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	bar.who:SetPoint("TOPLEFT", bar.talk, "BOTTOMLEFT", 0, -4)
-	bar.read = Btn("Read: off", 124, function() Say(Comp("VoiceRead", not (ns.db and ns.db.settings.voiceRead == true))) end)
+	bar.read = Btn("Read: off", 94, function() Say(Comp("VoiceRead", not (ns.db and ns.db.settings.voiceRead == true))) end)
 	bar.read:SetPoint("LEFT", bar.who, "RIGHT", 4, 0)
+	bar.guide=Btn("Guide",68,function()if ns.HelperPanel then ns.HelperPanel.Toggle() end end)
+	bar.guide:SetPoint("LEFT",bar.read,"RIGHT",4,0)
 	local s = ns.db and ns.db.settings
 	if s and type(s.voiceBarX) == "number" and type(s.voiceBarY) == "number" then
 		bar:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", s.voiceBarX, s.voiceBarY)
@@ -112,7 +114,7 @@ function V.Refresh()
 	bar.mute:SetText(st == "listening" and "Close mic" or "Open mic")
 	bar.read:SetText("Read: " .. ((ns.db and ns.db.settings.voiceRead == true) and "on" or "off"))
 	bar.pause:SetText((st == "paused" or st == "off") and "Resume" or "Pause")
-	bar.who:SetText("Voice: " .. (NAMES[who or (ns.db and ns.db.settings.voicePersona) or ""] or "…"))
+	bar.who:SetText(NAMES[who or (ns.db and ns.db.settings.voicePersona) or ""] or "Voice")
 	bar:Show()
 end
 

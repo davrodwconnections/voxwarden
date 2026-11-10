@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { appDataDir, readGame, gameSections, wowmapBlock, appendVoiceInbox, readVoiceControl, writeVoiceStatus, takeVoiceSay, askInventory, lacksInventory, rememberInventory, SECTIONS, ON_DEMAND } from './game.mjs';
+import { appDataDir, readGame, refreshGame, gameSections, wowmapBlock, appendVoiceInbox, readVoiceControl, writeVoiceStatus, takeVoiceSay, askInventory, lacksInventory, rememberInventory, SECTIONS, ON_DEMAND } from './game.mjs';
 import { lookupWowhead, WOWHEAD_TYPES } from './wowhead.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -206,16 +206,32 @@ async function mintSecret(o, key, fetchFn = fetch) {
   return { ok: true, value: j.value, expiresAt: j.expires_at, model: j.session?.model || o.model };
 }
 
+// A connection check for a staged voice-only key. Never return the minted
+// client secret or the long-lived key to settings/IPC; no audio is started.
+export async function validateVoiceKey(key,{fetchFn=fetch,model=DEFAULTS.model}={}){
+ if(typeof key!=='string'||!key)return {ok:false,error:'missing_voice_key'};
+ try{
+  const r=await mintSecret({...DEFAULTS,model,names:[],brain:false},key,(url,init)=>fetchFn(url,{...init,signal:AbortSignal.timeout(15000)}));
+  return r.ok?{ok:true}:{ok:false,error:r.status===401?'key_invalid':r.status===403?'voice_not_allowed':r.status===429?'voice_limit':'voice_connection_failed'};
+ }catch{return {ok:false,error:'voice_connection_failed'};}
+}
+
 /** Runs one tool call for the page. Never throws: errors come back as {error}. */
 // The brain (odd/tasks/nqa-brain.md B7): the voice's questions go to the subscription model through the
 // proxy, with the sourced facts tools/brain retrieves; the last few exchanges are its history.
 export const BRAIN_TIMEOUT_MS = 45000;
 const brainHistories = new Map(); // per character key (local only), so two characters never share a conversation
 const WOWMAP_RE = /```wowmap[ \t]*\r?\n([\s\S]*?)\n```/;
-export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData || appDataDir(), heard = '' } = {}) {
+export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData || appDataDir(), heard = '', answerBrain, signal } = {}) {
   if (!question) return { error: 'No question.' };
   const t0 = Date.now();
-  const game = readGame(dir);
+  const wanted=[];
+  if(/piel|peleter|leather|craf|fabric|recet|subast|auction|dinero|benefic|profit|material/i.test(question))wanted.push('crafting','inventory');
+  if(/banco|\bbank\b/i.test(question))wanted.push('bank');
+  if(/hechiz|habilidad|spell|poder/i.test(question))wanted.push('spells','status');
+  if(/compr|vendedor|vendor|merchant/i.test(question))wanted.push('merchant');
+  if(/entren|trainer|training/i.test(question))wanted.push('training');
+  const game = await refreshGame(dir,{sections:wanted});
   // The character, fixed at the start of the turn from the app's own file (the state the voice reads has
   // no identity). It stays on this computer.
   let raw = null;
@@ -229,13 +245,21 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
   const hkey = key || '-';
   if (!brainHistories.has(hkey)) brainHistories.set(hkey, []);
   const brainHistory = brainHistories.get(hkey);
-  const req = await brainRequest({ appData: dir, question, heard, state: game.ok ? game.state : null, history: brainHistory, ageSeconds: game.ok ? game.ageSeconds : null, key });
+  const req = await brainRequest({ appData: dir, question, heard, state: game.ok ? game.state : null, history: brainHistory, ageSeconds: game.ok ? game.ageSeconds : null, key,
+    web:o.web===true&&!answerBrain,signal,lookup:(type,id)=>lookupWowhead(type,id,{fetchFn,signal,timeoutMs:3000}) });
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), BRAIN_TIMEOUT_MS);
   let r, j;
   try {
-    r = await fetchFn(`${o.brainBase}/chat/completions`, { method: 'POST', signal: ctl.signal, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: o.brainModel, max_tokens: req.maxTokens, messages: req.messages }) });
-    j = await r.json().catch(() => ({}));
+    const requestSignal=signal?AbortSignal.any([signal,ctl.signal]):ctl.signal;
+    if (answerBrain) {
+      const out=await answerBrain({question,state:game.ok?raw:null,history:brainHistory,signal:requestSignal});
+      if (!out?.ok) return {error:out?.message || 'The connected AI could not answer now.'};
+      r={ok:true,status:200};j={choices:[{message:{content:out.answer}}]};
+    } else {
+      r = await fetchFn(`${o.brainBase}/chat/completions`, { method: 'POST', signal: requestSignal, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: o.brainModel, max_tokens: req.maxTokens, messages: req.messages }) });
+      j = await r.json().catch(() => ({}));
+    }
   } catch (e) {
     return { error: e?.name === 'AbortError' ? 'The brain took too long: say you could not get the answer now.' : 'The brain is not reachable (the subscription proxy may be off): say so.' };
   } finally { clearTimeout(timer); }
@@ -248,6 +272,7 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
     const put = appendVoiceInbox(dir, { kind: 'pins', text: `Pins on your map.\n\n\`\`\`wowmap\n${m[1]}\n\`\`\`` });
     pins = put.ok;
   }
+  if (answerBrain) answer=answer.replace(/\n+TL;DR:[\s\S]*$/i,'').trim();
   brainHistory.push({ role: 'user', content: question }, { role: 'assistant', content: answer });
   // The brain remembers (B4): the character's profile, what the player said about themselves, both sides
   // of the exchange as said rows. The character key is read from the app's own file and stays local.
@@ -256,7 +281,7 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
     const db = openBrain(brainFile(dir));
     try {
       if (key && raw && P.charKey(raw) === key) P.updateFromState(db, raw);
-      if (key) { P.learnFromPlayer(db, key, question); P.recordSaid(db, key, 'player', 'voice', question); P.recordSaid(db, key, 'brain', 'voice', answer); }
+      if (key && !answerBrain) { P.learnFromPlayer(db, key, question); P.recordSaid(db, key, 'player', 'voice', question); P.recordSaid(db, key, 'brain', 'voice', answer); }
     } finally { db.close(); }
   } catch { /* the brain is a help, never a reason to fail the answer */ }
   while (brainHistory.length > 8) brainHistory.shift();
@@ -268,7 +293,7 @@ export const INVENTORY_WAIT_MS = 5000;
 const isObjOf = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const pause = ms => new Promise(r => setTimeout(r, ms));
 
-export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now(), sleep = pause, clock = Date.now } = {}) {
+export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now(), sleep = pause, clock = Date.now, answerBrain, signal } = {}) {
   const dir = o.appData || appDataDir();
   try {
     if (name === 'get_game_state') {
@@ -277,13 +302,15 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
       let waited = false;
       // Bags or gear asked for by name and missing: ask the addon, and wait a few seconds for them.
       const onDemand = asked.filter(sec => ON_DEMAND.includes(sec));
-      if (game.ok && onDemand.length && lacksInventory(game.state, onDemand) && askInventory(dir, { now: clock() })) {
+      if (game.ok && onDemand.length && lacksInventory(game.state, onDemand) && askInventory(dir, { now: clock(), sections:onDemand })) {
         const until = clock() + INVENTORY_WAIT_MS, before = game.at;
         waited = true;
         while (clock() < until) {
           await sleep(250);
           const next = readGame(dir, { now: clock() });
-          if (next.ok && next.at > before) { game = next; if (!lacksInventory(next.state, onDemand)) break; }
+          game=next;
+          if(next.privacy?.gameContext===false)break;
+          if (next.ok && next.at > before && !lacksInventory(next.state, onDemand)) break;
         }
       }
       const mem = rememberInventory(dir, game);
@@ -303,7 +330,7 @@ export async function runTool(name, args, o, { fetchFn = fetch, now = Date.now()
       }
       return out;
     }
-    if (name === 'ask_brain') return await askBrain(String(args?.question || '').trim(), o, { fetchFn, dir, heard: String(args?.heard || '').slice(0, 500).trim() });
+    if (name === 'ask_brain') return await askBrain(String(args?.question || '').trim(), o, { fetchFn, dir, heard: String(args?.heard || '').slice(0, 500).trim(), answerBrain, signal });
     if (name === 'place_map_pins') {
       const b = wowmapBlock(args || {});
       if (b.error) return { error: b.error };
@@ -332,7 +359,8 @@ function readBody(req) {
 
 const STATIC = { '/': ['index.html', 'text/html; charset=utf-8'], '/app.js': ['app.js', 'text/javascript; charset=utf-8'] };
 
-export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
+export function createServer(o, { key, fetchFn = fetch, log = () => {}, answerBrain } = {}) {
+  let server;
   const spend = { day: null, usd: 0, responses: 0 };
   const today = () => new Date().toISOString().slice(0, 10);
   const json = (res, status, obj) => {
@@ -345,7 +373,8 @@ export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
     try { url = new URL(req.url, 'http://localhost'); } catch { return json(res, 400, { error: 'bad path' }); }
     // DNS rebinding: only our own host names; CSRF: POSTs only from our own page.
     const host = String(req.headers.host || '').toLowerCase();
-    const hostOk = host === `localhost:${o.port}` || host === `127.0.0.1:${o.port}` || host === `${o.host}:${o.port}`;
+    const port=server?.address()?.port||o.port;
+    const hostOk = host === `localhost:${port}` || host === `127.0.0.1:${port}` || host === `${o.host}:${port}`;
     if (!hostOk) return json(res, 421, { error: 'wrong host' });
     if (req.method === 'GET' && STATIC[url.pathname]) {
       const [file, type] = STATIC[url.pathname];
@@ -359,16 +388,21 @@ export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
     let body = {};
     try { body = JSON.parse((await readBody(req)) || '{}'); } catch { return json(res, 400, { error: 'bad json' }); }
     if (url.pathname === '/session') {
-      if (!key) return json(res, 500, { error: 'No OpenAI key: set OPENAI_API_KEY or --key-file.' });
+      const activeKey=typeof key==='function'?await key():key;
+      if (!activeKey) return json(res, 400, { error: 'Connect an OpenAI API key for voice.' });
       // The page may name a persona from the fixed list (the game's picker, S4); anything else keeps the server's.
       const asked = typeof body.persona === 'string' && PERSONAS[body.persona] ? body.persona : null;
       const so = asked && asked !== o.persona ? { ...o, persona: asked, voiceSet: false } : o;
-      const r = await mintSecret(so, key, fetchFn).catch(e => ({ ok: false, status: 502, error: String(e?.message || e) }));
-      log('session', r.ok ? 'ok' : `fail ${r.status} ${r.error}`);
-      return r.ok ? json(res, 200, { value: r.value, expiresAt: r.expiresAt, model: r.model, persona: so.persona }) : json(res, 502, { error: r.error });
+      const r = await mintSecret(so, activeKey, fetchFn).catch(e => ({ ok: false, status: 502, error: String(e?.message || e) }));
+      const publicError=String(r.error||'Voice could not connect.').split(activeKey).join('[redacted]');
+      log('session', r.ok ? 'ok' : `fail ${r.status} ${publicError}`);
+      return r.ok ? json(res, 200, { value: r.value, expiresAt: r.expiresAt, model: r.model, persona: so.persona }) : json(res, 502, { error: publicError });
     }
     if (url.pathname === '/tool') {
-      const out = await runTool(String(body.name || ''), body.args, o, { fetchFn });
+      const controller=new AbortController();
+      req.once('aborted',()=>controller.abort());
+      res.once('close',()=>{if(!res.writableEnded)controller.abort();});
+      const out = await runTool(String(body.name || ''), body.args, o, { fetchFn, answerBrain, signal:controller.signal });
       log('tool', body.name, out?.error ? `error ${out.error}` : 'ok');
       return json(res, 200, out);
     }
@@ -404,12 +438,13 @@ export function createServer(o, { key, fetchFn = fetch, log = () => {} } = {}) {
     return json(res, 404, { error: 'not found' });
   };
   // Nothing a request does takes the server down: an unexpected error is a 500.
-  return http.createServer((req, res) => {
+  server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
       log('error', String(e?.message || e).slice(0, 160));
       if (!res.headersSent) json(res, 500, { error: 'server error' }); else res.end();
     });
   });
+  return server;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

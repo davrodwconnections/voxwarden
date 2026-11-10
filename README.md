@@ -6,7 +6,7 @@
 
 Voxwarden is David Rodriguez's independent AI companion for World of Warcraft: Forever. Ask by voice or text, get advice grounded in your character and local game knowledge, and see useful locations on your map.
 
-This is a private development project. Public installers and a CurseForge listing will be prepared and published only when David chooses to release them. There are currently no Voxwarden public downloads.
+The source repository is public; Windows installer previews are still under validation. A public installer release and CurseForge listing will be published only when David chooses. See [Windows preview](docs/WINDOWS-PREVIEW.md) for setup and current limits.
 
 ## What it does
 

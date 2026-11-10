@@ -10,6 +10,26 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { lookupWowhead } from '../voice/wowhead.mjs';
 import { gearCandidates } from './gear.mjs';
+import {questFocus} from './quest-focus.mjs';
+
+export const wantsWebReference=q=>/busca|buscar|consulta|online|wowhead|internet|search|look.?up/i.test(String(q||''));
+/** At most two fixed-host quest tooltips. They supplement local relations;
+ * a tooltip never proves a turn-in location or a navigable route. */
+export async function enrichQuestQuestion({db,question,state,history=[],lookup=lookupWowhead,signal}={}){
+  const quests=questFocus(question,state,history,2);
+  if(!db||!quests.length||signal?.aborted)return {status:'not_requested',attempted:0,lines:[]};
+  const lines=[],errors=[];
+  for(const q of quests){
+    if(signal?.aborted)break;
+    try{
+      const r=await cachedTooltip(db,'quest',q.id,{lookup:(kind,id)=>lookup(kind,id,{signal})});
+      if(r.error){errors.push(String(r.error).slice(0,100));continue;}
+      const fact=tooltipFact(db,'quest',q.id,600);if(fact)lines.push(fact);
+    }catch{errors.push('Reference unavailable');}
+  }
+  return {status:lines.length?'available':'unavailable',attempted:quests.length,lines,coordinatesAvailable:false,
+    note:'Wowhead tooltip reference only; use sourced local quest relations for turn-ins and coordinates.',...(errors.length?{errors}:{} )};
+}
 
 export const WEB_MAX_AGE_MS = 14 * 24 * 3600 * 1000; // tooltips change rarely
 export const WARM_LIMIT = 12; // per round

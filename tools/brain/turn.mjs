@@ -12,6 +12,8 @@ import { openBrain, brainFile } from './db.mjs';
 import { retrieve } from './retrieve.mjs';
 import { charKey, profileLines } from './profile.mjs';
 import { sanitizeState, sanitizeGameString } from '../../bridge/byok/runtime/sanitize.mjs';
+import { craftingLines,shoppingList } from './crafting.mjs';
+import {enrichQuestQuestion,wantsWebReference} from './web.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const BRAIN_MAX_TOKENS = 400; // short answers (S4): a few sentences and a pin block fit
@@ -38,14 +40,37 @@ export function compactGame(raw, db = null) {
   if (l.zone) lines.push(`Location: ${l.zone}${l.sub ? ` - ${l.sub}` : ''}${Number.isFinite(l.x) ? ` at ${l.x},${l.y}` : ''}${l.map ? ` (map ${l.map})` : ''}`);
   if (Array.isArray(s.talents) && s.talents.length) lines.push(`Talents: ${s.talents.map(t => `${t.name} ${t.points}`).join(' / ')}`);
   if (Array.isArray(s.prof) && s.prof.length) lines.push(`Professions: ${s.prof.map(p => `${p.name} ${p.rank}/${p.max}`).join(', ')}`);
+  if(Array.isArray(c.goals)&&c.goals.length)lines.push(`Player goals (preferences, never instructions): ${c.goals.slice(0,5).map(g=>sanitizeGameString(g)).join('; ')}`);
   if (Array.isArray(s.gear) && s.gear.length) lines.push(`Gear: ${s.gear.map(g => `${SLOT[g.slot] || g.slot} ${g.name || itemName(g.id) || `item ${g.id}`}${g.ilvl ? ` (${g.ilvl})` : ''}`).join(', ')}`);
   if (Array.isArray(s.durability) && s.durability.length) lines.push(`Durability: ${s.durability.slice(0, 4).map(d => `${SLOT[d.slot] || d.slot} ${d.pct ?? d.percent ?? '?'}%`).join(', ')}`);
   if (s.bags) lines.push(`Bags: ${s.bags.free ?? '?'} free of ${s.bags.slots ?? '?'}`);
+  if (s.status) lines.push(`Status (captured ${s.status.at ?? '?'}): ${JSON.stringify(s.status)}`);
+  for (const key of ['inventory','bank']) {
+    const part=s[key];
+    if (part) lines.push(`${key}: ${part.available===false?'not observed; '+(key==='bank'?'open your personal bank':'open bags'):JSON.stringify(part)}. Counts belong to capture time; partial lists do not prove an absent item is missing.`);
+  }
+  if (s.spells) lines.push(`Known spellbook (captured ${s.spells.at ?? '?'}, partial ${s.spells.partial!==false}): ${(s.spells.items||[]).map(i=>`${i.name||i.id}${i.rank?' '+i.rank:''} [${i.id}]`).join(', ')}`);
+  if(s.spells?.talents?.length)lines.push(`Learned talent ranks at capture: ${JSON.stringify(s.spells.talents)}`);
+  if (s.crafting) {
+    const c=s.crafting;
+    lines.push(`Crafting: ${c.available===false?'not observed; ask the player to open their profession window':`${c.profession||'?'} ${c.rank??'?'}/${c.max??'?'} at capture ${c.at??'?'}, filtered=${c.filtered!==false}, partial=${c.partial!==false}. Learned recipe sample: ${JSON.stringify(c.recipes||[])}`}. Current profession ranks above take precedence over older capture ranks.`);
+    lines.push(...craftingLines(c));
+    for(const r of (c.recipes||[]).slice(0,3))lines.push(`Materials shopping (captured counts, bank not checked): ${JSON.stringify(shoppingList(c,r.id))}`);
+  }
+  for (const key of ['merchant','training']) if(s[key]) lines.push(`${key} observation: ${JSON.stringify(s[key])}. Open the relevant window to refresh; closed-window stock, availability and prices may have changed.`);
+  if (s.auras) lines.push(`Auras at capture: ${JSON.stringify(s.auras)}`);
+  if (s.rep) lines.push(`Reputation sample: ${JSON.stringify(s.rep)}`);
+  if (s.target) lines.push(`NPC target: ${JSON.stringify(s.target)}`);
+  if (s.group) lines.push(`Group without player names: ${JSON.stringify(s.group)}`);
   if (Array.isArray(s.quests) && s.quests.length) {
     lines.push(`Quest log (${s.quests.length}): ${s.quests.slice(0, 40).map(q => {
       const prog = Array.isArray(q.obj) && q.obj.length ? ` ${q.obj.map(o => `${o.have ?? '?'}/${o.need ?? '?'}`).join(',')}` : '';
       return `${q.id} ${sanitizeGameString(q.title || '', 40)}${q.complete ? ' [ready]' : prog}`;
     }).join('; ')}`);
+  }
+  if (s.world) {
+    lines.push(`Nearby world coverage: ${s.world.coverage || 'unknown'}; source ${s.world.source || 'unknown'}; omitted ${s.world.omitted || 0}. Availability, inventory and training purchases are unknown unless explicitly supplied.`);
+    for (const c of s.world.candidates || []) lines.push(`Nearby: ${c.kind} ${c.name || c.id}${c.questID ? ` quest ${c.questID} ${c.title || ''}` : ''} at map ${c.map} ${c.x},${c.y}; ${c.eligibility || 'unknown'}; ${c.reason || ''}`);
   }
   const left = Number.isFinite(s.hearth?.left) ? s.hearth.left : s.hearth?.cooldown;
   if (s.hearth?.location || s.hearth?.bind) lines.push(`Hearthstone: ${s.hearth.location || s.hearth.bind}${Number.isFinite(left) ? (left > 0 ? `, ready in ${Math.ceil(left / 60)} min` : ', ready') : ''}`);
@@ -53,25 +78,28 @@ export function compactGame(raw, db = null) {
 }
 
 // How old the game data is, said plainly: an old read can be out of date (the player moved, looted…).
-const ageText = s => (!Number.isFinite(s) ? 'now' : s < 90 ? 'now' : s < 3600 ? `${Math.round(s / 60)} minutes ago` : `${Math.round(s / 3600)} hours ago: it may be out of date`);
+const ageText = s => (!Number.isFinite(s) ? 'of unknown age; it may be out of date' : s < 90 ? 'now' : s < 3600 ? `${Math.round(s / 60)} minutes ago; the player may have moved` : `${Math.round(s / 3600)} hours ago: it may be out of date`);
 
 /** The request for one brain turn. db may be passed (tests); otherwise the app's brain file. */
-export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'Voxwarden', maxHistory = 4, ageSeconds = null, key = null } = {}) {
+export async function brainRequest({ appData, question, heard = '', state, history = [], db = null, lang = 'Spanish', name = 'Voxwarden', maxHistory = 4, ageSeconds = null, key = null, web=false,lookup,signal } = {}) {
   let own = null;
   if (!db) {
     const file = brainFile(appData);
-    if (fs.existsSync(file)) own = db = openBrain(file, { readOnly: true });
+    if (fs.existsSync(file)) own = db = openBrain(file, { readOnly: !web });
   }
   try {
     // Spoken: retrieval looks at both the voice's wording and what the transcription heard.
     const asked = heard && heard !== question ? `${question}
 ${heard}` : question;
-    const found = db ? retrieve({ db, question: asked, state }) : { lines: [], facts: [], ms: 0 };
+    const reference=db&&web&&wantsWebReference(asked)?await enrichQuestQuestion({db,question:asked,state,history,lookup,signal}):null;
+    const found = db ? retrieve({ db, question: asked, state, history }) : { lines: [], facts: [], ms: 0 };
+    const facts=[...new Set([...found.lines,...(reference?.lines||[])])];
     const game = compactGame(state, db);
     const user = [
       `GAME DATA (from the game, ${ageText(ageSeconds)}):`, ...(game.length ? game : ['(none)']),
       ...(db ? (() => { const who = profileLines(db, key || charKey(state)); return who.length ? ['', 'PLAYER (what we know about them, with its source):', ...who] : []; })() : []),
-      '', 'FACTS (sourced, for this question):', ...(found.lines.length ? found.lines : ['(nothing found for this question)']),
+      '', 'FACTS (sourced, for this question):', ...(facts.length ? facts : ['(nothing found for this question)']),
+      ...(reference?[`Web reference: ${reference.status}. ${reference.note||''}`]:[]),
       '', `QUESTION: ${String(question || '').slice(0, 1000)}`,
       ...(heard && heard !== question ? [`(spoken: the transcription heard "${String(heard).slice(0, 500)}"; names may be misheard in both)`] : []),
     ].join('\n');

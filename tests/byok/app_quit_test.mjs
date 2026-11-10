@@ -222,7 +222,7 @@ test('quit (fix-102): main wires it: no stop in before-quit, the tray goes and t
   assert.doesNotMatch(main, /app\.on\('will-quit'/);
   const flowSrc = /const quit = createQuitFlow\(\{([\s\S]*?)\n\}\);/.exec(main)?.[1] ?? '';
   assert.match(flowSrc, /onCommit: \(\) => \{\s*live\?\.commit\(\);[\s\S]*?tray\?\.destroy\(\)/);
-  assert.match(flowSrc, /stop: \(\) => api\?\.stop\?\.\(\)/);
+  assert.match(flowSrc, /stop: async \(\) => \{ await companion\?\.stop\?\.\(\); await api\?\.stop\?\.\(\); \}/);
   assert.match(flowSrc, /removeTargets\(uninstallTargets\(/, 'the uninstall\'s removal waits for the stop');
   // quit-race: still running after exit, nothing comes back; main never asks the holder to boot again.
   assert.doesNotMatch(flowSrc, /onExitFailed/);

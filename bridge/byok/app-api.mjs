@@ -947,6 +947,11 @@ export function createAppApi(opts = {}) {
       return clean(out);
     },
 
+    // Trusted desktop runtime only: these are not exposed by renderer/preload IPC.
+    async voiceRuntimeKey() { return (await keystore.get('openai')) || null; },
+    async askVoice(v = {}) { return S.backend?.askVoice ? S.backend.askVoice(v) : { ok: false, error: 'unavailable' }; },
+    async warmKnowledge() { await S.backend?.warmKnowledge?.(); return {ok:true}; },
+
     async setKey(provider, key) {
       const m = visible(provider);
       if (!m || m.local || isCustom(m)) return bad('provider'); // Other's key comes with its service (connectCustom)
@@ -1385,7 +1390,9 @@ export function createAppApi(opts = {}) {
         target = found.found ? found.path : (config.wow.flavorDir && isDir(config.wow.flavorDir) ? config.wow.flavorDir : null);
       }
       if (!target) return { ok: false, error: 'wow_not_found', detail: 'Voxwarden couldn’t find World of Warcraft: Forever.' };
-      const r = (wow.install ?? installAddon)({ flavorDir: target, platform, run: wow.run, tighten: o.tighten === true, addonSource: wow.addonSource, slots: slotsOf(config), configFile });
+      const worldDataFile=path.join(paths.userData||'', 'brain','WorldData.lua');
+      const r = (wow.install ?? installAddon)({ flavorDir: target, platform, run: wow.run, tighten: o.tighten === true, addonSource: wow.addonSource, slots: slotsOf(config), configFile,
+        ...(fs.existsSync(worldDataFile)?{worldDataFile}:{}) });
       wowSeen = { at: 0, running: false };
       if (!r.ok) { changed(); return clean({ ok: false, error: r.error, ...(r.detail ? { detail: r.detail } : {}), ...(r.steps ? { steps: r.steps } : {}) }); }
       if (target !== config.wow.flavorDir || !S.bridge) {

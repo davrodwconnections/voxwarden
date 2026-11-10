@@ -79,13 +79,13 @@ local LIMITS = { obj = 5, poi = 40, prof = 6, gear = 19, pending = 10, zones = 2
 -- with cap qlog puts back the ones it has seen whole), and titles last of
 -- all: every quest's id and ready flag, the least that goes. A quest itself
 -- never goes.
-local DROP_ORDER = { "bags", "auras", "rep", "target", "group", "rewards", "rested", "hearth", "talents", "durability", "gear", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
-	"prof", "pending", "quests.title.short", "quests.title.tiny", "quests.title" }
+local DROP_ORDER = { "bags", "auras", "rep", "target", "group", "bank", "inventory", "spells", "merchant", "training", "rewards", "rested", "hearth", "talents", "durability", "gear", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level", "crafting", "status",
+	"prof", "pending", "world", "quests.title.short", "quests.title.tiny", "quests.title" }
 -- When the voice companion asks for bags and gear (odd/tasks/nqa-voice-controls.md T15): they stay
 -- until the quests' detail has gone, so a long quest log can't push them out of the frame.
 -- The small sections (rested, hearth, talents) stay too: they cost a few bytes and the voice asked for them.
-local INV_DROP_ORDER = { "auras", "rep", "target", "group", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level",
-	"prof", "pending", "rewards", "rested", "hearth", "talents", "quests.title.short", "quests.title.tiny", "quests.title", "bags", "gear", "durability" }
+local INV_DROP_ORDER = { "auras", "rep", "target", "group", "poi", "quests.obj.done", "chainStarts", "quests.obj.text", "quests.obj", "quests.chain", "quests.level", "merchant", "training", "spells", "bank", "inventory", "crafting", "status",
+	"prof", "pending", "world", "rewards", "rested", "hearth", "talents", "quests.title.short", "quests.title.tiny", "quests.title", "bags", "gear", "durability" }
 -- Quest titles go before bags and gear here: a long log (30 quests of long titles) doesn't fit beside
 -- them otherwise, and the bridge puts the titles back from the ones it already holds (fillTitles, cap
 -- qlog); every quest keeps its id and ready flag.
@@ -659,8 +659,8 @@ end
 
 -- Which droppable parts the state has at all: only those count as omitted.
 local function Present(g)
-	local has = { gear = g.gear ~= nil, poi = g.poi ~= nil, chainStarts = g.chainStarts ~= nil, prof = g.prof ~= nil and #g.prof > 0, pending = g.pending ~= nil and #g.pending > 0 } -- [QL-F-14] none in P.ListOnlyOf's
-	for _, k in ipairs({ "bags", "auras", "rep", "target", "group", "rewards", "durability", "rested", "hearth", "talents" }) do has[k] = g[k] ~= nil end
+	local has = { world = g.world ~= nil, gear = g.gear ~= nil, poi = g.poi ~= nil, chainStarts = g.chainStarts ~= nil, prof = g.prof ~= nil and #g.prof > 0, pending = g.pending ~= nil and #g.pending > 0 } -- [QL-F-14] none in P.ListOnlyOf's
+	for _, k in ipairs({ "bags", "auras", "rep", "target", "group", "rewards", "durability", "rested", "hearth", "talents", "status", "inventory", "bank", "spells", "crafting", "merchant", "training" }) do has[k] = g[k] ~= nil end
 	for _, q in ipairs(g.quests) do
 		local len = #(q.title or "")
 		if len > 0 then has["quests.title"] = true end
@@ -698,6 +698,15 @@ local function TitleAt(q, drop)
 	return title, nil
 end
 
+local function WorldObj(w)
+ if type(w) ~= "table" then return nil end
+ local candidates = {}
+ for _, c in ipairs(w.candidates or {}) do
+  candidates[#candidates+1] = O("kind",c.kind,"id",c.id,"questID",c.questID,"map",c.map,"x",c.x,"y",c.y,"name",c.name,"title",c.title,"reason",c.reason,"eligibility",c.eligibility)
+ end
+ return O("schema",w.schema,"map",w.map,"coverage",w.coverage,"source",w.source,"omitted",w.omitted,"candidates",candidates)
+end
+
 local function Encode(g, drop, seq, t)
 	local quests = {}
 	for _, q in ipairs(g.quests) do
@@ -720,6 +729,7 @@ local function Encode(g, drop, seq, t)
 	local unread = tonumber(qm.unread) or 0
 	return J.encode(O("v", 1, "sid", g.sid, "seq", seq, "t", t, "char", g.char, "loc", g.loc,
 		"questCount", #g.quests, "questMax", qm.max, "questUnread", unread > 0 and unread or nil, "quests", quests,
+		"world", (not drop.world) and WorldObj(g.world) or nil,
 		"poi", (not drop.poi) and g.poi or nil, "chainStarts", (not drop.chainStarts) and g.chainStarts or nil,
 		"prof", (not drop.prof) and g.prof or nil, "gear", (not drop.gear) and g.gear or nil,
 		"pending", (not drop.pending) and g.pending or nil,
@@ -728,7 +738,11 @@ local function Encode(g, drop, seq, t)
 		"group", (not drop.group) and g.group or nil,
 		"rewards", (not drop.rewards) and g.rewards or nil, "durability", (not drop.durability) and g.durability or nil,
 		"rested", (not drop.rested) and g.rested or nil, "hearth", (not drop.hearth) and g.hearth or nil,
-		"talents", (not drop.talents) and g.talents or nil, "omitted", Omitted(g, drop)))
+		"talents", (not drop.talents) and g.talents or nil,
+		"status", (not drop.status) and g.status or nil, "inventory", (not drop.inventory) and g.inventory or nil,
+		"bank", (not drop.bank) and g.bank or nil, "spells", (not drop.spells) and g.spells or nil,
+		"crafting", (not drop.crafting) and g.crafting or nil, "merchant", (not drop.merchant) and g.merchant or nil,
+		"training", (not drop.training) and g.training or nil, "omitted", Omitted(g, drop)))
 end
 P.Encode = Encode
 
@@ -749,13 +763,35 @@ function P.Gather()
 	end
 	local quests, questMeta = P.Quests()
 	local char = Character()
-	return {
-		sid = ch.sid, char = char, loc = loc, quests = quests, questMeta = questMeta, poi = Poi(mapId),
+ if ns.HelperPanel and P.Caps().xctx and P.DesktopOn() and ns.db.settings.context then
+  local goals=ns.HelperPanel.Goals();if #goals>0 then local kv=char._o;kv[#kv+1]={"goals",goals} end
+ end
+ local _, _, classID = Try(UnitClass, "player")
+ local _, _, raceID = Try(UnitRace, "player")
+ local durability = P.Durability()
+ local needsRepair = false
+ for _, d in ipairs(durability or {}) do if (Get(d,"pct") or 100) < 30 then needsRepair=true end end
+ local worldProfessions = {}
+ for _, p in ipairs(prof) do worldProfessions[#worldProfessions+1]={name=Get(p,"name"),rank=Get(p,"rank"),max=Get(p,"max")} end
+ local world = ns.WorldData and not ns.InCombat() and ns.WorldContext and Try(ns.WorldContext.Build,
+  {map=mapId,x=Get(loc,"x"),y=Get(loc,"y")},quests,
+  {faction=Try(UnitFactionGroup,"player"),professions=worldProfessions,class=Get(char,"class"),level=Get(char,"level"),classID=classID,raceID=raceID,needsRepair=needsRepair,
+   knowsSpell=function(id) local v=Try(IsPlayerSpell,id); if type(v)~="boolean" then v=Try(IsSpellKnown,id) end; if type(v)=="boolean" then return v end end,
+   spellName=function(id) return Clean(Try(C_Spell and C_Spell.GetSpellName,id) or Try(GetSpellInfo,id) or ("spell "..id)) end,
+   itemCount=function(id) return Try(C_Item and C_Item.GetItemCount or GetItemCount,id) end,
+   completed=function(id) return Try(C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted,id) end}) or nil
+ local gathered = {
+		sid = ch.sid, char = char, loc = loc, world = world, quests = quests, questMeta = questMeta, poi = Poi(mapId),
 		chainStarts = ChainStarts(Get(char, "level"), quests),
 		prof = prof, gear = P.Gear(), pending = PendingList(ch), pendingIds = pendingIds,
 		bags = P.Bags(), auras = P.Auras(), rep = P.Reputations(), target = P.Target(), group = P.Group(),
-		rewards = P.Rewards(quests), durability = P.Durability(), rested = P.Rested(), hearth = P.Hearth(), talents = P.Talents(),
+		rewards = P.Rewards(quests), durability = durability, rested = P.Rested(), hearth = P.Hearth(), talents = P.Talents(),
 	}
+ if ns.GameContext and P.Caps().xctx and P.DesktopOn() and ns.db.settings.context then
+  local extra=Try(ns.GameContext.Snapshot)
+  for _,kv in ipairs(extra and extra._o or {}) do gathered[kv[1]]=kv[2] end
+ end
+ return gathered
 end
 
 -- The JSON for g, fitted (F1, PROTOCOL §2.6): the body as it goes on the strip
@@ -803,13 +839,21 @@ function P.Build()
 	local listOnly = P.ListOnly() -- [QL-F-14] the app's companion switch off: the quest log alone
 	if listOnly then g = P.ListOnlyOf(g) end
 	local caps = P.Caps()
+	local preferred=R.stateWantedSections
+	local fitOrder=inv and INV_DROP_ORDER or DROP_ORDER
+	if type(preferred)=="table" then
+		local ordered={}
+		for _,k in ipairs(fitOrder) do if not preferred[k] then ordered[#ordered+1]=k end end
+		for _,k in ipairs(fitOrder) do if preferred[k] then ordered[#ordered+1]=k end end
+		fitOrder=ordered
+	end
 	local nextSeq = math.max(c.seq, R.bridgeStateSeq or 0) + 1
 	-- The fit starts from where the last one ended, for the same caps.
 	local fitKey = (caps.z and "z" or "") .. (caps.qlog and "q" or "") .. (listOnly and "l" or "") .. (inv and "i" or "") -- [QL-F-14]
-	local from = R.fitStep and R.fitStep.key == fitKey and R.fitStep.i or 0
+	local from = not preferred and R.fitStep and R.fitStep.key == fitKey and R.fitStep.i or 0
 	if listOnly then from = math.max(from, #DROP_ORDER - 2) end -- [QL-F-14] at the title steps, the last three
-	local json, drop, tooLarge, packed, step = P.Fit(g, nextSeq, time(), { z = caps.z, qlog = caps.qlog, from = from, order = inv and INV_DROP_ORDER or nil })
-	R.fitStep = { key = fitKey, i = step }
+	local json, drop, tooLarge, packed, step = P.Fit(g, nextSeq, time(), { z = caps.z, qlog = caps.qlog, from = from, order = fitOrder })
+	R.fitStep = not preferred and { key = fitKey, i = step } or nil
 	local core = tooLarge and ("too_large:" .. g.sid) or Encode(g, drop, 0, 0)
 	if core ~= c.stateCore or type(c.stateJson) ~= "string" then
 		c.seq = nextSeq
@@ -884,7 +928,8 @@ end
 function P.ListOnlyOf(g)
 	local quests = {}
 	for i, q in ipairs(g.quests) do quests[i] = { id = q.id, title = q.title, complete = q.complete, obj = {} } end
-	return { sid = g.sid, char = g.char, loc = g.loc, quests = quests, questMeta = g.questMeta, pendingIds = {} }
+	local char=O();for _,kv in ipairs(g.char and g.char._o or {}) do if kv[1]~="goals" then char._o[#char._o+1]=kv end end
+	return { sid = g.sid, char = char, loc = g.loc, quests = quests, questMeta = g.questMeta, pendingIds = {} }
 end
 
 -- May the companion send this record type now? On (here and on the desktop),
@@ -1049,8 +1094,12 @@ function P.VoiceWanted()
 	R.voiceWantSeen = want
 	if ns.InCombat() then return end
 	R.statePreferInv = true
+	local allowed={bags=true,gear=true,durability=true,rewards=true,talents=true,hearth=true,status=true,inventory=true,bank=true,spells=true,crafting=true,merchant=true,training=true}
+	R.stateWantedSections={}
+	for i,k in ipairs(type(b.voice.sections)=="table" and b.voice.sections or {}) do if i<=10 and allowed[k] then R.stateWantedSections[k]=true end end
 	local ok = pcall(P.QueueState, STATE_DWELL)
 	R.statePreferInv = nil
+	R.stateWantedSections = nil
 	return ok
 end
 

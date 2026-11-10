@@ -39,13 +39,13 @@ export async function readCapped(res, max) {
   return Buffer.concat(parts.map(p => Buffer.from(p))).toString('utf8');
 }
 
-export async function lookupWowhead(type, id, { fetchFn = fetch, timeoutMs = 8000 } = {}) {
+export async function lookupWowhead(type, id, { fetchFn = fetch, timeoutMs = 8000, signal } = {}) {
   if (!WOWHEAD_TYPES.includes(type)) return { error: `type must be one of ${WOWHEAD_TYPES.join(', ')}` };
   if (!Number.isInteger(id) || id <= 0 || id > 10_000_000) return { error: 'id must be a whole number from the game data' };
   const url = `https://${WOWHEAD_HOST}/forever/tooltip/${type}/${id}`;
   let res;
   try {
-    res = await fetchFn(url, { redirect: 'error', signal: AbortSignal.timeout(timeoutMs), headers: { accept: 'application/json' } });
+    res = await fetchFn(url, { redirect: 'error', signal: signal?AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]):AbortSignal.timeout(timeoutMs), headers: { accept: 'application/json' } });
   } catch (e) {
     return { error: `Wowhead didn't answer (${String(e?.name || e).slice(0, 40)})` };
   }

@@ -83,7 +83,7 @@ export function createShellLedger({ now = Date.now, maxHosts = 64 } = {}) {
   return {
     record(verdict, url) {
       if (verdict.allow && (verdict.kind === 'page' || verdict.kind === 'devtools')) { pages += 1; return; }
-      if (verdict.allow) { bump(allowed, `${verdict.host}:${verdict.port ?? 443}`, { host: verdict.host, port: verdict.port ?? 443, feature: updateFeature(url), by: 'app' }); return; }
+      if (verdict.allow) { bump(allowed, `${verdict.host}:${verdict.port ?? 443}`, { host: verdict.host, port: verdict.port ?? 443, feature: verdict.feature||updateFeature(url), by: 'app' }); return; }
       // Only the scheme and host are kept for a refused request, never its path or query.
       bump(blocked, `${verdict.scheme ?? '?'}://${verdict.host ?? ''}`, { scheme: verdict.scheme, host: verdict.host, reason: verdict.kind });
     },

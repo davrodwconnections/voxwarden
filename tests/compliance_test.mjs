@@ -54,7 +54,9 @@ test('the addon never acts for the player: no chat or addon messages, casting, t
 test('the addon asks for no money: no ads, donations or paid features (Blizzard\'s add-on policy)', { skip: !exists(ADDON) && 'no addon in this tree' }, () => {
   const re = /\b(donat\w*|patreon|ko-?fi|buymeacoffee|paypal|venmo|cash ?app|sponsor\w*|subscribe now|premium version)\b/i;
   const hits = [];
-  for (const f of [...addonFiles(), ...list(ADDON, /\.toc$/)]) read(f).split('\n').forEach((l, i) => { const m = l.match(re); if (m) hits.push(`${f}:${i + 1} ${m[1]}`); });
+  // Quest/NPC titles in the inert generated database can contain donation words.
+  // This UI solicitation check covers authored code; the no-actions check above still covers every Lua file.
+  for (const f of [...addonFiles().filter(f => path.basename(f) !== 'WorldData.lua'), ...list(ADDON, /\.toc$/)]) read(f).split('\n').forEach((l, i) => { const m = l.match(re); if (m) hits.push(`${f}:${i + 1} ${m[1]}`); });
   assert.deepEqual(hits, []);
 });
 

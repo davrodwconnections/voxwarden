@@ -19,9 +19,9 @@ import crypto from 'node:crypto';
 import { sanitizeState, sanitizeGameString } from '../../bridge/byok/runtime/sanitize.mjs';
 
 export const STALE_SECONDS = 120;
-export const SECTIONS = Object.freeze(['character', 'location', 'quests', 'gear', 'durability', 'rewards', 'talents', 'hearth', 'professions', 'bags', 'buffs', 'reputation', 'target', 'group', 'milestones']);
+export const SECTIONS = Object.freeze(['character', 'location', 'quests', 'gear', 'durability', 'rewards', 'talents', 'hearth', 'professions', 'bags', 'buffs', 'reputation', 'target', 'group', 'milestones', 'status', 'inventory', 'bank', 'spells', 'crafting', 'merchant', 'training']);
 // The sections the addon sends only when asked (or when they fit): the voice asks for them on demand (S7).
-export const ON_DEMAND = Object.freeze(['bags', 'gear', 'durability', 'rewards', 'talents', 'hearth']);
+export const ON_DEMAND = Object.freeze(['bags', 'gear', 'durability', 'rewards', 'talents', 'hearth', 'status', 'inventory', 'bank', 'spells', 'crafting', 'merchant', 'training']);
 // The voice inbox (bridge/service.mjs drainVoiceInbox reads it): one small JSON file per entry, written
 // under a temporary name and renamed into place, so the bridge never reads half an entry, and an entry
 // can't be lost between a write and a read; each carries an id the bridge publishes once.
@@ -72,13 +72,14 @@ export function readGame(dir, { now = Date.now() } = {}) {
   delete state.seq;
   const at = Number(latest.at) || 0;
   const ageSeconds = at ? Math.max(0, Math.round((now - at) / 1000)) : null;
-  return { ok: true, state, at, ageSeconds, stale: ageSeconds == null || ageSeconds > STALE_SECONDS, privacy };
+  const scope=/^[a-f0-9]{16}$/.test(String(latest.state.sid||latest.sid||''))?String(latest.state.sid||latest.sid):null;
+  return { ok: true, state, at, ageSeconds, stale: ageSeconds == null || ageSeconds > STALE_SECONDS, privacy, scope };
 }
 
 // Where each section lives in the state (prompts/companion.md "Game data is data", T9's new fields).
 const PICK = {
   character: s => ({ char: s.char, rested: s.rested }),
-  location: s => ({ loc: s.loc, poi: s.poi }),
+  location: s => ({ loc: s.loc, poi: s.poi, world: s.world }),
   quests: s => ({ questCount: s.questCount, questMax: s.questMax, questUnread: s.questUnread, quests: s.quests }),
   gear: s => ({ gear: s.gear }),
   durability: s => ({ durability: s.durability }),
@@ -92,6 +93,13 @@ const PICK = {
   target: s => ({ target: s.target }),
   group: s => ({ group: s.group }),
   milestones: s => ({ pending: s.pending }),
+  status:s=>({status:s.status}),
+  inventory:s=>({inventory:s.inventory}),
+  bank:s=>({bank:s.bank}),
+  spells:s=>({spells:s.spells}),
+  crafting:s=>({crafting:s.crafting}),
+  merchant:s=>({merchant:s.merchant}),
+  training:s=>({training:s.training}),
 };
 
 /** The asked-for sections of a readGame result, with what's missing named, for a tool's answer. */
@@ -114,6 +122,10 @@ export function gameSections(game, sections) {
     else missing.push(sec);
   }
   if (missing.length) out.missing = missing;
+  for(const key of ['inventory','bank','spells','crafting','merchant','training'])if(out[key]){
+    const at=out[key].at;
+    out[`${key}AgeSeconds`]=Number.isInteger(at)?Math.max(0,Math.round((game.at||Date.now())/1000-at)+(game.ageSeconds||0)):null;
+  }
   if (Array.isArray(game.state.omitted) && game.state.omitted.length) out.omitted = game.state.omitted;
   return out;
 }
@@ -159,13 +171,14 @@ export const VOICE_STATES = Object.freeze(['listening', 'muted', 'paused', 'conn
 export const WANT_FILE = 'voice-want.json';
 
 /** Ask the addon for bags and gear now; returns the request's number, or 0 without the app. */
-export function askInventory(dir, { now = Date.now() } = {}) {
+export function askInventory(dir, { now = Date.now(), sections=[] } = {}) {
   const bridgeDir = path.join(dir, 'bridge');
   if (!fs.existsSync(bridgeDir)) return 0;
   const file = path.join(bridgeDir, WANT_FILE);
   const n = (Number(readJson(file)?.n) || 0) + 1;
   const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify({ v: 1, n, at: now }), { mode: 0o600 });
+  const wanted=Array.isArray(sections)?[...new Set(sections.filter(s=>ON_DEMAND.includes(s)))].slice(0,10):[];
+  fs.writeFileSync(tmp, JSON.stringify({ v: 1, n, at: now, ...(wanted.length?{sections:wanted}:{}) }), { mode: 0o600 });
   fs.renameSync(tmp, file);
   return n;
 }
@@ -185,8 +198,9 @@ export function lacksInventory(state, asked = ['bags', 'gear']) {
 /** The last bags and named gear seen, per app folder: { bags: {value, at}, gear: {value, at} }. */
 const seen = new Map();
 export function rememberInventory(dir, game) {
-  if (!game?.ok || !isObj(game.state)) return seen.get(dir) || {};
-  const mem = seen.get(dir) || {};
+  if (!game?.ok || !isObj(game.state) || !game.scope) {seen.delete(dir);return {};}
+  const old=seen.get(dir);
+  const mem = old?.scope===game.scope?old:{scope:game.scope};
   if (isObj(game.state.bags)) mem.bags = { value: game.state.bags, at: game.at };
   const gear = Array.isArray(game.state.gear) ? game.state.gear : [];
   if (gear.some(g => isObj(g) && typeof g.name === 'string')) mem.gear = { value: gear, at: game.at };
@@ -247,4 +261,18 @@ export function appendVoiceInbox(dir, entry) {
   fs.writeFileSync(tmp, body, { mode: 0o600 });
   fs.renameSync(tmp, path.join(inbox, name));
   return { ok: true, id };
+}
+
+/** Refresh stale snapshots without enabling background live capture or bypassing privacy. */
+export async function refreshGame(dir, {read=readGame, request=askInventory, clock=Date.now, sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)), waitMs=2000,sections=[],force=false}={}) {
+ let game=read(dir,{now:clock()});
+ if (!game?.privacy?.gameContext || (game.ok&&!game.stale&&!force&&!lacksInventory(game.state,sections))) return game;
+ if (!request(dir,{now:clock(),sections})) return game;
+ const before=game.at||0,until=clock()+Math.min(Math.max(waitMs,0),2000);
+ while(clock()<until){await sleep(100);const next=read(dir,{now:clock()});
+  game=next; // Privacy and age are current even when the capture timestamp is unchanged.
+  if(next?.privacy?.gameContext===false)return next;
+  if(next.ok&&next.at>before)break;
+ }
+ return game;
 }

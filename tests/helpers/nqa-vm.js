@@ -549,7 +549,9 @@ function newVM(opts = {}) {
   run('NS = {}');
   // opts.skip: files the client didn't load (a /reload runs the TOC's old list:
   // a file new in an update loads only after a full restart).
-  for (const f of tocFiles().filter(f => !(opts.skip || []).includes(f))) {
+  // The generated local-only world DB is exercised by dedicated real-data tests.
+  // Unit scenarios stay portable and do not allocate it for every VM.
+  for (const f of tocFiles().filter(f => !(opts.skip || []).includes(f) && (f !== 'WorldData.lua' || opts.worldData === true))) {
     let src = fs.readFileSync(path.join(ADDON, f), 'utf8');
     if (f === 'Inbox.lua' && opts.inbox) src = opts.inbox; // what the bridge wrote there
     loadFile(src, f);
