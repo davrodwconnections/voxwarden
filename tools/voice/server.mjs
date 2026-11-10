@@ -231,20 +231,20 @@ export async function askBrain(question, o, { fetchFn = fetch, dir = o.appData |
   if(/hechiz|habilidad|spell|poder/i.test(question))wanted.push('spells','status');
   if(/compr|vendedor|vendor|merchant/i.test(question))wanted.push('merchant');
   if(/entren|trainer|training/i.test(question))wanted.push('training');
-  const game = await refreshGame(dir,{sections:wanted});
+  const game = await refreshGame(dir,{sections:wanted,force:true});
   // The character, fixed at the start of the turn from the app's own file (the state the voice reads has
   // no identity). It stays on this computer.
   let raw = null;
-  try {
+  if(game.ok) try {
     const comp = JSON.parse(fs.readFileSync(path.join(dir, 'bridge', 'companion.json'), 'utf8'));
-    raw = Object.values(comp.states || {}).filter(x => x && x.state).sort((a, b) => (b.at || 0) - (a.at || 0))[0]?.state ?? null;
+    raw = Object.values(comp.states || {}).find(x => x?.state && x.at===game.at && (x.state.sid||x.sid)===game.scope)?.state ?? null;
   } catch { raw = null; }
   const [{ brainRequest }, P] = await Promise.all([import('../brain/turn.mjs'), import('../brain/profile.mjs')]);
   // Game data off (privacy): no character, no profile in the turn, nothing remembered about it.
   const key = game.ok && raw ? P.charKey(raw) : null;
   const hkey = key || '-';
   if (!brainHistories.has(hkey)) brainHistories.set(hkey, []);
-  const brainHistory = brainHistories.get(hkey);
+  const brainHistory = key?brainHistories.get(hkey):[];
   const req = await brainRequest({ appData: dir, question, heard, state: game.ok ? game.state : null, history: brainHistory, ageSeconds: game.ok ? game.ageSeconds : null, key,
     web:o.web===true&&!answerBrain,signal,lookup:(type,id)=>lookupWowhead(type,id,{fetchFn,signal,timeoutMs:3000}) });
   const ctl = new AbortController();
